@@ -1,6 +1,9 @@
 pyopenapi
 =========
 
+[![Build Status](https://travis-ci.org/AntXlab/pyopenapi.svg?branch=master)](https://travis-ci.org/AntXlab/pyopenapi)
+[![Coverage](https://coveralls.io/repos/AntXlab/pyopenapi/badge.png)](https://coveralls.io/r/AntXlab/pyopenapi)
+
 A python REST client for swagger enabled rest API, which integrated with different kinds of http clients,
 ex. AsyncHTTPClient in tornado. For me, the use case is to unittest a torando REST server.
 
