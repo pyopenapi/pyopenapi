@@ -6,4 +6,7 @@ install:
     - pip install -r requirements-dev.txt
     - pip install coveralls
 script:
-    py.test --cov=pyopenapi pyopenapi/tests
+    - py.test --cov=pyopenapi pyopenapi/tests
+after_success:
+    - coveralls
+
