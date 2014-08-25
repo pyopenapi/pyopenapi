@@ -16,9 +16,9 @@ Here are **TODO**s:
 
 
 ##Contents
-- [Features](https://github.com/AntXlab/pyopenapi/edit/master/README.md#features)
-- [Development](https://github.com/AntXlab/pyopenapi/edit/master/README.md#development)
-- [FAQ](https://github.com/AntXlab/pyopenapi/edit/master/README.md#faq)
+- [Features](https://github.com/AntXlab/pyopenapi/blob/master/README.md#features)
+- [Development](https://github.com/AntXlab/pyopenapi/blob/master/README.md#development)
+- [FAQ](https://github.com/AntXlab/pyopenapi/blob/master/README.md#faq)
 
 ---------
 
