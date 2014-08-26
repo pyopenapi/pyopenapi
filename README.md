@@ -39,7 +39,7 @@ pip install -r requirement-dev.txt
 
 unit testing
 ```bash
-python -m py.test -s -v --cov=pyopenapi --cov-config=.coveragerc --cov-report=html pyopenapi/tests
+python -m pytest -s -v --cov=pyopenapi --cov-config=.coveragerc --cov-report=html pyopenapi/tests
 ```
 
 ###FAQ
