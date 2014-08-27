@@ -11,6 +11,9 @@ your API, the first option is [Swagger-codegen](https://github.com/wordnik/swagg
 **pyopenapi** is much easier to use (you don't need to prepare a scala environment) and tries hard to fully supports
 [Swagger Spec](https://helloreverb.com/developers/swagger)
 
+**TODO**
+- File uploading (the last piece finally)
+- tornado.httpclient.AsyncHTTPClient
 
 - [Features](https://github.com/AntXlab/pyopenapi/blob/master/README.md#features)
 - [Quick Start](https://github.com/AntXlab/pyopenapi/blob/master/README.md#quick-start)
