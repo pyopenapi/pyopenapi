@@ -9,8 +9,8 @@ setup(
     description = 'A type-safe, dynamic, spec-compliant swagger client for python',
     author = 'Mission Liao',
     author_email = 'missionaryliao@gmail.com',
-    url = 'https://github.com/AntXlab/pyopenapi', # use the URL to the github repo
-    download_url = 'https://github.com/AntXlab/pyopenapi/tarball/{0}'.format(version),
+    url = 'https://github.com/mission-liao/pyopenapi', # use the URL to the github repo
+    download_url = 'https://github.com/mission-liao/pyopenapi/tarball/{0}'.format(version),
     keywords = ['swagger', 'REST'], # arbitrary keywords
     classifiers = [
         'Development Status :: 4 - Beta',

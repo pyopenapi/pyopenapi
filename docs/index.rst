@@ -66,6 +66,6 @@ Getting Started
         client.request(app.op['getPetsByStatus'](status=['available', 'sold'])) # multiple value, wrapped by list.
 
 
-`Source code <https://github.com/AntXlab/pyopenapi>`_
-`Report issues <https://github.com/AntXlab/pyopenapi/issues>`_
+`Source code <https://github.com/mission-liao/pyopenapi>`_
+`Report issues <https://github.com/mission-liao/pyopenapi/issues>`_
 
