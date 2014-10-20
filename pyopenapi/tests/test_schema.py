@@ -1,6 +1,6 @@
 from pyopenapi import SwaggerApp
 from .utils import get_test_data_folder
-from pyopenapi.obj import (
+from pyopenapi.spec.v1_2.obj import (
     Info,
     Authorization,
     Scope,

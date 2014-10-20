@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from .base import BaseObj, FieldMeta, Context
-from .io import SwaggerRequest, SwaggerResponse
+from ...base import BaseObj, FieldMeta, Context
+from ...io import SwaggerRequest, SwaggerResponse
 from pyopenapi import primitives
 import six
 
