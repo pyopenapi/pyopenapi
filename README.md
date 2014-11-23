@@ -1,4 +1,4 @@
-pyopenapi
+pyopenapi (Support on Swagger 2.0 is ongoing)
 =========
 
 [![Build Status](https://travis-ci.org/mission-liao/pyopenapi.svg?branch=master)](https://travis-ci.org/mission-liao/pyopenapi)
