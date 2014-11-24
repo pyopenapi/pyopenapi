@@ -1,7 +1,7 @@
 from pyopenapi import SwaggerApp
 from pyopenapi.contrib.client.requests import Client
 from pyopenapi.primitives import Model
-from .utils import get_test_data_folder
+from ..utils import get_test_data_folder
 import unittest
 import httpretty
 import json
