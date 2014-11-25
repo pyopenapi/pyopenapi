@@ -1,5 +1,5 @@
 from pyopenapi import SwaggerApp
-from .utils import get_test_data_folder
+from ..utils import get_test_data_folder
 from pyopenapi.primitives import Model, Array
 from pyopenapi.io import SwaggerRequest
 import unittest

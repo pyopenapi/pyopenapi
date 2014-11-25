@@ -1,5 +1,5 @@
 from pyopenapi import SwaggerApp, primitives
-from .utils import get_test_data_folder
+from ..utils import get_test_data_folder
 from pyopenapi.spec.v2_0 import objects
 from pyopenapi.utils import jp_compose
 import unittest
