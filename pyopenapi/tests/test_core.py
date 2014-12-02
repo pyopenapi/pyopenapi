@@ -9,9 +9,10 @@ import os
 class SwaggerCoreTestCase(unittest.TestCase):
     """ test core part """
 
-    def test_auth_security(self):
+    def test_backward_compatible_v1_2(self):
         """ make sure alias works """
         self.assertEqual(pyopenapi.SwaggerAuth, pyopenapi.SwaggerSecurity)
+        self.assertEqual(pyopenapi.SwaggerApp._create_, pyopenapi.SwaggerApp.create)
 
     @httpretty.activate
     def test_auto_schemes(self):
