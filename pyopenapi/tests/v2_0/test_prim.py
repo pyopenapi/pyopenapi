@@ -2,6 +2,7 @@ from pyopenapi import SwaggerApp, primitives
 from ..utils import get_test_data_folder
 from pyopenapi.spec.v2_0 import objects
 from pyopenapi.utils import jp_compose
+import os
 import unittest
 import datetime
 import six
@@ -12,7 +13,7 @@ class SchemaTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = SwaggerApp._create_(get_test_data_folder(version='2.0', which='schema'))
+        kls.app = SwaggerApp._create_(get_test_data_folder(version='2.0', which=os.path.join('schema', 'model')))
 
     def test_model_tag(self):
         """ test basic model """
@@ -153,7 +154,7 @@ class HeaderTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = SwaggerApp._create_(get_test_data_folder(version='2.0', which='schema'))
+        kls.app = SwaggerApp._create_(get_test_data_folder(version='2.0', which=os.path.join('schema', 'model')))
 
     def test_simple_array(self):
         """ header in array """
