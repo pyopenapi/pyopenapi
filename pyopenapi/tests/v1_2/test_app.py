@@ -1,4 +1,4 @@
-from pyopenapi import SwaggerApp
+from pyopenapi import SwaggerApp, errs
 from ..utils import get_test_data_folder
 from pyopenapi.spec.v2_0.objects import (
     Schema,
@@ -113,7 +113,7 @@ class ValidationTestCase(unittest.TestCase):
 
     def test_raise_exception(self):
         """ raise exceptions in strict mode """
-        self.assertRaises(ValueError, self.app.validate)
+        self.assertRaises(errs.ValidationError, self.app.validate)
 
 
 class SwaggerAppTestCase(unittest.TestCase):
