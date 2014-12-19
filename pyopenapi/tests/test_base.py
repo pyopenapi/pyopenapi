@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from pyopenapi import base
+from pyopenapi.spec import base
 import unittest
 import six
 
