@@ -1,12 +1,12 @@
 ## Access the Response
-The return value of 'request' function of each client implementation is a pyopenapi.io.SwaggerResponse object.
+The return value of 'request' function of each client implementation is a pyopenapi.io.Response object.
 You need to access the result of your request via its interface (note: this sample requires [requests](https://github.com/kennethreitz/requests) ready on your environment)
 
 ```python
-from pyopenapi import SwaggerApp
+from pyopenapi import App
 from pyopenapi.contrib.client.requests import Client
 
-app = SwaggerApp.create('/path/to/your/resource/file/swagger.json')
+app = App.create('/path/to/your/resource/file/swagger.json')
 client = Client()
 
 # making a request

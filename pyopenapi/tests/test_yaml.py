@@ -1,4 +1,4 @@
-from pyopenapi import SwaggerApp
+from pyopenapi import App
 from pyopenapi.scan import Scanner
 from pyopenapi.scanner.v2_0 import YamlFixer
 from pyopenapi.spec.v2_0.objects import Operation
@@ -11,11 +11,11 @@ class YAMLTestCase(unittest.TestCase):
 
     def test_load(self):
         """ make sure the result of yaml and json are identical """
-        app_json = SwaggerApp.load(get_test_data_folder(
+        app_json = App.load(get_test_data_folder(
             version='2.0',
             which='wordnik'
         ))
-        app_yaml = SwaggerApp.load(get_test_data_folder(
+        app_yaml = App.load(get_test_data_folder(
             version='2.0',
             which='yaml',
             )

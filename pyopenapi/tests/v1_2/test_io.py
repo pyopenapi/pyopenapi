@@ -1,4 +1,4 @@
-from pyopenapi import SwaggerApp, errs
+from pyopenapi import App, errs
 from ..utils import get_test_data_folder
 from pyopenapi.primitives import Model, Array
 from pyopenapi.io import SwaggerRequest
@@ -6,7 +6,7 @@ import unittest
 import json
 
 
-app = SwaggerApp._create_(get_test_data_folder(version='1.2', which='wordnik')) 
+app = App._create_(get_test_data_folder(version='1.2', which='wordnik')) 
 
 
 class SwaggerRequest_Pet_TestCase(unittest.TestCase):

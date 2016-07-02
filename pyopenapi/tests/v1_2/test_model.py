@@ -1,4 +1,4 @@
-from pyopenapi import SwaggerApp
+from pyopenapi import App
 from pyopenapi.contrib.client.requests import Client
 from pyopenapi.primitives import Model
 from ..utils import get_test_data_folder
@@ -9,7 +9,7 @@ import pytest
 import sys
 
 
-app = SwaggerApp._create_(get_test_data_folder(version='1.2', which='model_subtypes')) 
+app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes')) 
 client = Client()
 
 u_mission = dict(id=1, username='mission', password='123123')
