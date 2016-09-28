@@ -4,7 +4,7 @@
 Extend pyopenapi
 ================
 
-This seciotn describes things about extending pyopenapi.
+This section describes things about extending pyopenapi.
 
 .. _extend_client:
 
