@@ -1,16 +1,13 @@
 from pyopenapi import App
-from pyopenapi.contrib.client.requests import Client
 from pyopenapi.primitives import Model
 from ..utils import get_test_data_folder
 import unittest
-import httpretty
 import json
 import pytest
 import sys
 
 
-app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes')) 
-client = Client()
+app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes'))
 
 u_mission = dict(id=1, username='mission', password='123123')
 uwi_mary = dict(id=2, username='mary', password='456456', email='m@a.ry', phone='123')
@@ -20,19 +17,12 @@ uwi_kevin = dict(id=3, username='kevin')
 class ModelInteritanceTestCase(unittest.TestCase):
     """ test cases for model inheritance """
 
-    @httpretty.activate
     def test_inheritantce_full(self):
         """ init a Model with every property along
         the inheritance path.
         """
-        httpretty.register_uri(
-            httpretty.GET, 'http://petstore.swagger.wordnik.com/api/user/mary',
-            status=200,
-            content_type='application/json',
-            body=json.dumps(uwi_mary)
-            )
-
-        resp = client.request(app.op['getUserByName'](username='mary'))
+        _, resp = app.op['getUserByName'](username='mary')
+        resp.apply_with(status=200, raw=json.dumps(uwi_mary), header={'Content-Type': 'application/json'})
 
         self.assertTrue(isinstance(resp.data, Model))
         m = resp.data
@@ -42,20 +32,13 @@ class ModelInteritanceTestCase(unittest.TestCase):
         self.assertEqual(m.phone, '123')
         self.assertEqual(m.sub_type, 'UserWithInfo')
 
-    @httpretty.activate
     def test_inheritance_partial(self):
         """ init a Model with only partial property
         set, expect failed.
         """
-        httpretty.register_uri(
-            httpretty.GET, 'http://petstore.swagger.wordnik.com/api/user/kevin',
-            status=200,
-            content_type='application/json',
-            body=json.dumps(uwi_kevin)
-            )
+        _, resp = app.op['getUserByName'](username='kevin')
 
-        resp = client.request(app.op['getUserByName'](username='kevin'))
-
+        resp.apply_with(status=200, raw=json.dumps(uwi_kevin), header={'Content-Type': 'application/json'})
         self.assertTrue(isinstance(resp.data, Model))
         m = resp.data
         self.assertEqual(m.id, 3)
