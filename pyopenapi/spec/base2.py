@@ -1,4 +1,5 @@
 from ..utils import jp_compose
+from ..errs import FieldNotExist
 import six
 import types
 import copy
@@ -57,7 +58,7 @@ def child(key, child_builder=None, required=False, default=None):
             val = self.spec[key]
         else:
             if required:
-                raise FieldNotExist('child not found: {} in {}, {}'.format(name, self.__class__.__name__, self.path))
+                raise FieldNotExist('child not found: {} in {}, {}'.format(key, self.__class__.__name__, self.path))
 
         if val is None and default is not None:
             val = copy.copy(default)
