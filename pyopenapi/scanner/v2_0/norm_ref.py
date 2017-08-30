@@ -19,4 +19,8 @@ class NormalizeRef(object):
 
     @Disp.register([Schema, Parameter, Response, PathItem])
     def _resolve(self, path, obj, _):
+        ref = getattr(obj, '$ref', None)
+        if ref:
+            obj.update_field('original_ref', ref)
+
         obj.update_field('$ref', normalize_jr(getattr(obj, '$ref'), self.base_url))
