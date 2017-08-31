@@ -111,3 +111,61 @@ class HeaderConverterTestCase(unittest.TestCase):
         self.assertEqual(obj['schema']['type'], 'array')
         self.assertEqual(obj['schema']['items']['type'], 'string')
 
+
+class ParameterConverterTestCase(unittest.TestCase):
+    """ test case for parameter """
+
+    def test_basic(self):
+        p = app.s('p1').get.parameters[0]
+
+        obj, pctx = converters.from_parameter(p, None, [], '')
+        self.assertFalse(pctx.is_body)
+        self.assertFalse(pctx.is_file)
+        self.assertEqual(obj['style'], 'form')
+        self.assertEqual(obj['explode'], True)
+        self.assertEqual(obj['in'], 'query')
+        self.assertEqual(obj['name'], 'status')
+
+        _schema = obj['schema']
+        self.assertEqual(_schema['default'], 'available')
+        self.assertEqual(_schema['type'], 'array')
+
+        _items = _schema['items']
+        self.assertEqual(_items['type'], 'string')
+        self.assertEqual(sorted(_items['enum']), sorted(['available', 'pending', 'sold']))
+
+    def test_file_in_form(self):
+        p = app.resolve('#/parameters/form_file')
+
+        obj, pctx = converters.from_parameter(p, None, ['application/x-www-form-urlencoded'], '')
+        self.assertTrue(pctx.is_body)
+        self.assertTrue(pctx.is_file)
+
+        _schema = obj['content']['application/x-www-form-urlencoded']['schema']['properties']['form_file']
+        self.assertEqual(_schema['type'], 'string')
+        self.assertEqual(_schema['format'], 'binary')
+
+    def test_file_in_body(self):
+        """ this is not a valid usage in 2.0, but someone suffer from that:
+            https://github.com/OAI/OpenAPI-Specification/issues/1226
+        """
+
+        # normal body parameter with file type
+        p = app.resolve('#/parameters/body_file')
+
+        obj, pctx = converters.from_parameter(p, None, ['application/x-www-form-urlencoded'], '')
+        self.assertTrue(pctx.is_body)
+        self.assertTrue(pctx.is_file)
+        _schema = obj['content']['application/x-www-form-urlencoded']['schema']['properties']['body_file']
+        self.assertEqual(_schema['type'], 'string')
+        self.assertEqual(_schema['format'], 'binary')
+
+        # body parameter with $ref to schema with file type
+        p = app.resolve('#/parameters/body_file_ref')
+
+        obj, pctx = converters.from_parameter(p, None, ['application/x-www-form-urlencoded'], '')
+        self.assertTrue(pctx.is_body)
+        self.assertTrue(pctx.is_file)
+        _schema = obj['content']['application/x-www-form-urlencoded']['schema']['properties']['body_file_ref']
+        self.assertEqual(_schema['$ref'], '#/components/schemas/some_file')
+

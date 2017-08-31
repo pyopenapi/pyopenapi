@@ -20,15 +20,15 @@
                   "required":false,
                   "type":"array",
                   "items":{
-                     "type":"string"
+                     "type":"string",
+                     "enum":[
+                        "available",
+                        "pending",
+                        "sold"
+                     ]
                   },
                   "collectionFormat":"multi",
-                  "default":"available",
-                  "enum":[
-                     "available",
-                     "pending",
-                     "sold"
-                  ]
+                  "default":"available"
                }
             ],
             "responses":{
@@ -142,7 +142,31 @@
          "xml":{
             "name":"Pet"
          }
+      },
+      "some_file":{
+          "type":"file"
       }
+    },
+    "parameters":{
+        "form_file":{
+            "name":"form_file",
+            "in":"formData",
+            "type":"file"
+        },
+        "body_file":{
+            "name":"body_file",
+            "in":"body",
+            "schema":{
+                "type":"file"
+            }
+        },
+        "body_file_ref":{
+            "name":"body_file_ref",
+            "in":"body",
+            "schema":{
+                "$ref":"#/definitions/some_file"
+            }
+        }
     },
     "securityDefinitions":{
       "petstore_auth":{

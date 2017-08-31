@@ -28,4 +28,26 @@ SCHEMA_FIELDS = BASE_SCHEMA_FIELDS + (
     'example',
 )
 
+FILE_CONTENT_TYPES = [
+    'multipart/form-data',
+    'application/x-www-form-urlencoded',
+    'application/octet-stream',
+    'application/pdf',
+    'image/*',
+    'image/gif',
+    'image/png',
+    'image/jpeg',
+    'image/bmp',
+    'image/webp',
+    'audio/*',
+    'audio/midi',
+    'audio/mpeg',
+    'audio/webm',
+    'audio/ogg',
+    'audio/wav',
+    'video/*',
+    'video/webm',
+    'video/ogg',
+]
+
 
