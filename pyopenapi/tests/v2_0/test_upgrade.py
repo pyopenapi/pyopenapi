@@ -278,3 +278,20 @@ class OperationConverterTestCase(unittest.TestCase):
         _parameter = obj['parameters'][0]
         self.assertEqual(_parameter['$ref'], '#/components/parameters/query_string')
 
+class InfoConverterTestCase(unittest.TestCase):
+    """ test case for info """
+
+    def test_basic(self):
+        info = app.resolve('#/info')
+
+        obj = converters.to_info(info, '')
+        self.assertEqual(obj['title'], 'Swagger Petstore')
+        self.assertEqual(obj['version'], '1.0.0')
+        self.assertEqual(obj['termsOfService'], 'http://helloreverb.com/terms/')
+        self.assertEqual(obj['description'], 'This is a sample server Petstore server.')
+        _license = obj['license']
+        self.assertEqual(_license['url'], 'http://www.apache.org/licenses/LICENSE-2.0.html')
+        self.assertEqual(_license['name'], 'Apache 2.0')
+        _contact = obj['contact']
+        self.assertEqual(_contact['email'], 'apiteam@wordnik.com')
+

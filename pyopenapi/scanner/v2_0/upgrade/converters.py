@@ -469,3 +469,39 @@ def to_operation(obj, root_url, path):
 
     return ret
 
+def to_contact(obj, path):
+    ret = _generate_fields(obj, (
+        'name',
+        'url',
+        'email'
+    ))
+
+    return ret
+
+def to_license(obj, path):
+    ret = {}
+    ret['name'] = obj.name
+    ret.update(_generate_fields(obj, ['url']))
+
+    return ret
+
+def to_info(obj, path):
+    ret = {}
+
+    # required fields
+    ret['title'] = obj.title
+    ret['version'] = obj.version
+
+    # optional fields
+    ret.update(_generate_fields(obj, [
+        'description',
+        'termsOfService'
+    ]))
+
+    if obj.contact:
+        ret['contact'] = to_contact(obj.contact, jp_compose('contact', base=path))
+    if obj.license:
+        ret['license'] = to_license(obj.license, jp_compose('license', base=path))
+
+    return ret
+
