@@ -65,3 +65,23 @@ class XMLConverterTestCase(unittest.TestCase):
         self.assertEqual(obj['name'], x.name)
         self.assertEqual(obj['wrapped'], x.wrapped)
 
+
+class SchemaConverterTestCase(unittest.TestCase):
+    """ test case for schema converter """
+
+    def test_basic(self):
+        pet = app.resolve('#/definitions/pet')
+
+        obj = converters.to_schema(pet, '')
+        self.assertEqual(obj['required'], pet.required)
+        _id = obj['properties']['id']
+        self.assertEqual(_id['type'], 'integer')
+        self.assertEqual(_id['format'], 'int64')
+        _category = obj['properties']['category']
+        self.assertEqual(_category['$ref'], '#/components/schemas/category')
+        _photo_urls = obj['properties']['photoUrls']
+        self.assertEqual(_photo_urls['type'], 'array')
+        self.assertEqual(_photo_urls['items']['type'], 'string')
+        _status = obj['properties']['status']
+        self.assertEqual(sorted(_status['enum']), sorted(['available', 'pending', 'sold']))
+

@@ -18,4 +18,14 @@ BASE_SCHEMA_FIELDS = (
     'multipleOf',
 )
 
+SCHEMA_FIELDS = BASE_SCHEMA_FIELDS + (
+    'title',
+    'maxProperties',
+    'minProperties',
+    'description',
+    'readOnly',
+    'writeOnly',
+    'example',
+)
+
 
