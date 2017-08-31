@@ -45,6 +45,18 @@ def to_tag(obj, path):
 
     return ret
 
+def to_xml(obj, path):
+    ret = {}
+    ret.update(_generate_fields(obj, [
+        'name',
+        'namespace',
+        'prefix',
+        'attribute',
+        'wrapped',
+    ]))
+
+    return ret
+
 def to_external_docs(obj, path):
     ret = {}
     ret['url'] = obj.url

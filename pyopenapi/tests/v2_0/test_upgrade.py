@@ -53,3 +53,15 @@ class TagConverterTestCase(unittest.TestCase):
         self.assertTrue('externalDocs' in obj)
         self.assertEqual(obj['externalDocs']['url'], tags[0].externalDocs.url)
 
+
+class XMLConverterTestCase(unittest.TestCase):
+    """ test case for XML converter """
+
+    def test_basic(self):
+        pet = app.resolve('#/definitions/pet')
+
+        x = pet.properties['photoUrls'].xml
+        obj = converters.to_xml(x, '')
+        self.assertEqual(obj['name'], x.name)
+        self.assertEqual(obj['wrapped'], x.wrapped)
+
