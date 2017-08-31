@@ -13,6 +13,9 @@
     "paths":{
       "/p1":{
          "get":{
+            "produces":[
+                "application/json"
+            ],
             "parameters":[
                {
                   "name":"status",

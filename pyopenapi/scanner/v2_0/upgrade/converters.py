@@ -379,3 +379,34 @@ def from_parameter(obj, existing_body, consumes, path):
 
     return ret, ctx
 
+def to_response(obj, produces, path):
+    if obj.original_ref:
+        return {'$ref': _patch_local_ref(obj.original_ref)}
+
+    ret = {}
+    ret.update(_generate_fields(obj, [
+        'description'
+    ]))
+
+    if obj.schema:
+        if len(produces) == 0:
+            raise SchemaError('unable to convert to content: no "produces" declared, {}'.format(path))
+
+        content = ret.setdefault('content', {})
+        type_ = getattr(obj.schema, 'type', None)
+        if type_ == 'file':
+            media_type = content.setdefault('application/octet-stream', {})
+            media_type['type'] = 'string'
+            media_type['format'] = 'binary'
+        else:
+            for p in produces:
+                content[p] = {'schema': to_schema(obj.schema, jp_compose('schema', base=path))}
+
+    # header
+    if obj.headers:
+        headers = ret.setdefault('headers', {})
+        for k, v in six.iteritems(obj.headers or {}):
+            headers[k] = to_header(v, jp_compose(['headers', k], base=path))
+
+    return ret
+

@@ -169,3 +169,38 @@ class ParameterConverterTestCase(unittest.TestCase):
         _schema = obj['content']['application/x-www-form-urlencoded']['schema']['properties']['body_file_ref']
         self.assertEqual(_schema['$ref'], '#/components/schemas/some_file')
 
+class ResponseConverterTestCase(unittest.TestCase):
+    """ test case for response """
+
+    def test_basic(self):
+        op = app.s('p1').get
+
+        obj = converters.to_response(
+            op.responses['200'],
+            op.produces,
+            ''
+        )
+
+        self.assertEqual(obj['description'], 'successful operation')
+        self.assertTrue('content' in obj)
+        _content = obj['content']
+        self.assertTrue('application/json' in _content)
+        self.assertTrue(_content['application/json']['schema']['items']['$ref'], '#/components/schemas/pet')
+        self.assertTrue(_content['application/json']['schema']['type'], 'array')
+
+    def test_with_header(self):
+        op = app.s('p2').get
+
+        obj = converters.to_response(
+            op.responses['200'],
+            [],
+            ''
+        )
+
+        self.assertEqual(obj['description'], 'test for header')
+        self.assertTrue('headers' in obj and 'X-TEST' in obj['headers'])
+        _header = obj['headers']['X-TEST']
+        self.assertEqual(_header['style'], 'simple')
+        self.assertEqual(_header['schema']['items']['type'], 'string')
+        self.assertEqual(_header['schema']['type'], 'array')
+
