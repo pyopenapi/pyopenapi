@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from ....utils import jp_compose
+from ....errs import SchemaError
 from .constants import BASE_SCHEMA_FIELDS, SCHEMA_FIELDS
 import six
 
@@ -136,3 +137,33 @@ def to_schema(obj, path, items_converter=None):
 
     return ret
 
+def to_flows(obj, path):
+    if not obj.flow:
+        raise SchemaError('no flow type for oauth2, {}'.format(path))
+
+    ret = {}
+    flow = ret.setdefault(obj.flow, {})
+    flow.update(_generate_fields(obj, [
+        'authorizationUrl',
+        'tokenUrl',
+        'scopes',
+    ]))
+
+    return ret
+
+def to_security_scheme(obj, path):
+    ret = {}
+    type_ = getattr(obj, 'type', None)
+    ret['type'] = type_
+    if type_ == 'basic':
+        ret['scheme'] = 'basic'
+    elif type_ == 'oauth2':
+        ret['flows'] = to_flows(obj, path)
+
+    ret.update(_generate_fields(obj, [
+        'description',
+        'name',
+        'in',
+    ]))
+
+    return ret

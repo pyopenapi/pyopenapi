@@ -85,3 +85,17 @@ class SchemaConverterTestCase(unittest.TestCase):
         _status = obj['properties']['status']
         self.assertEqual(sorted(_status['enum']), sorted(['available', 'pending', 'sold']))
 
+
+class SecuritySchemeConverterTestCase(unittest.TestCase):
+    """ test case for security scheme """
+
+    def test_basic(self):
+        auth = app.resolve('#/securityDefinitions/petstore_auth')
+
+        obj = converters.to_security_scheme(auth, '')
+        self.assertEqual(obj['type'], 'oauth2')
+        flows = obj['flows']['implicit']
+        self.assertEqual(flows['authorizationUrl'], 'http://petstore.swagger.io/api/oauth/dialog')
+        self.assertTrue('write:pets' in flows['scopes'])
+        self.assertTrue('read:pets' in flows['scopes'])
+
