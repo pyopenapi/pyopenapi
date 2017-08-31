@@ -34,6 +34,30 @@ def _patch_local_ref(ref, is_body=False):
 
     return ref
 
+def to_style_and_explode(collection_format, in_, type_, path):
+    style = None
+    explode = None
+    if collection_format == 'csv':
+        if in_ in ('query'):
+            style = 'form'
+            explode = False
+        elif in_ in ('path', 'header'):
+            style = 'simple'
+    elif collection_format == 'ssv':
+        if in_ != 'query' or type_ != 'array':
+            raise SchemaError('Unsupported style: ssv for {},{} {}'.format(in_, type_, path))
+        style = 'spaceDelimited'
+    elif collection_format == 'pipes':
+        if in_ != 'query' or type_ != 'array':
+            raise SchemaError('Unsupported style: pipes for {},{} {}'.format(in_, type_, path))
+        style = 'pipeDelimited'
+    elif collection_format == 'multi':
+         if in_ in ('query'):
+            style = 'form'
+            explode = True
+
+    return style, explode
+
 def to_tag(obj, path):
     ret = {}
     ret['name'] = obj.name
@@ -165,5 +189,28 @@ def to_security_scheme(obj, path):
         'name',
         'in',
     ]))
+
+    return ret
+
+def to_header(obj, path):
+    ret = {}
+    ret.update(_generate_fields(obj, [
+        'description',
+    ]))
+    ret['schema'] = _generate_fields(obj, BASE_SCHEMA_FIELDS)
+    if obj.items:
+        ret['schema']['items'] = from_items(obj.items, jp_compose('items', base=path))
+
+    if obj.is_set('collectionFormat'):
+        style, explode = to_style_and_explode(
+            obj.collectionFormat,
+            'header',
+            getattr(obj, 'type', None),
+            jp_compose('collectionFormat', base=path)
+        )
+        if style:
+            ret['style'] = style
+        if explode is not None:
+            ret['explode'] = explode
 
     return ret

@@ -99,3 +99,15 @@ class SecuritySchemeConverterTestCase(unittest.TestCase):
         self.assertTrue('write:pets' in flows['scopes'])
         self.assertTrue('read:pets' in flows['scopes'])
 
+
+class HeaderConverterTestCase(unittest.TestCase):
+    """ test case for header """
+
+    def test_basic(self):
+        header = app.s('p2').get.responses['200'].headers['X-TEST']
+
+        obj = converters.to_header(header, '')
+        self.assertEqual(obj['style'], 'simple')
+        self.assertEqual(obj['schema']['type'], 'array')
+        self.assertEqual(obj['schema']['items']['type'], 'string')
+

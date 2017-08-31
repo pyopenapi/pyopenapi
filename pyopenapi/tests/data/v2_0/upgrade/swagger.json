@@ -43,6 +43,24 @@
                }
             }
          }
+      },
+      "/p2":{
+          "get":{
+              "responses":{
+                  "200":{
+                      "description":"test for header",
+                      "headers":{
+                          "X-TEST":{
+                              "type":"array",
+                              "items":{
+                                  "type":"string"
+                              },
+                              "collectionFormat":"csv"
+                          }
+                      }
+                  }
+              }
+          }
       }
     },
     "definitions":{
