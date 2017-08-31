@@ -131,6 +131,28 @@
                  }
              }
           }
+      },
+      "/p3/{user_name}":{
+          "post":{
+              "description":"POST api of /p3"
+          },
+          "parameters":[
+              {
+                  "$ref":"#/parameters/form_file"
+              },
+              {
+                  "$ref":"#/parameters/form_string"
+              },
+              {
+                  "$ref":"#/parameters/query_string"
+              },
+              {
+                  "name":"user_name",
+                  "in":"path",
+                  "type":"string",
+                  "required":true
+              }
+          ]
       }
     },
     "definitions":{

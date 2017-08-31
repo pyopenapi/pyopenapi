@@ -261,7 +261,6 @@ class OperationConverterTestCase(unittest.TestCase):
         op = app.s('p2').post
 
         obj = converters.to_operation(op, 'test_root', '')
-
         _content = obj['requestBody']['content']
         self.assertTrue('application/x-www-form-urlencoded' in _content)
         _properties = _content['application/x-www-form-urlencoded']['schema']['properties']
@@ -294,4 +293,54 @@ class InfoConverterTestCase(unittest.TestCase):
         self.assertEqual(_license['name'], 'Apache 2.0')
         _contact = obj['contact']
         self.assertEqual(_contact['email'], 'apiteam@wordnik.com')
+
+
+class PathItemConverterTestCase(unittest.TestCase):
+    """ test case for path item """
+
+    def test_basic(self):
+        p = app.s('p1')
+
+        obj = converters.to_path_item(p, 'test_root', '')
+        self.assertTrue('get' in obj)
+        self.assertTrue('post' in obj)
+        self.assertFalse('options' in obj)
+
+    def test_path_item_parameters(self):
+        """ make sure PathItem.parameters are correctly handled:
+
+            - request-body: inline all 'body' or 'file' parameter
+            to each operation
+            - other parameter: let them stay in PathItem.parameters
+        """
+        p = app.s('p3/{user_name}')
+
+        obj = converters.to_path_item(p, 'test_root', '')
+        self.assertTrue('post' in obj)
+        _post = obj['post']
+        self.assertFalse('parameters' in _post)
+
+        def _check(o):
+            self.assertTrue('encoding' in o)
+            self.assertEqual(o['encoding']['description']['contentType'], 'text/plain')
+            self.assertEqual(o['encoding']['form_file']['contentType'], 'application/octet-stream')
+
+            self.assertTrue('schema' in o)
+            self.assertEqual(o['schema']['required'], ['description'])
+            self.assertEqual(o['schema']['properties']['description']['$ref'], '#/components/requestBodies/form_string/content/application~1x-www-form-urlencoded/schema/properties/description')
+            self.assertEqual(o['schema']['properties']['form_file']['$ref'], '#/components/requestBodies/form_file/content/multipart~1form-data/schema/properties/form_file')
+
+        self.assertTrue('requestBody' in _post)
+        _check(_post['requestBody']['content']['multipart/form-data'])
+        _check(_post['requestBody']['content']['application/x-www-form-urlencoded'])
+
+        self.assertTrue('parameters' in obj)
+        _parameters = obj['parameters']
+        for p in _parameters:
+            if '$ref' in p:
+                self.assertEqual(p['$ref'], '#/components/parameters/query_string')
+            elif 'name' in p:
+                self.assertEqual(p['name'], 'user_name')
+            else:
+                self.assertTrue(False)
 

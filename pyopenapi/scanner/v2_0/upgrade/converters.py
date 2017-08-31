@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 from ....utils import jp_compose, final, deref
 from ....errs import SchemaError
+from ....spec.v2_0.objects import Operation
 from .constants import BASE_SCHEMA_FIELDS, SCHEMA_FIELDS, FILE_CONTENT_TYPES
 from .parameter_context import ParameterContext
 from os import path
 import six
+import copy
 
 
 def _generate_fields(obj, names):
@@ -422,7 +424,6 @@ def to_operation(obj, root_url, path):
         'deprecated',
     ]))
 
-    # we need to merge multiple form parameters into one body in 3.0.0
     body = None
 
     # parameters
@@ -502,6 +503,41 @@ def to_info(obj, path):
         ret['contact'] = to_contact(obj.contact, jp_compose('contact', base=path))
     if obj.license:
         ret['license'] = to_license(obj.license, jp_compose('license', base=path))
+
+    return ret
+
+def to_path_item(obj, root_url, path, consumes=None):
+    ret = {}
+    ref = getattr(obj, '$ref', None)
+    if ref:
+        ret['$ref'] = ref
+
+    # parameters
+    if obj.parameters:
+        consumes, parameters = consumes or [], None
+        for index, p in enumerate(obj.parameters):
+            new_path = jp_compose(['parameters', str(index)], base=path)
+            new_p, pctx = from_parameter(p, None, consumes, jp_compose(['parameters', str(index)], base=path))
+            if pctx.is_file or pctx.is_body:
+                continue
+            else:
+                if not parameters:
+                    parameters = ret.setdefault('parameters', [])
+                parameters.append(new_p)
+
+    # operations
+    for method in (
+        'get',
+        'put',
+        'post',
+        'delete',
+        'options',
+        'head',
+        'patch',
+    ):
+        op = getattr(obj, method, None)
+        if op:
+            ret[method] = to_operation(op, root_url, jp_compose(method, base=path))
 
     return ret
 
