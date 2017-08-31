@@ -39,3 +39,17 @@ class ItemsConverterTestCase(unittest.TestCase):
 
         obj = converters.from_items(items, '')
         self.assertEqual(obj['$ref'], '#/components/schemas/pet')
+
+
+class TagConverterTestCase(unittest.TestCase):
+    """ test case for tag converter """
+
+    def test_basic(self):
+        tags = app.resolve('#/tags')
+
+        obj = converters.to_tag(tags[0], '')
+        self.assertEqual(obj['name'], tags[0].name)
+        self.assertEqual(obj['description'], tags[0].description)
+        self.assertTrue('externalDocs' in obj)
+        self.assertEqual(obj['externalDocs']['url'], tags[0].externalDocs.url)
+

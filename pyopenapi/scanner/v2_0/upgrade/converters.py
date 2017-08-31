@@ -33,6 +33,18 @@ def _patch_local_ref(ref, is_body=False):
 
     return ref
 
+def to_tag(obj, path):
+    ret = {}
+    ret['name'] = obj.name
+    ret.update(_generate_fields(obj, [
+        'description'
+    ]))
+
+    if obj.externalDocs:
+        ret['externalDocs'] = to_external_docs(obj.externalDocs, jp_compose('externalDocs', base=path))
+
+    return ret
+
 def to_external_docs(obj, path):
     ret = {}
     ret['url'] = obj.url
@@ -54,3 +66,4 @@ def from_items(obj, path):
         ret['items'] = from_items(obj.items, jp_compose([path, 'items']))
 
     return ret
+
