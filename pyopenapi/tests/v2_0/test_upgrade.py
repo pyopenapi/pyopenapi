@@ -24,3 +24,18 @@ class ExternalDocConverterTestCase(unittest.TestCase):
         self.assertTrue('description' in obj)
         self.assertEqual(obj['description'], ex_doc.description)
 
+
+class ItemsConverterTestCase(unittest.TestCase):
+    """ test case for items converter """
+
+    def test_with_type(self):
+        items = app.s('p1').get.parameters[0].items
+
+        obj = converters.from_items(items, '')
+        self.assertEqual(obj['type'], getattr(items, 'type'))
+
+    def test_with_ref(self):
+        items = app.s('p1').get.responses['200'].schema.items
+
+        obj = converters.from_items(items, '')
+        self.assertEqual(obj['$ref'], '#/components/schemas/pet')
