@@ -344,3 +344,13 @@ class PathItemConverterTestCase(unittest.TestCase):
             else:
                 self.assertTrue(False)
 
+
+class ServerTestCase(unittest.TestCase):
+    """ test case for server """
+
+    def test_from_swagger(self):
+        obj = converters.from_swagger_to_server(app.root, '')
+
+        self.assertTrue('url' in obj)
+        self.assertEqual(obj['url'], '/')
+

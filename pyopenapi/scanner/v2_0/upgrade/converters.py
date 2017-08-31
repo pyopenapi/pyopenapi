@@ -541,3 +541,15 @@ def to_path_item(obj, root_url, path, consumes=None):
 
     return ret
 
+def from_swagger_to_server(obj, path):
+    url = obj.host if not obj.basePath else six.moves.urllib.parse.urlunsplit((
+        obj.schemes[0] if len(obj.schemes) > 0 else 'https',
+        obj.host,
+        obj.basePath,
+        None,
+        None
+    ))
+    url = url or '/'
+
+    return {'url': url}
+
