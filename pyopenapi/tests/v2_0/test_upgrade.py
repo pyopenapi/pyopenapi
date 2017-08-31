@@ -204,3 +204,77 @@ class ResponseConverterTestCase(unittest.TestCase):
         self.assertEqual(_header['schema']['items']['type'], 'string')
         self.assertEqual(_header['schema']['type'], 'array')
 
+
+class OperationConverterTestCase(unittest.TestCase):
+    """ test case for operation """
+
+    def test_basic(self):
+        op = app.s('p1').get
+
+        obj = converters.to_operation(op, 'test_root', '')
+        self.assertTrue('responses' in obj and '200' in obj['responses'])
+        _response = obj['responses']['200']
+        self.assertEqual(_response['description'], 'successful operation')
+        self.assertTrue(
+            'content' in _response and
+            'application/json' in _response['content'] and
+            'schema' in _response['content']['application/json']
+        )
+        _schema = _response['content']['application/json']['schema']
+        self.assertEqual(_schema['items']['$ref'], '#/components/schemas/pet')
+        self.assertEqual(_schema['type'], 'array')
+        self.assertTrue('parameters' in obj and len(obj['parameters']) > 0)
+        _parameter = obj['parameters'][0]
+        self.assertEqual(_parameter['style'], 'form')
+        self.assertEqual(_parameter['explode'], True)
+        self.assertEqual(_parameter['in'], 'query')
+        self.assertEqual(_parameter['name'], 'status')
+        _schema = _parameter['schema']
+        self.assertEqual(_schema['default'], 'available')
+        self.assertEqual(_schema['type'], 'array')
+        self.assertEqual(sorted(_schema['items']['enum']), sorted(['available', 'pending', 'sold']))
+        self.assertEqual(_schema['items']['type'], 'string')
+
+    def test_multiple_file_with_other_type(self):
+        op = app.s('p1').post
+
+        obj = converters.to_operation(op, 'test_root', '')
+
+        # requestBody
+        self.assertEqual(obj['requestBody']['required'], True)
+        _media_type = obj['requestBody']['content']['multipart/form-data']
+        _encoding = _media_type['encoding']
+        self.assertEqual(_encoding['picture'], {'contentType':'application/octet-stream'})
+        self.assertEqual(_encoding['description'], {'contentType':'text/plain'})
+        self.assertEqual(_encoding['thumbnail'], {'contentType':'application/octet-stream'})
+        _properties = _media_type['schema']['properties']
+        self.assertEqual(_properties['picture'], {'type': 'string', 'format': 'binary'})
+        self.assertEqual(_properties['description'], {'type': 'string'})
+        self.assertEqual(_properties['thumbnail'], {'type': 'string', 'format': 'binary'})
+
+        # response
+        self.assertEqual(obj['responses']['200']['description'], 'successful operation')
+
+    def test_parameter_ref(self):
+        """ test parameters declared with '$ref'
+        """
+        op = app.s('p2').post
+
+        obj = converters.to_operation(op, 'test_root', '')
+
+        _content = obj['requestBody']['content']
+        self.assertTrue('application/x-www-form-urlencoded' in _content)
+        _properties = _content['application/x-www-form-urlencoded']['schema']['properties']
+        self.assertTrue('form_file' in _properties)
+        self.assertEqual(_properties['form_file']['$ref'], '#/components/requestBodies/form_file/content/multipart~1form-data/schema/properties/form_file')
+        self.assertTrue('description' in _properties)
+        self.assertEqual(_properties['description']['$ref'], '#/components/requestBodies/form_string/content/application~1x-www-form-urlencoded/schema/properties/description')
+        _encoding = _content['application/x-www-form-urlencoded']['encoding']
+        self.assertTrue('form_file' in _encoding)
+        self.assertEqual(_encoding['form_file']['contentType'], 'application/octet-stream')
+        self.assertTrue('description' in _encoding)
+        self.assertEqual(_encoding['description']['contentType'], 'text/plain')
+
+        _parameter = obj['parameters'][0]
+        self.assertEqual(_parameter['$ref'], '#/components/parameters/query_string')
+

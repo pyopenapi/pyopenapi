@@ -227,10 +227,8 @@ def to_header(obj, path):
 
 def _decide_encoding_content_type(obj, path):
     type_ = getattr(obj, 'type', None)
-    if type_ == 'string':
-        format_ = getattr(obj, 'format', None)
-        if format_ == 'binary':
-            return 'application/octet-stream'
+    if type_ == 'file':
+        return 'application/octet-stream'
     if type_ == 'object':
         return 'application/json'
     if type_ == 'array':
@@ -248,7 +246,11 @@ def _decide_encoding_content_type(obj, path):
 
 def to_encoding(obj, content_type, path):
     ret = {}
-    if content_type == 'application/x-www-form-urlencoded':
+    # TODO: support multipart/*
+    if content_type in [
+        'application/x-www-form-urlencoded',
+        'multipart/form-data'
+    ]:
         ret['contentType'] = _decide_encoding_content_type(obj, path)
         if obj.is_set('collectionFormat'):
             style, explode = to_style_and_explode(
@@ -407,6 +409,63 @@ def to_response(obj, produces, path):
         headers = ret.setdefault('headers', {})
         for k, v in six.iteritems(obj.headers or {}):
             headers[k] = to_header(v, jp_compose(['headers', k], base=path))
+
+    return ret
+
+def to_operation(obj, root_url, path):
+    ret = {}
+    ret.update(_generate_fields(obj, [
+        'tags',
+        'summary',
+        'description',
+        'operationId',
+        'deprecated',
+    ]))
+
+    # we need to merge multiple form parameters into one body in 3.0.0
+    body = None
+
+    # parameters
+    if obj.parameters:
+        parameters = None
+        for index, p in enumerate(obj.parameters):
+            new_path = jp_compose(['parameters', str(index)], base=path)
+            new_p, pctx = from_parameter(p, body, obj.consumes, new_path)
+            if pctx.is_body:
+                body = new_p
+            else:
+                if p._parent_ is not obj:
+                    # for those parameters merged from PathItem and not body / file type,
+                    # leave them in PathItem level
+                    continue
+
+                if not parameters:
+                    parameters = ret.setdefault('parameters', [])
+                parameters.append(new_p)
+
+    if body:
+        ret['requestBody'] = body
+
+    # responses
+    if obj.responses:
+        responses = ret.setdefault('responses', {})
+        for k, v in six.iteritems(obj.responses):
+            responses[k] = to_response(v, obj.produces, jp_compose(['responses', k], base=path))
+
+    # externalDocs
+    if obj.externalDocs:
+        ret['externalDocs'] = to_external_docs(obj.externalDocs, jp_compose('externalDocs', base=path))
+
+    # schemes
+    if obj.schemes:
+        servers = ret.setdefault('servers', [])
+        for s in obj.schemes:
+            parts = six.moves.urllib.parse.urlsplit(root_url)
+            servers.append({'url': six.moves.urllib.parse.urlunsplit((s,) + parts[1:])})
+
+    # security
+    if obj.security:
+        ret['security'] = obj.security
 
     return ret
 
