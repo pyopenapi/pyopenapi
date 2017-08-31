@@ -354,3 +354,61 @@ class ServerTestCase(unittest.TestCase):
         self.assertTrue('url' in obj)
         self.assertEqual(obj['url'], '/')
 
+
+class OpenAPITestCase(unittest.TestCase):
+    """ test case for OpenAPI """
+
+    @classmethod
+    def setUpClass(kls):
+        kls.from_upgrade = converters.to_openapi(app.root, '')
+
+    def test_basic(self):
+        obj = self.from_upgrade
+
+        self.assertTrue('info' in obj)
+        self.assertTrue('servers' in obj)
+
+        self.assertTrue('paths' in obj)
+        _paths = obj['paths']
+        self.assertTrue('/p1' in _paths)
+        self.assertTrue('/p2' in _paths)
+
+        self.assertTrue('components' in obj)
+        _components = obj['components']
+        self.assertTrue('securitySchemes' in _components)
+        self.assertTrue('schemas' in _components)
+
+        self.assertTrue('externalDocs' in obj)
+
+    def test_request_bodies(self):
+        """ make sure we create requestBodies with
+        reasonable content types
+        """
+
+        _request_bodies = self.from_upgrade['components']['requestBodies']
+
+        _form_file = _request_bodies['form_file']
+        self.assertTrue('multipart/form-data' in _form_file['content'])
+
+        _body_file = _request_bodies['body_file']
+        self.assertTrue('multipart/form-data' in _body_file['content'])
+
+        _body_file_ref = _request_bodies['body_file_ref']
+        self.assertTrue('multipart/form-data' in _body_file_ref['content'])
+
+        _form_string = _request_bodies['form_string']
+        self.assertTrue('application/x-www-form-urlencoded' in _form_string['content'])
+
+        _body_obj_simple = _request_bodies['body_obj_simple']
+        self.assertTrue('application/json' in _body_obj_simple['content'])
+        _schema_properties = _body_obj_simple['content']['application/json']['schema']['properties']
+        self.assertTrue('phone' in _schema_properties)
+        self.assertEqual(_schema_properties['phone']['type'], 'string')
+        self.assertTrue('email' in _schema_properties)
+        self.assertEqual(_schema_properties['email']['type'], 'string')
+
+        _body_ref_pet = _request_bodies['body_ref_pet']
+        self.assertTrue('application/json' in _body_ref_pet['content'])
+        _schema = _body_ref_pet['content']['application/json']['schema']
+        self.assertEqual(_schema['$ref'], '#/components/schemas/pet')
+

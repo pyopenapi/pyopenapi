@@ -553,3 +553,75 @@ def from_swagger_to_server(obj, path):
 
     return {'url': url}
 
+def to_openapi(obj, path):
+    ret = {'openapi': '3.0.0'}
+
+    # info
+    if obj.info:
+        ret['info'] = to_info(obj.info, jp_compose('info', base=path))
+
+    # servers
+    server = from_swagger_to_server(obj, path)
+    ret['servers'] = [server]
+
+    # paths
+    if obj.paths:
+        paths = ret.setdefault('paths', {})
+        for k, v in six.iteritems(obj.paths):
+            if k.startswith('x-'):
+                raise ScheaError('No more extension field in Paths object: {}'.format(path))
+
+            paths[k] = to_path_item(v, server['url'], jp_compose(k, base=path))
+
+    # security
+    if obj.security:
+        ret['security'] = obj.security
+
+    # tag
+    if obj.tags:
+        tags = ret.setdefault('tags', [])
+        for index, tag in enumerate(obj.tags):
+            tags.append(to_tag(tag, jp_compose(['tags', str(index)], base=path)))
+
+    # externalDocs
+    if obj.externalDocs:
+        ret['externalDocs'] = to_external_docs(obj.externalDocs, jp_compose('externalDocs', base=path))
+
+    if obj.definitions or obj.parameters or obj.responses or obj.securityDefinitions:
+        components = ret.setdefault('components', {})
+
+        # definitions
+        if obj.definitions:
+            schemas = components.setdefault('schemas', {})
+            for k, v in six.iteritems(obj.definitions):
+                schemas[k] = to_schema(v, jp_compose(['definitions', k], base=path))
+
+        # parameters
+        if obj.parameters:
+            parameters = None
+            request_bodies = None
+            for k, v in six.iteritems(obj.parameters):
+                param, pctx = from_parameter(v, None, None, jp_compose(['parameters', k], base=path))
+                if pctx.is_body:
+                    if request_bodies is None:
+                        request_bodies = components.setdefault('requestBodies', {})
+                    request_bodies[k] = param
+                else:
+                    if parameters is None:
+                        parameters = components.setdefault('parameters', {})
+                    parameters[k] = param
+
+        # responses
+        if obj.responses:
+            responses = components.setdefault('responses', {})
+            for k, v in six.iteritems(obj.responses):
+                responses[k] = to_response(v, obj.produces, jp_compose(['responses', k], base=path))
+
+        # securityDefinitions
+        if obj.securityDefinitions:
+            security_schemes = components.setdefault('securitySchemes', {})
+            for k, v in six.iteritems(obj.securityDefinitions):
+                security_schemes[k] = to_security_scheme(v, jp_compose(['securityDefinitions', k], base=path))
+
+    return ret
+
