@@ -160,6 +160,14 @@ class App(object):
         """
         return self.__mime_codec
 
+    @property
+    def resolver(self):
+        """ JSON Reference resolver
+
+        :type: pyopenapi.resolve.Resolver
+        """
+        return self.__resolver
+
     def load_obj(self, jref, getter=None, parser=None):
         """ load a object(those in spec._version_.objects) from a JSON reference.
         """
