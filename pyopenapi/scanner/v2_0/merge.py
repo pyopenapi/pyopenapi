@@ -16,7 +16,7 @@ from ...utils import CycleGuard
 
 
 def _merge(obj, app, creator, parser):
-    """ resolve $ref, and inject/merge referenced object to self.
+    """ resolve 'normalized_ref, and inject/merge referenced object to self.
     This operation should be carried in a cascade manner.
     """
     result = creator(NullContext())
@@ -25,7 +25,7 @@ def _merge(obj, app, creator, parser):
     guard = CycleGuard()
     guard.update(obj)
 
-    r = getattr(obj, '$ref')
+    r = obj.normalized_ref
     while r and len(r) > 0:
         ro = app.resolve(r, parser)
         if ro.__class__ != obj.__class__:
@@ -38,11 +38,11 @@ def _merge(obj, app, creator, parser):
             break
 
         result.merge(ro, parser)
-        r = getattr(ro, '$ref')
+        r = ro.normalized_ref
     return result
 
 class Merge(object):
-    """ pre-merge these objects with '$ref' """
+    """ pre-merge these objects with 'normalized_ref' """
 
     class Disp(Dispatcher): pass
 

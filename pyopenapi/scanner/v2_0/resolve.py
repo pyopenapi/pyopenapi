@@ -5,7 +5,7 @@ from ...spec.v2_0.parser import SchemaContext
 from ...spec.v2_0.objects import Schema
 
 class Resolve(object):
-    """ pre-resolve '$ref' """
+    """ pre-resolve 'normalized_ref' """
 
     class Disp(Dispatcher): pass
 
@@ -14,7 +14,7 @@ class Resolve(object):
         if obj.ref_obj:
             return
 
-        r = getattr(obj, '$ref')
+        r = obj.normalized_ref
         if not r:
             return
 

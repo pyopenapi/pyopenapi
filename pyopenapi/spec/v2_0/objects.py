@@ -86,7 +86,7 @@ class Schema(six.with_metaclass(FieldMeta, BaseSchema)):
         'ref_obj': None,
         'final': None,
         'name': None,
-        'original_ref': None,
+        'normalized_ref': None,
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
@@ -178,7 +178,7 @@ class Parameter(six.with_metaclass(FieldMeta, BaseSchema)):
 
     __internal_fields__ = {
         'final': None,
-        'original_ref': None,
+        'normalized_ref': None,
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
@@ -216,7 +216,7 @@ class Response(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
 
     __internal_fields__ = {
         'final': None,
-        'original_ref': None,
+        'normalized_ref': None,
     }
 
 
@@ -313,7 +313,7 @@ class PathItem(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
     }
 
     __internal_fields__ = {
-        'original_ref': None
+        'normalized_ref': None
     }
 
 
