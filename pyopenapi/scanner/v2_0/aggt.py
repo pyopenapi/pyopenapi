@@ -38,7 +38,7 @@ def _compose(obj, guard=None):
         except CycleDetectionError:
             continue
         o = o.final if o.final else o
-        final.merge(o, SchemaContext, exclude=['$ref', 'allOf'])
+        final.merge(o, SchemaContext, exclude=['$ref', 'allOf', 'normalized_ref'])
         for n, p in six.iteritems(o.properties):
             if n in obj.properties:
                 continue

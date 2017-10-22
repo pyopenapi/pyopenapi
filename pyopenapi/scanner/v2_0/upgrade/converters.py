@@ -105,7 +105,7 @@ def to_external_docs(obj, path):
 def from_items(obj, path):
     # TODO: raise a warning for unsupported collectionformat in items in 3.0
 
-    ref = getattr(obj, 'original_ref', None)
+    ref = getattr(obj, '$ref', None)
     if ref:
         return {'$ref': _patch_local_ref(ref)}
 
@@ -117,7 +117,7 @@ def from_items(obj, path):
     return ret
 
 def to_schema(obj, path, items_converter=None, parameter_context=None):
-    ref = getattr(obj, 'original_ref', None)
+    ref = getattr(obj, '$ref', None)
     if ref:
         return {'$ref': _patch_local_ref(ref, parameter_context=parameter_context)}
 
@@ -354,7 +354,7 @@ def to_parameter(obj, ctx, path):
     return ret
 
 def from_parameter(obj, existing_body, consumes, path):
-    ref_ = obj.original_ref
+    ref_ = getattr(obj, '$ref', None)
     resolved_obj = deref(obj)
     obj = final(obj)
 
@@ -384,8 +384,9 @@ def from_parameter(obj, existing_body, consumes, path):
     return ret, ctx
 
 def to_response(obj, produces, path):
-    if obj.original_ref:
-        return {'$ref': _patch_local_ref(obj.original_ref)}
+    ref = getattr(obj, '$ref', None)
+    if ref:
+        return {'$ref': _patch_local_ref(ref)}
 
     ret = {}
     ret.update(_generate_fields(obj, [
@@ -508,9 +509,8 @@ def to_info(obj, path):
 
 def to_path_item(obj, root_url, path, consumes=None):
     ret = {}
-    ref = getattr(obj, '$ref', None)
-    if ref:
-        ret['$ref'] = ref
+    if obj.normalized_ref:
+        ret['$ref'] = obj.normalized_ref
 
     # parameters
     if obj.parameters:

@@ -18,7 +18,7 @@ import six
 
 def _out(app, parser, path):
     obj = app.resolve(path, parser=parser)
-    r = getattr(obj, '$ref')
+    r = obj.normalized_ref
     return [r] if r else []
 
 def _schema_out_obj(obj, out=None):
@@ -36,7 +36,7 @@ def _schema_out_obj(obj, out=None):
     if obj.items:
         out = _schema_out_obj(obj.items, out)
 
-    r = getattr(obj, '$ref')
+    r = obj.normalized_ref
     if r:
         out.append(r)
 

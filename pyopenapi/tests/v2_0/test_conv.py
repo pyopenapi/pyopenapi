@@ -22,7 +22,7 @@ class ConverterTestCase(unittest.TestCase):
 
         # diff for empty list or dict is allowed
         d = app.dump()
-        self.assertEqual(sorted(_diff_(origin, d, exclude=['$ref'])), sorted([
+        self.assertEqual(sorted(_diff_(origin, d, exclude=['$ref', 'normalized_ref'])), sorted([
             ('paths/~1pet~1{petId}/get/security/0/api_key', "list", "NoneType"),
             ('paths/~1store~1inventory/get/parameters', None, None),
             ('paths/~1store~1inventory/get/security/0/api_key', "list", "NoneType"),

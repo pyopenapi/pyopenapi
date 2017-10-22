@@ -21,6 +21,4 @@ class NormalizeRef(object):
     def _resolve(self, path, obj, _):
         ref = getattr(obj, '$ref', None)
         if ref:
-            obj.update_field('original_ref', ref)
-
-        obj.update_field('$ref', normalize_jr(getattr(obj, '$ref'), self.base_url))
+            obj.update_field('normalized_ref', normalize_jr(getattr(obj, '$ref'), self.base_url))
