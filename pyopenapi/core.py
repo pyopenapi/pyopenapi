@@ -10,11 +10,13 @@ from .scanner import TypeReduce, CycleDetector
 from .scanner.v1_2 import Upgrade
 from .scanner.v2_0 import AssignParent, Merge, Resolve, PatchObject, YamlFixer, Aggregate, NormalizeRef
 from pyopenapi import utils, errs, consts
+from distutils.version import StrictVersion
 import copy
 import base64
 import six
 import weakref
 import logging
+import pkgutil
 
 
 logger = logging.getLogger(__name__)
@@ -209,14 +211,19 @@ class App(object):
         """ cache 'prepared' object
         """
         # cache this object
+        if jp == '#':
+            if isinstance(self.__objs.get(url, None), dict):
+                raise Exception('it should not be dict with #')
+
+            self.__objs[url] = obj
+            return
+
         if url not in self.__objs:
-            if jp == '#':
-                self.__objs[url] = obj
-            else:
-                self.__objs[url] = {jp: obj}
+            self.__objs[url] = {jp: obj}
         else:
             if not isinstance(self.__objs[url], dict):
                 raise Exception('it should be able to resolve with BaseObj')
+
             self.__objs[url].update({jp: obj})
 
     def prepare_obj(self, obj, jref):
@@ -226,29 +233,42 @@ class App(object):
         if not obj:
             raise Exception('unexpected, passing {0}:{1} to prepare'.format(obj, jref))
 
-        s = Scanner(self)
-        if self.version == '1.2':
-            # upgrade from 1.2 to 2.0
-            converter = Upgrade(self.__sep)
-            s.scan(root=obj, route=[converter])
-            obj = converter.swagger
+        obj = self.migrate_obj(obj, jref, spec_version='2.0')
 
-            if not obj:
-                raise Exception('unable to upgrade from 1.2: {0}'.format(jref))
+        return obj
 
-            s.scan(root=obj, route=[AssignParent()])
+    def migrate_obj(self, obj, jref, spec_version=None):
+        """ migrate an object(those in spec._version_.objects)
+        """
+        spec_version = spec_version or '3.0.0'
+        supported_versions = utils.get_supported_versions('migration', is_pkg=False)
 
-        # normalize $ref
-        url, jp = utils.jr_split(jref)
-        s.scan(root=obj, route=[NormalizeRef(url)])
-        # fix for yaml that treat response code as number
-        s.scan(root=obj, route=[YamlFixer()], leaves=[Operation])
+        if spec_version not in supported_versions:
+            raise ValueError('unsupported spec version: {}'.format(spec_version))
 
-        self._cache_obj(obj, url, jp)
+        # only keep required version strings for this migration
+        supported_versions = supported_versions[:(supported_versions.index(spec_version)+1)]
 
-        # pre resolve Schema Object
-        # note: make sure this object is cached before using 'Resolve' scanner
-        s.scan(root=obj, route=[Resolve()])
+        # filter out those migration with lower version than current one
+        supported_versions = [v for v in supported_versions if StrictVersion(obj.__swagger_version__) <= StrictVersion(v)]
+
+        # load migration module
+        for v in supported_versions:
+            patched_version = 'v{}'.format(v).replace('.', '_')
+            migration_module_path = '.'.join(['pyopenapi', 'migration', patched_version])
+            loader = pkgutil.find_loader(migration_module_path)
+            if not loader:
+                raise Exception('unable to find module loader for {}'.format(migration_module_path))
+
+            migration_module = loader.load_module(migration_module_path)
+            if not migration_module:
+                raise Exception('unable to load {} for migration'.format(migration_module_path))
+
+            obj = migration_module.up(obj, self, jref)
+
+        # cache migrated object if we need it later
+        self._cache_obj(obj, *utils.jr_split(jref))
+
         return obj
 
     def _validate(self):
@@ -369,6 +389,16 @@ class App(object):
         # cycle detection
         if len(cy.cycles['schema']) > 0 and strict:
             raise errs.CycleDetectionError('Cycles detected in Schema Object: {0}'.format(cy.cycles['schema']))
+
+    def migrate(self, spec_version=None):
+        """ migrate the internal spec object (refer to pyopenapi.spec) to a specific version.
+        This function can be used to migrate your original API spec to some version of OpenAPI,
+        then dump to perform 'spec upgrade' action
+
+        :param str spec_version: the version of OpenAPI you want to migrate, ex. 3.0.0, 'None' means latest version of OpenAPI
+        """
+
+        self.__root = self.migrate_obj(self.raw, self.url, spec_version=spec_version)
 
     @classmethod
     def create(kls, url, strict=True):

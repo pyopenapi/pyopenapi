@@ -100,3 +100,17 @@ class SwaggerCoreTestCase(unittest.TestCase):
         req.prepare(scheme='https', handle_files=False)
         self.assertEqual(req.url, 'https://test.com/t1')
 
+    def test_migration_in_steps(self):
+        """ from 1.2 -> 2.0 -> 3.0
+        """
+        app = App.load(get_test_data_folder(version='1.2', which='simple_auth'))
+        app.migrate(spec_version='2.0')
+        self.assertEqual(app.root.__swagger_version__, '2.0')
+
+        app.migrate(spec_version='3.0.0')
+        self.assertEqual(app.root.__swagger_version__, '3.0.0')
+
+        # able to migrate backward, seems weird
+        app.migrate(spec_version='2.0')
+        self.assertEqual(app.root.__swagger_version__, '2.0')
+
