@@ -75,6 +75,12 @@ class App(object):
         self.__mime_codec = mime_codec or MimeCodec()
 
     @property
+    def sep(self):
+        """ separator used by pyswager.utils.ScopeDict
+        """
+        return self.__sep
+
+    @property
     def root(self):
         """ schema representation of Swagger API, its structure may
         be different from different version of Swagger.
@@ -199,6 +205,20 @@ class App(object):
 
         return tmp['_tmp_'], version
 
+    def _cache_obj(self, obj, url, jp):
+        """ cache 'prepared' object
+        """
+        # cache this object
+        if url not in self.__objs:
+            if jp == '#':
+                self.__objs[url] = obj
+            else:
+                self.__objs[url] = {jp: obj}
+        else:
+            if not isinstance(self.__objs[url], dict):
+                raise Exception('it should be able to resolve with BaseObj')
+            self.__objs[url].update({jp: obj})
+
     def prepare_obj(self, obj, jref):
         """ basic preparation of an object(those in sepc._version_.objects),
         and cache the 'prepared' object.
@@ -224,16 +244,7 @@ class App(object):
         # fix for yaml that treat response code as number
         s.scan(root=obj, route=[YamlFixer()], leaves=[Operation])
 
-        # cache this object
-        if url not in self.__objs:
-            if jp == '#':
-                self.__objs[url] = obj
-            else:
-                self.__objs[url] = {jp: obj}
-        else:
-            if not isinstance(self.__objs[url], dict):
-                raise Exception('it should be able to resolve with BaseObj')
-            self.__objs[url].update({jp: obj})
+        self._cache_obj(obj, url, jp)
 
         # pre resolve Schema Object
         # note: make sure this object is cached before using 'Resolve' scanner
