@@ -5,6 +5,7 @@ from .spec.v1_2.parser import ResourceListContext
 from .spec.v2_0.parser import SwaggerContext
 from .spec.v2_0.objects import Operation
 from .spec.base import BaseObj
+from .spec.base2 import Base2Obj
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
 from .scanner.v1_2 import Upgrade
@@ -59,7 +60,7 @@ class App(object):
         # a map from json-reference to
         # - spec.BaseObj
         # - a map from json-pointer to spec.BaseObj
-        self.__objs = {}
+        self.__spec_objs = {}
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
@@ -207,33 +208,37 @@ class App(object):
 
         return tmp['_tmp_'], version
 
-    def _cache_obj(self, obj, url, jp):
-        """ cache 'prepared' object
+    def _cache_spec_obj(self, obj, url, jp, spec_version):
+        """ cache 'prepared' spec objects (those under pyopenapi.spec)
         """
-        # cache this object
-        if jp == '#':
-            if isinstance(self.__objs.get(url, None), dict):
-                raise Exception('it should not be dict with #')
+        if not issubclass(type(obj), (BaseObj, Base2Obj)):
+            raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
 
-            self.__objs[url] = obj
-            return
+        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
 
-        if url not in self.__objs:
-            self.__objs[url] = {jp: obj}
-        else:
-            if not isinstance(self.__objs[url], dict):
-                raise Exception('it should be able to resolve with BaseObj')
+    def _get_spec_obj_from_cache(self, url, jp, spec_version):
+        """ get spec objects from cache
+        """
+        url_cache = self.__spec_objs.get(url, None)
+        if not url_cache:
+            return None
 
-            self.__objs[url].update({jp: obj})
+        # try to find a 'jp' with common prefix with input under 'url'
+        for path, cache in six.iteritems(url_cache):
+            if jp.startswith(path) and spec_version in cache:
+                return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
 
-    def prepare_obj(self, obj, jref):
+        return None
+
+    def prepare_obj(self, obj, jref, spec_version=None):
         """ basic preparation of an object(those in sepc._version_.objects),
         and cache the 'prepared' object.
         """
         if not obj:
             raise Exception('unexpected, passing {0}:{1} to prepare'.format(obj, jref))
 
-        obj = self.migrate_obj(obj, jref, spec_version='2.0')
+        spec_version = spec_version or consts.private.DEFAULT_OPENAPI_SPEC_VERSION
+        obj = self.migrate_obj(obj, jref, spec_version=spec_version)
 
         return obj
 
@@ -267,7 +272,7 @@ class App(object):
             obj = migration_module.up(obj, self, jref)
 
         # cache migrated object if we need it later
-        self._cache_obj(obj, *utils.jr_split(jref))
+        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=spec_version)
 
         return obj
 
@@ -421,11 +426,12 @@ class App(object):
     """
     _create_ = create
 
-    def resolve(self, jref, parser=None):
+    def resolve(self, jref, parser=None, spec_version=None):
         """ JSON reference resolver
 
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
         :param parser: the parser corresponding to target object.
+        :param str spec_version: the OpenAPI spec version 'jref' pointing to.
         :type parser: pyopenapi.base.Context
         :return: the referenced object, wrapped by weakref.ProxyType
         :rtype: weakref.ProxyType
@@ -437,30 +443,20 @@ class App(object):
         if jref == None or len(jref) == 0:
             raise ValueError('Empty Path is not allowed')
 
-        obj = None
-        url, jp = utils.jr_split(jref)
+        spec_version = spec_version or consts.private.DEFAULT_OPENAPI_SPEC_VERSION
 
         # check cacahed object against json reference by
         # comparing url first, and find those object prefixed with
         # the JSON pointer.
-        o = self.__objs.get(url, None)
-        if o:
-            if isinstance(o, BaseObj):
-                obj = o.resolve(utils.jp_split(jp)[1:])
-            elif isinstance(o, dict):
-                for k, v in six.iteritems(o):
-                    if jp.startswith(k):
-                        obj = v.resolve(utils.jp_split(jp[len(k):])[1:])
-                        break
-            else:
-                raise Exception('Unknown Cached Object: {0}'.format(str(type(o))))
+        url, jp = utils.jr_split(jref)
+        obj = self._get_spec_obj_from_cache(url, jp, spec_version)
 
         # this object is not found in cache
         if obj == None:
             if url:
                 obj, _ = self.load_obj(jref, parser=parser)
                 if obj:
-                    obj = self.prepare_obj(obj, jref)
+                    obj = self.prepare_obj(obj, jref, spec_version=spec_version)
             else:
                 # a local reference, 'jref' is just a json-pointer
                 if not jp.startswith('#'):

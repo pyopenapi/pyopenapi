@@ -27,7 +27,7 @@ def up(obj, app, jref):
         scanner.scan(root=ret, route=[YamlFixer()], leaves=[Operation])
 
         # cache this object before resolving external(possible) object
-        app._cache_obj(ret, url, jp)
+        app._cache_spec_obj(ret, url, jp, '2.0')
 
         # pre resolve Schema Object
         # note: make sure this object is cached before using 'Resolve' scanner

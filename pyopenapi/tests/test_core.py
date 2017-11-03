@@ -1,5 +1,5 @@
 from pyopenapi import App, utils
-from .utils import get_test_data_folder
+from .utils import get_test_data_folder, gen_test_folder_hook
 from pyopenapi.spec.base import BaseObj
 import pyopenapi
 import unittest
@@ -113,4 +113,22 @@ class SwaggerCoreTestCase(unittest.TestCase):
         # able to migrate backward, seems weird
         app.migrate(spec_version='2.0')
         self.assertEqual(app.root.__swagger_version__, '2.0')
+
+    def test_cache_spec_obj(self):
+        """ make sure App's internal cache for spec objects can handle different
+        OpenAPI spec version
+        """
+        app = App.load(
+            url='file:///root/swagger.json',
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
+        )
+
+        app.migrate(spec_version='2.0')
+        app.migrate(spec_version='3.0.0')
+
+        obj = app._get_spec_obj_from_cache('file:///root/swagger.json', '#', '2.0')
+        self.assertEqual(obj.__swagger_version__, '2.0')
+
+        obj = app._get_spec_obj_from_cache('file:///root/swagger.json', '#', '3.0.0')
+        self.assertEqual(obj.__swagger_version__, '3.0.0')
 
