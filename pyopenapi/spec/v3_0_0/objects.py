@@ -3,7 +3,11 @@ from ..base2 import Base2, field, child, internal, list_, map_
 import six
 
 
-class Reference(Base2):
+class Base2_v3_0_0(Base2):
+    __swagger_version__ = '3.0.0'
+
+
+class Reference(Base2_v3_0_0):
     __fields__ = {
         'ref': dict(key='$ref', builder=field, required=True),
     }
@@ -36,7 +40,7 @@ def is_str_or_int(spec, path):
     raise Exception('should be a string or int, not {}'.format(str(type(spec)), path))
 
 
-class Contact(Base2):
+class Contact(Base2_v3_0_0):
     __fields__ = {
         'name': dict(builder=field),
         'url': dict(builder=field),
@@ -44,14 +48,14 @@ class Contact(Base2):
     }
 
 
-class License(Base2):
+class License(Base2_v3_0_0):
     __fields__ = {
         'name': dict(builder=field, required=True),
         'url': dict(builder=field),
     }
 
 
-class Info(Base2):
+class Info(Base2_v3_0_0):
     __fields__ = {
         'title': dict(builder=field, required=True),
         'description': dict(builder=field),
@@ -62,7 +66,7 @@ class Info(Base2):
     }
 
 
-class ServerVariable(Base2):
+class ServerVariable(Base2_v3_0_0):
     __fields__ = {
         'enum_': dict(key='enum', builder=child, child_builder=list_(is_str)),
         'default': dict(builder=field, required=True),
@@ -70,7 +74,7 @@ class ServerVariable(Base2):
     }
 
 
-class Server(Base2):
+class Server(Base2_v3_0_0):
     __fields__ = {
         'url': dict(builder=field, required=True),
         'description': dict(builder=field),
@@ -78,7 +82,7 @@ class Server(Base2):
     }
 
 
-class Example(Base2):
+class Example(Base2_v3_0_0):
     __fields__ = {
         'summary': dict(builder=field),
         'description': dict(builder=field),
@@ -87,7 +91,7 @@ class Example(Base2):
     }
 
 
-class XML_(Base2):
+class XML_(Base2_v3_0_0):
     __fields__ = {
         'name': dict(builder=field),
         'namespace': dict(builder=field),
@@ -97,21 +101,21 @@ class XML_(Base2):
     }
 
 
-class ExternalDocumentation(Base2):
+class ExternalDocumentation(Base2_v3_0_0):
     __fields__ = {
         'description': dict(builder=field),
         'url': dict(builder=field, required=True),
     }
 
 
-class Discriminator(Base2):
+class Discriminator(Base2_v3_0_0):
     __fields__ = {
         'property_name': dict(key='propertyName', builder=field),
         'mapping': dict(builder=child, child_builder=map_(is_str)),
     }
 
 
-class Schema(Base2):
+class Schema(Base2_v3_0_0):
     __fields__ = {
         'title': dict(builder=field),
         'multiple_of': dict(key='multipleOf', builder=field),
@@ -156,7 +160,7 @@ Schema.attach_field(
 )
 
 
-class Parameter(Base2):
+class Parameter(Base2_v3_0_0):
     __fields__ = {
         'name': dict(builder=field, required=True),
         'in_': dict(key='in', builder=field, required=True),
@@ -180,7 +184,7 @@ class Header(Parameter):
     }
 
 
-class Encoding(Base2):
+class Encoding(Base2_v3_0_0):
     __fields__ = {
         'content_type': dict(key='contentType', builder=field),
         'headers': dict(builder=child, child_builder=map_(if_not_ref_else(Header))),
@@ -190,7 +194,7 @@ class Encoding(Base2):
     }
 
 
-class MediaType(Base2):
+class MediaType(Base2_v3_0_0):
     __fields__ = {
         'schema': dict(builder=child, child_builder=if_not_ref_else(Schema)),
         'example': dict(builder=field),
@@ -202,7 +206,7 @@ class MediaType(Base2):
 Parameter.attach_field('content', builder=child, child_builder=map_(MediaType))
 
 
-class RequestBody(Base2):
+class RequestBody(Base2_v3_0_0):
     __fields__ = {
         'description': dict(builder=field),
         'content': dict(builder=child, child_builder=map_(MediaType), required=True),
@@ -210,7 +214,7 @@ class RequestBody(Base2):
     }
 
 
-class Link(Base2):
+class Link(Base2_v3_0_0):
     __fields__ = {
         'operation_ref': dict(key='operationRef', builder=field),
         'operation_id': dict(key='operationId', builder=field),
@@ -221,7 +225,7 @@ class Link(Base2):
     }
 
 
-class Response(Base2):
+class Response(Base2_v3_0_0):
     __fields__ = {
         'description': dict(builder=field, required=True),
         'headers': dict(builder=child, child_builder=map_(if_not_ref_else(Header))),
@@ -230,7 +234,7 @@ class Response(Base2):
     }
 
 
-class OAuthFlow(Base2):
+class OAuthFlow(Base2_v3_0_0):
     __fields__ = {
         'authorization_url': dict(key='authorizationUrl', builder=field, required=True),
         'token_url': dict(key='tokenUrl', builder=field, required=True),
@@ -239,7 +243,7 @@ class OAuthFlow(Base2):
     }
 
 
-class OAuthFlows(Base2):
+class OAuthFlows(Base2_v3_0_0):
     __fields__ = {
         'implicit': dict(builder=child, child_builder=OAuthFlow),
         'password': dict(builder=child, child_builder=OAuthFlow),
@@ -249,7 +253,7 @@ class OAuthFlows(Base2):
     }
 
 
-class SecurityScheme(Base2):
+class SecurityScheme(Base2_v3_0_0):
     __fields__ = {
         'type_': dict(key='type', builder=field, required=True),
         'description': dict(builder=field),
@@ -262,7 +266,7 @@ class SecurityScheme(Base2):
     }
 
 
-class Operation(Base2):
+class Operation(Base2_v3_0_0):
     __fields__ = {
         'tags': dict(builder=child, child_builder=list_(is_str)),
         'summary': dict(builder=field),
@@ -278,7 +282,7 @@ class Operation(Base2):
     }
 
 
-class PathItem(Base2):
+class PathItem(Base2_v3_0_0):
     __fields__ = {
         'ref': dict(key='$ref', builder=field),
         'summary': dict(builder=field),
@@ -298,7 +302,7 @@ class PathItem(Base2):
 Operation.attach_field('callbacks', builder=child, child_builder=map_(if_not_ref_else(map_(PathItem))))
 
 
-class Components(Base2):
+class Components(Base2_v3_0_0):
     __fields__ = {
         'schemas': dict(builder=child, child_builder=map_(Schema)),
         'responses': dict(builder=child, child_builder=map_(Response)),
@@ -312,7 +316,7 @@ class Components(Base2):
     }
 
 
-class Tag(Base2):
+class Tag(Base2_v3_0_0):
     __fields__ = {
         'name': dict(builder=field, required=True),
         'description': dict(builder=field),
@@ -320,7 +324,7 @@ class Tag(Base2):
     }
 
 
-class OpenApi(Base2):
+class OpenApi(Base2_v3_0_0):
     __fields__ = {
         'openapi': dict(builder=field),
         'info': dict(builder=child, child_builder=Info),

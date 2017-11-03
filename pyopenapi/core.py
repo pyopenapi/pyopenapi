@@ -5,16 +5,19 @@ from .spec.v1_2.parser import ResourceListContext
 from .spec.v2_0.parser import SwaggerContext
 from .spec.v2_0.objects import Operation
 from .spec.base import BaseObj
+from .spec.base2 import Base2Obj
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
 from .scanner.v1_2 import Upgrade
 from .scanner.v2_0 import AssignParent, Merge, Resolve, PatchObject, YamlFixer, Aggregate, NormalizeRef
 from pyopenapi import utils, errs, consts
+from distutils.version import StrictVersion
 import copy
 import base64
 import six
 import weakref
 import logging
+import pkgutil
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +60,7 @@ class App(object):
         # a map from json-reference to
         # - spec.BaseObj
         # - a map from json-pointer to spec.BaseObj
-        self.__objs = {}
+        self.__spec_objs = {}
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
@@ -73,6 +76,12 @@ class App(object):
 
         # MIME codec
         self.__mime_codec = mime_codec or MimeCodec()
+
+    @property
+    def sep(self):
+        """ separator used by pyswager.utils.ScopeDict
+        """
+        return self.__sep
 
     @property
     def root(self):
@@ -199,45 +208,72 @@ class App(object):
 
         return tmp['_tmp_'], version
 
-    def prepare_obj(self, obj, jref):
+    def _cache_spec_obj(self, obj, url, jp, spec_version):
+        """ cache 'prepared' spec objects (those under pyopenapi.spec)
+        """
+        if not issubclass(type(obj), (BaseObj, Base2Obj)):
+            raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
+
+        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
+
+    def _get_spec_obj_from_cache(self, url, jp, spec_version):
+        """ get spec objects from cache
+        """
+        url_cache = self.__spec_objs.get(url, None)
+        if not url_cache:
+            return None
+
+        # try to find a 'jp' with common prefix with input under 'url'
+        for path, cache in six.iteritems(url_cache):
+            if jp.startswith(path) and spec_version in cache:
+                return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
+
+        return None
+
+    def prepare_obj(self, obj, jref, spec_version=None):
         """ basic preparation of an object(those in sepc._version_.objects),
         and cache the 'prepared' object.
         """
         if not obj:
             raise Exception('unexpected, passing {0}:{1} to prepare'.format(obj, jref))
 
-        s = Scanner(self)
-        if self.version == '1.2':
-            # upgrade from 1.2 to 2.0
-            converter = Upgrade(self.__sep)
-            s.scan(root=obj, route=[converter])
-            obj = converter.swagger
+        spec_version = spec_version or consts.private.DEFAULT_OPENAPI_SPEC_VERSION
+        obj = self.migrate_obj(obj, jref, spec_version=spec_version)
 
-            if not obj:
-                raise Exception('unable to upgrade from 1.2: {0}'.format(jref))
+        return obj
 
-            s.scan(root=obj, route=[AssignParent()])
+    def migrate_obj(self, obj, jref, spec_version=None):
+        """ migrate an object(those in spec._version_.objects)
+        """
+        spec_version = spec_version or '3.0.0'
+        supported_versions = utils.get_supported_versions('migration', is_pkg=False)
 
-        # normalize $ref
-        url, jp = utils.jr_split(jref)
-        s.scan(root=obj, route=[NormalizeRef(url)])
-        # fix for yaml that treat response code as number
-        s.scan(root=obj, route=[YamlFixer()], leaves=[Operation])
+        if spec_version not in supported_versions:
+            raise ValueError('unsupported spec version: {}'.format(spec_version))
 
-        # cache this object
-        if url not in self.__objs:
-            if jp == '#':
-                self.__objs[url] = obj
-            else:
-                self.__objs[url] = {jp: obj}
-        else:
-            if not isinstance(self.__objs[url], dict):
-                raise Exception('it should be able to resolve with BaseObj')
-            self.__objs[url].update({jp: obj})
+        # only keep required version strings for this migration
+        supported_versions = supported_versions[:(supported_versions.index(spec_version)+1)]
 
-        # pre resolve Schema Object
-        # note: make sure this object is cached before using 'Resolve' scanner
-        s.scan(root=obj, route=[Resolve()])
+        # filter out those migration with lower version than current one
+        supported_versions = [v for v in supported_versions if StrictVersion(obj.__swagger_version__) <= StrictVersion(v)]
+
+        # load migration module
+        for v in supported_versions:
+            patched_version = 'v{}'.format(v).replace('.', '_')
+            migration_module_path = '.'.join(['pyopenapi', 'migration', patched_version])
+            loader = pkgutil.find_loader(migration_module_path)
+            if not loader:
+                raise Exception('unable to find module loader for {}'.format(migration_module_path))
+
+            migration_module = loader.load_module(migration_module_path)
+            if not migration_module:
+                raise Exception('unable to load {} for migration'.format(migration_module_path))
+
+            obj = migration_module.up(obj, self, jref)
+
+        # cache migrated object if we need it later
+        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=spec_version)
+
         return obj
 
     def _validate(self):
@@ -359,6 +395,16 @@ class App(object):
         if len(cy.cycles['schema']) > 0 and strict:
             raise errs.CycleDetectionError('Cycles detected in Schema Object: {0}'.format(cy.cycles['schema']))
 
+    def migrate(self, spec_version=None):
+        """ migrate the internal spec object (refer to pyopenapi.spec) to a specific version.
+        This function can be used to migrate your original API spec to some version of OpenAPI,
+        then dump to perform 'spec upgrade' action
+
+        :param str spec_version: the version of OpenAPI you want to migrate, ex. 3.0.0, 'None' means latest version of OpenAPI
+        """
+
+        self.__root = self.migrate_obj(self.raw, self.url, spec_version=spec_version)
+
     @classmethod
     def create(kls, url, strict=True):
         """ factory of App
@@ -380,11 +426,12 @@ class App(object):
     """
     _create_ = create
 
-    def resolve(self, jref, parser=None):
+    def resolve(self, jref, parser=None, spec_version=None):
         """ JSON reference resolver
 
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
         :param parser: the parser corresponding to target object.
+        :param str spec_version: the OpenAPI spec version 'jref' pointing to.
         :type parser: pyopenapi.base.Context
         :return: the referenced object, wrapped by weakref.ProxyType
         :rtype: weakref.ProxyType
@@ -396,30 +443,20 @@ class App(object):
         if jref == None or len(jref) == 0:
             raise ValueError('Empty Path is not allowed')
 
-        obj = None
-        url, jp = utils.jr_split(jref)
+        spec_version = spec_version or consts.private.DEFAULT_OPENAPI_SPEC_VERSION
 
         # check cacahed object against json reference by
         # comparing url first, and find those object prefixed with
         # the JSON pointer.
-        o = self.__objs.get(url, None)
-        if o:
-            if isinstance(o, BaseObj):
-                obj = o.resolve(utils.jp_split(jp)[1:])
-            elif isinstance(o, dict):
-                for k, v in six.iteritems(o):
-                    if jp.startswith(k):
-                        obj = v.resolve(utils.jp_split(jp[len(k):])[1:])
-                        break
-            else:
-                raise Exception('Unknown Cached Object: {0}'.format(str(type(o))))
+        url, jp = utils.jr_split(jref)
+        obj = self._get_spec_obj_from_cache(url, jp, spec_version)
 
         # this object is not found in cache
         if obj == None:
             if url:
                 obj, _ = self.load_obj(jref, parser=parser)
                 if obj:
-                    obj = self.prepare_obj(obj, jref)
+                    obj = self.prepare_obj(obj, jref, spec_version=spec_version)
             else:
                 # a local reference, 'jref' is just a json-pointer
                 if not jp.startswith('#'):

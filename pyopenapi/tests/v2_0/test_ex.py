@@ -1,22 +1,10 @@
 from pyopenapi import App
-from ..utils import get_test_data_folder
+from ..utils import get_test_data_folder, gen_test_folder_hook
 from ...utils import deref, final
 from ...spec.v2_0.parser import PathItemContext
 import unittest
 import os
 import six
-
-
-def _gen_hook(folder):
-    def _hook(url):
-        p = six.moves.urllib.parse.urlparse(url)
-        if p.scheme != 'file':
-            return url
-
-        path = os.path.join(folder, p.path if not p.path.startswith('/') else p.path[1:])
-        return six.moves.urllib.parse.urlunparse(p[:2]+(path,)+p[3:])
-
-    return _hook
 
 
 class ExternalDocumentTestCase(unittest.TestCase):
@@ -26,7 +14,7 @@ class ExternalDocumentTestCase(unittest.TestCase):
     def setUpClass(kls):
         kls.app = App.load(
             url='file:///root/swagger.json',
-            url_load_hook=_gen_hook(get_test_data_folder(version='2.0', which='ex'))
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
         )
         kls.app.prepare()
 
@@ -36,8 +24,8 @@ class ExternalDocumentTestCase(unittest.TestCase):
         """
         p = self.app.resolve('#/paths/~1full')
         p_ = self.app.resolve('file:///root/swagger.json#/paths/~1full')
-        # refer to 
-        #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy 
+        # refer to
+        #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy
         # for how to dereferencing weakref
         self.assertEqual(p.__repr__(), p_.__repr__())
 
@@ -81,8 +69,8 @@ class ExternalDocumentTestCase(unittest.TestCase):
         p = self.app.resolve('#/definitions/s4')
         original_p = self.app.resolve('file:///partial/schema/swagger.json')
 
-        # refer to 
-        #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy 
+        # refer to
+        #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy
         # for how to dereferencing weakref
         self.assertEqual(p.items.ref_obj.__repr__(), original_p.__repr__())
 
@@ -106,7 +94,7 @@ class ExternalDocumentTestCase(unittest.TestCase):
         """
         app = App.load(
             url='file:///relative/internal.yaml',
-            url_load_hook=_gen_hook(get_test_data_folder(version='2.0', which='ex'))
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
         )
         app.prepare()
 
@@ -119,7 +107,7 @@ class ReuseTestCase(unittest.TestCase):
     def setUpClass(kls):
         kls.app = App.load(
             url='file:///reuse/swagger.json',
-            url_load_hook=_gen_hook(get_test_data_folder(version='2.0', which='ex'))
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
         )
         kls.app.prepare()
 
@@ -135,7 +123,7 @@ class ReuseTestCase(unittest.TestCase):
         is correctly injected(merged) in 'final' field.
         """
         o = final(self.app.s('pets').get.parameters[0])
-        self.assertEqual(o.description, 'Results to skip when paginating through a result set') 
+        self.assertEqual(o.description, 'Results to skip when paginating through a result set')
 
     def test_relative_response(self):
         """ make sure response from relative $ref

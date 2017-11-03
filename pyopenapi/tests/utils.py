@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os
+import six
 
 def get_test_data_folder(version='1.2', which=''):
     """
@@ -59,3 +60,15 @@ def create_pet_db():
     pet.create_(**pet_Sue)
 
     return pet
+
+def gen_test_folder_hook(folder):
+    def _hook(url):
+        p = six.moves.urllib.parse.urlparse(url)
+        if p.scheme != 'file':
+            return url
+
+        path = os.path.join(folder, p.path if not p.path.startswith('/') else p.path[1:])
+        return six.moves.urllib.parse.urlunparse(p[:2]+(path,)+p[3:])
+
+    return _hook
+

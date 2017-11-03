@@ -15,5 +15,5 @@ class Upgrade(object):
 
     @Disp.register([Swagger])
     def _swagger(self, path, obj, app):
-        self.openapi = OpenApi(to_openapi(obj, app, path))
+        self.openapi = OpenApi(to_openapi(obj, path))
         # TODO: validation ?
