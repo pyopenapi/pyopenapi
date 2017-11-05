@@ -388,6 +388,8 @@ def get_swagger_version(obj):
             return obj['swaggerVersion']
         elif 'swagger' in obj:
             return obj['swagger']
+        elif 'openapi' in obj:
+            return obj['openapi']
         return None
     else:
         # should be an instance of BaseObj

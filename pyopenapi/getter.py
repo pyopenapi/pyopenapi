@@ -82,7 +82,7 @@ class LocalGetter(Getter):
             # - when 'path' points to a specific file, and its
             #   extension is either 'json' or 'yaml'.
             _, ext = os.path.splitext(path)
-            for e in [private.FILE_EXT_JSON, private.FILE_EXT_YAML]:
+            for e in [private.FILE_EXT_JSON, private.FILE_EXT_YAML, private.FILE_EXT_YML]:
                 if ext.endswith(e):
                     self.base_path = os.path.dirname(path)
                     self.urls = [path]
