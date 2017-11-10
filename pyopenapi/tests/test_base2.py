@@ -1,5 +1,5 @@
 from pyopenapi.spec.base2 import (
-    Base2, field, child,
+    Base2, field, child, internal,
     map_, list_,
     _Map, _List,
     )
@@ -16,6 +16,7 @@ class AObj(Base2):
         'a': dict(builder=field),
         'b': dict(builder=field, required=True),
         'c': dict(builder=child, child_builder=BObj),
+        'ic': dict(builder=internal),
     }
 
 class CObj(Base2):
@@ -101,6 +102,19 @@ class Base2TestCase(unittest.TestCase):
         # when required, raise exception when none
         self.assertRaises(Exception, lambda: AObj({}).b)
         self.assertEqual(AObj({'b': 2}).b, 2)
+
+    def test_internal(self):
+        """ make sure builder:internal works
+        """
+        a = AObj({'a': 1, 'b': 2, 'ic': 3})
+        self.assertEqual(sorted(a._field_names_), ['a', 'b', 'c']) # internal is not included in '_field_names_'
+        self.assertEqual(a.ic, None) # internal is separated from input spec (in __fields__)
+
+        a.ic = 4
+        self.assertEqual(a.ic, 4)
+
+        # make sure we won't dump internal fields
+        self.assertEqual(a.dump(), {'a': 1, 'b': 2})
 
     def test_child(self):
         """ make sure builder:child works

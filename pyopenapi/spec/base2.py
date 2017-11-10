@@ -36,7 +36,10 @@ def internal(key, default=None):
             return self.internal[key]
         return default
 
-    return property(_getter_, None)
+    def _setter_(self, v):
+        self.internal[key] = v
+
+    return property(_getter_, _setter_)
 
 
 def child(key, child_builder=None, required=False, default=None):
@@ -189,12 +192,10 @@ class _List(_Base):
         for idx, obj in enumerate(self.__elm):
             if isinstance(obj, Base2Obj):
                 ret[str(idx)] = obj
-            elif isinstance(obj, (Map, List,)):
-                c = self.__elm[name]._children_
+            elif isinstance(obj, (_Map, _List,)):
+                c = obj._children_
                 for cc in c:
                     ret[jp_compose(str(idx), cc)] = c[cc]
-            else:
-                raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
 
         return ret
 
@@ -292,15 +293,13 @@ class _Map(_Base):
     @property
     def _children_(self):
         ret = {}
-        for name in self.__elm:
+        for name, obj in six.iteritems(self.__elm):
             if isinstance(obj, Base2Obj):
-                ret[name] = self.__elm[name]
+                ret[name] = obj
             elif isinstance(obj, (_Map, _List,)):
-                c = self.__elm[name]._children_
+                c = obj._children_
                 for cc in c:
                     ret[jp_compose(name, cc)] = c[cc]
-            else:
-                raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
 
         return ret
 
@@ -492,7 +491,7 @@ class Base2Obj(_Base):
         :return: a list of field names
         :rtype: a list of str
         """
-        return [name for name in self.__fields__]
+        return [name for name in set(self.__fields__) - set(self.__internal__)]
 
     @property
     def _children_(self):
