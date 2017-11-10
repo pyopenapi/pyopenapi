@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from .spec.base import BaseObj
+from .spec.base2 import Base2Obj
 import six
 
 
@@ -42,7 +43,7 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
     def __add_route(cls, t, f):
         """
         """
-        if not issubclass(t, BaseObj):
+        if not issubclass(t, (BaseObj, Base2Obj)):
             raise ValueError('target_cls should be a subclass of BaseObj, but got:' + str(t))
 
         # allow register multiple handler function
@@ -78,6 +79,34 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
         return f
 
 
+def _build_route(route):
+    ret = []
+    for r in route:
+        for attr in r.__class__.__dict__:
+            o = getattr(r, attr)
+            if type(o) == DispatcherMeta:
+                ret.append((r, o.obj_route, o.result_fn[0]))
+
+    return ret
+
+def _handle_cls(cls, app, path, obj, the_self, r, res):
+    f = r.get(cls, None)
+    if f:
+        for ff in f:
+            ret = ff(the_self, path, obj, app)
+            if res:
+                res(the_self, ret)
+
+def _handle_cls_without_app(cls, path, obj, the_self, r, res):
+    f = r.get(cls, None)
+    if not f:
+        return
+    for ff in f:
+        ret = ff(the_self, path, obj)
+        if res:
+            res(the_self, ret)
+
+
 class Scanner(object):
     """ Scanner
     """
@@ -89,38 +118,29 @@ class Scanner(object):
     def app(self):
         return self.__app
 
-    def __build_route(self, route):
-        """
-        """
-        ret = []
-        for r in route:
-            for attr in r.__class__.__dict__:
-                o = getattr(r, attr)
-                if type(o) == DispatcherMeta:
-                    ret.append((r, o.obj_route, o.result_fn[0]))
-
-        return ret
-
     def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
-        """
-        """
         if root == None:
             raise ValueError('Can\'t scan because root==None')
 
-        merged_r = self.__build_route(route)
+        merged_r = _build_route(route)
         for path, obj in nexter(root, leaves):
-            for the_self, r, res in merged_r:
-
-                def handle_cls(cls):
-                    f = r.get(cls, None)
-                    if f:
-                        for ff in f:
-                            ret = ff(the_self, path, obj, self.app)
-                            if res:
-                                res(the_self, ret)
-
+            for r in merged_r:
                 for cls in obj.__class__.__mro__[:-1]:
                     if cls is BaseObj:
                         break
-                    handle_cls(cls)
+                    _handle_cls(cls, self.app, path, obj, *r)
+
+
+class Scanner2(object):
+    """ Scanner v2, the main change is to remove 'app' from default input. The depnedencies
+    between Scannner and App should be decoupled.
+    """
+    def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
+        if root == None:
+            raise ValueError('Can\'t scan because root==None')
+
+        merged_r = _build_route(route)
+        for path, obj in nexter(root, leaves):
+            for r in merged_r:
+                _handle_cls_without_app(obj.__class__, path, obj, *r)
 
