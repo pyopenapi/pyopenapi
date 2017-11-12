@@ -3,13 +3,13 @@ from .resolve import Resolver
 from .primitives import Primitive, MimeCodec
 from .spec.v1_2.parser import ResourceListContext
 from .spec.v2_0.parser import SwaggerContext
-from .spec.v2_0.objects import Operation
-from .spec.base import BaseObj
+from .spec.v2_0.objects import Swagger, Operation
+from .spec.v3_0_0.objects import OpenApi
+from .spec.base import BaseObj, Context
 from .spec.base2 import Base2Obj
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
-from .scanner.v1_2 import Upgrade
-from .scanner.v2_0 import Merge, PatchObject, Aggregate
+from .scanner.v2_0 import Aggregate
 from pyopenapi import utils, errs, consts
 from distutils.version import StrictVersion
 import copy
@@ -180,33 +180,48 @@ class App(object):
     def load_obj(self, jref, getter=None, parser=None):
         """ load a object(those in spec._version_.objects) from a JSON reference.
         """
-        obj = self.__resolver.resolve(jref, getter)
+        src_spec = self.__resolver.resolve(jref, getter)
 
         # get root document to check its swagger version.
         tmp = {'_tmp_': {}}
-        version = utils.get_swagger_version(obj)
+        obj = None
+        version = utils.get_swagger_version(src_spec)
         if version == '1.2':
             # swagger 1.2
             with ResourceListContext(tmp, '_tmp_') as ctx:
-                ctx.parse(obj, jref, self.__resolver, getter)
+                ctx.parse(src_spec, jref, self.__resolver, getter)
+            obj = tmp['_tmp_']
+
         elif version == '2.0':
             # swagger 2.0
             with SwaggerContext(tmp, '_tmp_') as ctx:
-                ctx.parse(obj)
-        elif version == None and parser:
-            with parser(tmp, '_tmp_') as ctx:
-                ctx.parse(obj)
+                ctx.parse(src_spec)
+            obj = tmp['_tmp_']
+        elif version == '3.0.0':
+            # openapi 3.0.0
+            obj = OpenApi(src_spec, jref)
 
-            version = tmp['_tmp_'].__swagger_version__ if hasattr(tmp['_tmp_'], '__swagger_version__') else version
+        elif version == None and parser:
+            if issubclass(parser, Context):
+                with parser(tmp, '_tmp_') as ctx:
+                    ctx.parse(src_spec)
+                obj = tmp['_tmp_']
+
+            elif issubclass(parser, Base2Obj):
+                obj = parser(src_spec, jref)
+            else:
+                raise Exception('unknown parser type: {}'.format(str(type(parser))))
+
+            version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
         else:
             raise NotImplementedError('Unsupported Swagger Version: {0} from {1}'.format(version, jref))
 
-        if not tmp['_tmp_']:
+        if not obj:
             raise Exception('Unable to parse object from {0}'.format(jref))
 
         logger.info('version: {0}'.format(version))
 
-        return tmp['_tmp_'], version
+        return obj, version
 
     def _cache_spec_obj(self, obj, url, jp, spec_version):
         """ cache 'prepared' spec objects (those under pyopenapi.spec)
@@ -361,18 +376,17 @@ class App(object):
         """
 
         self.validate(strict=strict)
+
+        # extract schemes from the url to load spec
+        self.__schemes = [six.moves.urllib.parse.urlparse(self.__url).scheme]
+
         self.__root = self.prepare_obj(self.raw, self.__url)
 
-        if hasattr(self.__root, 'schemes') and self.__root.schemes:
-            if len(self.__root.schemes) > 0:
-                self.__schemes = self.__root.schemes
-            else:
-                # extract schemes from the url to load spec
-                self.__schemes = [six.moves.urlparse(self.__url).schemes]
+        # upadte schemes if available
+        if isinstance(self.__root, Swagger) and hasattr(self.__root, 'schemes') and self.__root.schemes:
+            self.__schemes = self.__root.schemes
 
         s = Scanner(self)
-        s.scan(root=self.__root, route=[Merge()])
-        s.scan(root=self.__root, route=[PatchObject()])
         s.scan(root=self.__root, route=[Aggregate()])
 
         # reducer for Operation
