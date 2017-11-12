@@ -329,6 +329,9 @@ class _Map(_Base):
     def __contains__(self, elm):
         return elm in self.__elm
 
+    def iteritems(self):
+        return self.__elm.iteritems()
+
 
 class FieldMeta(type):
     """ metaclass to init fields, similar to the one in base.py

@@ -6,7 +6,7 @@ from .spec.v2_0.parser import SwaggerContext
 from .spec.v2_0.objects import Swagger, Operation
 from .spec.v3_0_0.objects import OpenApi
 from .spec.base import BaseObj, Context
-from .spec.base2 import Base2Obj
+from .spec.base2 import _Base
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
 from .scanner.v2_0 import Aggregate
@@ -18,6 +18,7 @@ import six
 import weakref
 import logging
 import pkgutil
+import inspect
 
 
 logger = logging.getLogger(__name__)
@@ -202,15 +203,13 @@ class App(object):
             obj = OpenApi(src_spec, jref)
 
         elif version == None and parser:
-            if issubclass(parser, Context):
+            if inspect.isclass(parser) and issubclass(parser, Context):
                 with parser(tmp, '_tmp_') as ctx:
                     ctx.parse(src_spec)
                 obj = tmp['_tmp_']
 
-            elif issubclass(parser, Base2Obj):
-                obj = parser(src_spec, jref)
             else:
-                raise Exception('unknown parser type: {}'.format(str(type(parser))))
+                obj = parser(src_spec, jref)
 
             version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
         else:
@@ -221,12 +220,16 @@ class App(object):
 
         logger.info('version: {0}'.format(version))
 
+        # cache obj before migration, or we may load an object multiple times when resolve
+        # $ref in the same spec
+        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=version)
+
         return obj, version
 
     def _cache_spec_obj(self, obj, url, jp, spec_version):
         """ cache 'prepared' spec objects (those under pyopenapi.spec)
         """
-        if not issubclass(type(obj), (BaseObj, Base2Obj)):
+        if not issubclass(type(obj), (BaseObj, _Base)):
             raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
 
         self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
