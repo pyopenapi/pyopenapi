@@ -9,7 +9,7 @@ from .spec.base2 import Base2Obj
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
 from .scanner.v1_2 import Upgrade
-from .scanner.v2_0 import AssignParent, Merge, Resolve, PatchObject, YamlFixer, Aggregate, NormalizeRef
+from .scanner.v2_0 import Merge, PatchObject, Aggregate
 from pyopenapi import utils, errs, consts
 from distutils.version import StrictVersion
 import copy
