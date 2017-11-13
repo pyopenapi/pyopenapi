@@ -195,7 +195,7 @@ class _List(_Base):
             elif isinstance(obj, (_Map, _List,)):
                 c = obj._children_
                 for cc in c:
-                    ret[jp_compose(str(idx), cc)] = c[cc]
+                    ret[jp_compose([str(idx), cc])] = c[cc]
 
         return ret
 
@@ -270,7 +270,7 @@ class _Map(_Base):
             return False, jp_compose(diff[0], base=base)
 
         for name in self.__elm:
-            s, n = self.__elm[name].compare(other[name], base=jp_compose(name, base))
+            s, n = self.__elm[name].compare(other[name], base=jp_compose(name, base=base))
             if not s:
                 return s, n
 
@@ -299,7 +299,7 @@ class _Map(_Base):
             elif isinstance(obj, (_Map, _List,)):
                 c = obj._children_
                 for cc in c:
-                    ret[jp_compose(name, cc)] = c[cc]
+                    ret[jp_compose([name, cc])] = c[cc]
 
         return ret
 
@@ -508,7 +508,7 @@ class Base2Obj(_Base):
             elif isinstance(obj, (_Map, _List,)):
                 c = obj._children_
                 for cc in c:
-                    ret[jp_compose(name, cc)] = c[cc]
+                    ret[jp_compose([name, cc])] = c[cc]
             else:
                 raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
 
