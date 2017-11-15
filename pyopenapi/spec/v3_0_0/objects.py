@@ -385,7 +385,12 @@ class PathItem(Base2_v3_0_0):
         'ref': dict(key='$ref'),
     }
 
-Operation.attach_field('callbacks', builder=child, child_builder=map_(if_not_ref_else(map_(PathItem))))
+
+class Callback(map_(PathItem)):
+    __swagger_version__ = '3.0.0'
+
+
+Operation.attach_field('callbacks', builder=child, child_builder=map_(if_not_ref_else(Callback)))
 
 
 class Components(Base2_v3_0_0):
@@ -398,7 +403,7 @@ class Components(Base2_v3_0_0):
         'headers': dict(builder=child, child_builder=map_(Header)),
         'securitySchemes': dict(builder=child, child_builder=map_(SecurityScheme)),
         'links': dict(builder=child, child_builder=map_(Link)),
-        'callbacks': dict(builder=child, child_builder=map_(map_(PathItem))),
+        'callbacks': dict(builder=child, child_builder=map_(Callback)),
     }
 
     __renamed__ = {
