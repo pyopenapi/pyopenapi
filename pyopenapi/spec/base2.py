@@ -42,6 +42,23 @@ def internal(key, default=None):
     return property(_getter_, _setter_)
 
 
+def rename(key):
+    """ property factory for 'renamed' property.
+    For some camel-cased property, we would make them snake-stype
+    for fulfill python's usage.
+
+    For child that might be targeted by '$ref', we can't rename it
+    directly because the resolving would be failed.
+
+    This property factory provide a redirection to actual property
+    and should only declared under __renamed__
+    """
+    def _getter_(self):
+        return getattr(self, key)
+
+    return property(_getter_, None)
+
+
 def child(key, child_builder=None, required=False, default=None):
     """ property factory for nested BaseObj
     Args:
@@ -322,14 +339,21 @@ class FieldMeta(type):
         fields = spc.setdefault('__fields__', {})
         cn = spc.setdefault('__children__', [])
         intl = spc.setdefault('__internal__', [])
+        renm = spc.setdefault('__renamed__', {})
         for b in bases:
-            d = {}
             bf = getattr(b, '__fields__', None)
-            if not bf:
-                continue
-            for k in set(bf.keys()) - set(fields.keys()):
-                d[k] = bf[k]
-            fields.update(d)
+            if bf:
+                d = {}
+                for k in set(bf.keys()) - set(fields.keys()):
+                    d[k] = bf[k]
+                fields.update(d)
+
+            re = getattr(b, '__renamed__', {})
+            if re:
+                d = {}
+                for k in set(re.keys()) - set(renm.keys()):
+                    d[k] = re[k]
+                renm.update(d)
 
         for n, args in six.iteritems(fields):
             args = copy.copy(args)
@@ -341,6 +365,10 @@ class FieldMeta(type):
                 cn.append(n)
             elif builder.__name__ == 'internal':
                 intl.append(n)
+
+        for n, args in six.iteritems(renm):
+            args = copy.copy(args)
+            spc[n] = rename(args.pop('key'))
 
         return type.__new__(metacls, name, bases, spc)
 
@@ -357,6 +385,11 @@ class Base2Obj(_Base):
         super(Base2Obj, self).__init__(spec, path)
         self.children = {}
         self.internal = {}
+
+        # for example, we would rename 'requestBodies' to 'request_bodies' for
+        # snake-stye in python, however, to be able to resolve such fields,
+        # we need to add these properties to target to correct fields.
+        self.renamed = {}
 
         # traverse through children
         for name in self.__children__:

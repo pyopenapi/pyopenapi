@@ -19,6 +19,10 @@ class AObj(Base2):
         'ic': dict(builder=internal),
     }
 
+    __renamed__ = {
+        'd3_renamed': dict(key='a')
+    }
+
 class CObj(Base2):
     __fields__ = {
         'cc': dict(builder=child, child_builder=map_(AObj)),
@@ -447,3 +451,14 @@ class Base2TestCase(unittest.TestCase):
         d = DObj({'d3': {'key1':{'key11':{'b':1}, 'key12':{'b':2}}, 'key2':{'key21':{'b':3}, 'key22':{'b':4}}}})
         self.assertEqual(d.d3['key1']['key11'].path, 'd3/key1/key11')
 
+    def test_renamed(self):
+        """ make sure renamed works
+        """
+        a = AObj({'a': 101})
+        self.assertEqual(a.a, 101)
+        self.assertEqual(a.d3_renamed, 101)
+
+        # should inherit __renamed__
+        f = FObj({'a': 102})
+        self.assertEqual(f.a, 102)
+        self.assertEqual(f.d3_renamed, 102)
