@@ -393,7 +393,7 @@ class Components(Base2_v3_0_0):
         'schemas': dict(builder=child, child_builder=map_(Schema)),
         'responses': dict(builder=child, child_builder=map_(Response)),
         'parameters': dict(builder=child, child_builder=map_(Parameter)),
-        'examples': dict(builder=field),
+        'examples': dict(builder=child, child_builder=map_(Example)),
         'requestBodies': dict(builder=child, child_builder=map_(RequestBody)),
         'headers': dict(builder=child, child_builder=map_(Header)),
         'securitySchemes': dict(builder=child, child_builder=map_(SecurityScheme)),
