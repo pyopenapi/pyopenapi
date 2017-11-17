@@ -10,6 +10,10 @@ class Base2_v3_0_0(Base2):
 class Reference(Base2_v3_0_0):
     __fields__ = {
         'ref': dict(key='$ref', builder=field, required=True),
+
+        # internal fields
+        'normalized_ref': dict(builder=internal),
+        'ref_obj': dict(builder=internal),
     }
 
 
@@ -98,6 +102,8 @@ class Example(Base2_v3_0_0):
         'external_value': dict(key='externalValue'),
     }
 
+ExampleOrReference = if_not_ref_else(Example)
+
 
 class XML_(Base2_v3_0_0):
     __fields__ = {
@@ -185,16 +191,19 @@ class Schema(Base2_v3_0_0):
         'additional_properties': dict(key='additionalProperties'),
     }
 
-Schema.attach_field('allOf', builder=child, child_builder=list_(if_not_ref_else(Schema)))
-Schema.attach_field('oneOf', builder=child, child_builder=list_(if_not_ref_else(Schema)))
-Schema.attach_field('anyOf', builder=child, child_builder=list_(if_not_ref_else(Schema)))
-Schema.attach_field('not', builder=child, child_builder=if_not_ref_else(Schema))
-Schema.attach_field('items', builder=child, child_builder=if_not_ref_else(Schema))
-Schema.attach_field('properties', builder=child, child_builder=map_(if_not_ref_else(Schema)))
+SchemaOrReference = if_not_ref_else(Schema)
+BoolOrSchemaOrReference = if_not_bool_else(SchemaOrReference)
+
+Schema.attach_field('allOf', builder=child, child_builder=list_(SchemaOrReference))
+Schema.attach_field('oneOf', builder=child, child_builder=list_(SchemaOrReference))
+Schema.attach_field('anyOf', builder=child, child_builder=list_(SchemaOrReference))
+Schema.attach_field('not', builder=child, child_builder=SchemaOrReference)
+Schema.attach_field('items', builder=child, child_builder=SchemaOrReference)
+Schema.attach_field('properties', builder=child, child_builder=map_(SchemaOrReference))
 Schema.attach_field(
     'additionalProperties',
     builder=child,
-    child_builder=if_not_bool_else(if_not_ref_else(Schema)),
+    child_builder=BoolOrSchemaOrReference,
 )
 
 
@@ -209,9 +218,9 @@ class Parameter(Base2_v3_0_0):
         'style': dict(builder=field),
         'explode': dict(builder=field),
         'allowReserved': dict(builder=field),
-        'schema': dict(builder=child, child_builder=if_not_ref_else(Schema)),
+        'schema': dict(builder=child, child_builder=SchemaOrReference),
         'example': dict(builder=field),
-        'examples': dict(builder=child, child_builder=map_(if_not_ref_else(Example))),
+        'examples': dict(builder=child, child_builder=map_(ExampleOrReference)),
     }
 
     __renamed__ = {
@@ -219,6 +228,8 @@ class Parameter(Base2_v3_0_0):
         'allow_empty_value': dict(key='allowEmptyValue'),
         'allow_reserved': dict(key='allowReserved'),
     }
+
+ParameterOrReference = if_not_ref_else(Parameter)
 
 
 class Header(Parameter):
@@ -231,11 +242,13 @@ class Header(Parameter):
         'in_': dict(key='in'),
     }
 
+HeaderOrReference = if_not_ref_else(Header)
+
 
 class Encoding(Base2_v3_0_0):
     __fields__ = {
         'contentType': dict(builder=field),
-        'headers': dict(builder=child, child_builder=map_(if_not_ref_else(Header))),
+        'headers': dict(builder=child, child_builder=map_(HeaderOrReference)),
         'stype': dict(builder=field),
         'explode': dict(builder=field),
         'allowReserved': dict(builder=field),
@@ -249,9 +262,9 @@ class Encoding(Base2_v3_0_0):
 
 class MediaType(Base2_v3_0_0):
     __fields__ = {
-        'schema': dict(builder=child, child_builder=if_not_ref_else(Schema)),
+        'schema': dict(builder=child, child_builder=SchemaOrReference),
         'example': dict(builder=field),
-        'examples': dict(builder=child, child_builder=if_not_ref_else(Example)),
+        'examples': dict(builder=child, child_builder=ExampleOrReference),
         'encoding': dict(builder=child, child_builder=map_(Encoding)),
     }
 
@@ -265,6 +278,8 @@ class RequestBody(Base2_v3_0_0):
         'content': dict(builder=child, child_builder=map_(MediaType), required=True),
         'required': dict(builder=field),
     }
+
+RequestBodyOrReference = if_not_ref_else(RequestBody)
 
 
 class Link(Base2_v3_0_0):
@@ -283,14 +298,18 @@ class Link(Base2_v3_0_0):
         'request_body': dict(key='requestBody'),
     }
 
+LinkOrReference = if_not_ref_else(Link)
+
 
 class Response(Base2_v3_0_0):
     __fields__ = {
         'description': dict(builder=field, required=True),
-        'headers': dict(builder=child, child_builder=map_(if_not_ref_else(Header))),
+        'headers': dict(builder=child, child_builder=map_(HeaderOrReference)),
         'content': dict(builder=child, child_builder=map_(MediaType)),
-        'links': dict(builder=child, child_builder=map_(if_not_ref_else(Link))),
+        'links': dict(builder=child, child_builder=map_(LinkOrReference)),
     }
+
+ResponseOrReference = if_not_ref_else(Response)
 
 
 class OAuthFlow(Base2_v3_0_0):
@@ -341,6 +360,8 @@ class SecurityScheme(Base2_v3_0_0):
         'openid_connect_url': dict(key='openIdConnectUrl'),
     }
 
+SecuritySchemeOrReference = if_not_ref_else(SecurityScheme)
+
 
 class Operation(Base2_v3_0_0):
     __fields__ = {
@@ -349,9 +370,9 @@ class Operation(Base2_v3_0_0):
         'description': dict(builder=field),
         'externalDocs': dict(builder=child, child_builder=ExternalDocumentation),
         'operationId': dict(builder=field),
-        'parameters': dict(builder=child, child_builder=list_(if_not_ref_else(Parameter))),
-        'requestBody': dict(builder=child, child_builder=if_not_ref_else(RequestBody)),
-        'responses': dict(builder=child, child_builder=map_(if_not_ref_else(Response))),
+        'parameters': dict(builder=child, child_builder=list_(ParameterOrReference)),
+        'requestBody': dict(builder=child, child_builder=RequestBodyOrReference),
+        'responses': dict(builder=child, child_builder=map_(ResponseOrReference)),
         'deprecated': dict(builder=field),
         'security': dict(builder=child, child_builder=list_(map_(list_(is_str)))),
         'servers': dict(builder=child, child_builder=list_(Server)),
@@ -378,7 +399,11 @@ class PathItem(Base2_v3_0_0):
         'patch': dict(builder=child, child_builder=Operation),
         'trace': dict(builder=child, child_builder=Operation),
         'servers': dict(builder=child, child_builder=list_(Server)),
-        'parameters': dict(builder=child, child_builder=list_(if_not_ref_else(Parameter))),
+        'parameters': dict(builder=child, child_builder=list_(ParameterOrReference)),
+
+        # internal fields
+        'normalized_ref': dict(builder=internal),
+        'ref_obj': dict(builder=internal),
     }
 
     __renamed__ = {
@@ -390,20 +415,21 @@ class Callback(map_(PathItem)):
     __swagger_version__ = '3.0.0'
 
 
-Operation.attach_field('callbacks', builder=child, child_builder=map_(if_not_ref_else(Callback)))
+CallbackOrReference = if_not_ref_else(Callback)
+Operation.attach_field('callbacks', builder=child, child_builder=map_(CallbackOrReference))
 
 
 class Components(Base2_v3_0_0):
     __fields__ = {
-        'schemas': dict(builder=child, child_builder=map_(Schema)),
-        'responses': dict(builder=child, child_builder=map_(Response)),
-        'parameters': dict(builder=child, child_builder=map_(Parameter)),
-        'examples': dict(builder=child, child_builder=map_(Example)),
-        'requestBodies': dict(builder=child, child_builder=map_(RequestBody)),
-        'headers': dict(builder=child, child_builder=map_(Header)),
-        'securitySchemes': dict(builder=child, child_builder=map_(SecurityScheme)),
-        'links': dict(builder=child, child_builder=map_(Link)),
-        'callbacks': dict(builder=child, child_builder=map_(Callback)),
+        'schemas': dict(builder=child, child_builder=map_(SchemaOrReference)),
+        'responses': dict(builder=child, child_builder=map_(ResponseOrReference)),
+        'parameters': dict(builder=child, child_builder=map_(ParameterOrReference)),
+        'examples': dict(builder=child, child_builder=map_(ExampleOrReference)),
+        'requestBodies': dict(builder=child, child_builder=map_(RequestBodyOrReference)),
+        'headers': dict(builder=child, child_builder=map_(HeaderOrReference)),
+        'securitySchemes': dict(builder=child, child_builder=map_(SecuritySchemeOrReference)),
+        'links': dict(builder=child, child_builder=map_(LinkOrReference)),
+        'callbacks': dict(builder=child, child_builder=map_(CallbackOrReference)),
     }
 
     __renamed__ = {
