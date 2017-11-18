@@ -229,6 +229,9 @@ class _List(_Base):
     def __getitem__(self, idx):
         return self.__elm[idx]
 
+    def __len__(self):
+        return len(self.__elm)
+
     def append(self, obj):
         return self.__elm.append(obj)
 
