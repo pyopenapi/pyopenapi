@@ -22,6 +22,9 @@ def up(obj, app, jref):
 
         # phase 2: resolve $ref
         scanner.scan(root=ret, route=[Resolve(app)])
+
+        # phase 3: merge path-item
+        scanner.scan(root=ret, route=[Merge(app)])
     else:
         raise Exception('unsupported migration: {} to 3.0.0'.format(obj.__swagger_version__))
 

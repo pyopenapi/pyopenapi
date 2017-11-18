@@ -404,6 +404,7 @@ class PathItem(Base2_v3_0_0):
         # internal fields
         'normalized_ref': dict(builder=internal),
         'ref_obj': dict(builder=internal),
+        'final_obj': dict(builder=internal),
     }
 
     __renamed__ = {

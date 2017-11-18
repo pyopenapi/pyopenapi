@@ -427,9 +427,6 @@ class Base2Obj(_Base):
         """ merge 1st layer of children from other object,
         :param BaseObj other: the source object to be merged from.
         """
-        if type(self) != type(other):
-            raise ValueError('different type to merge: {}, {}, {}'.format(str(type(self)), str(type(other)), self.path))
-
         for name in self.__children__:
             if not getattr(self, name):
                 o = getattr(other, name)

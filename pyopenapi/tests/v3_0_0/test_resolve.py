@@ -22,11 +22,73 @@ class PathItemMergeTestCase(unittest.TestCase):
     def test_merge_basic(self):
         """ one path item in root ref to an external path item
         """
+        pi = self.app.s('test1')
+
+        def _not_exist(o):
+            self.assertEqual(o.delete, None)
+            self.assertEqual(o.options, None)
+            self.assertEqual(o.head, None)
+            self.assertEqual(o.patch, None)
+            self.assertEqual(o.trace, None)
+
+        # check original object is not touch, or 'dump' would be wrong
+        _not_exist(pi)
+        self.assertNotEqual(pi.post, None)
+
+        another = self.app.resolve('file:///partial_path_item_1.yml#/test1', PathItem, '3.0.0')
+        self.assertNotEqual(another.get, None)
+        self.assertNotEqual(another.put, None)
+
+        final = pi.final_obj
+        _not_exist(final)
+        self.assertNotEqual(final.get, None)
+        self.assertNotEqual(final.post, None)
+        # children objects are shared
+        self.assertEqual(id(pi.post), id(final.post))
+        self.assertEqual(id(another.get), id(final.get))
+        self.assertEqual(id(another.put), id(final.put))
 
     def test_merge_cascade(self):
         """ path item in root ref to an external path item with
         ref to yet another path item, too
         """
+        pi = self.app.s('test2')
+
+        def _not_exist(o):
+            self.assertEqual(o.put, None)
+            self.assertEqual(o.delete, None)
+            self.assertEqual(o.options, None)
+            self.assertEqual(o.head, None)
+            self.assertEqual(o.patch, None)
+            self.assertEqual(o.trace, None)
+
+        _not_exist(pi)
+        self.assertEqual(pi.get, None)
+        self.assertEqual(pi.post, None)
+
+        another_1 = self.app.resolve('file:///partial_path_item_1.yml#/test2')
+        _not_exist(another_1)
+        self.assertNotEqual(another_1.get, None)
+        self.assertEqual(another_1.post, None)
+
+        another_2 = self.app.resolve('file:///partial_path_item_2.yml#/test2')
+        _not_exist(another_2)
+        self.assertEqual(another_2.get, None)
+        self.assertNotEqual(another_2.post, None)
+
+        final = pi.final_obj
+        _not_exist(final)
+        self.assertNotEqual(final.get, None)
+        self.assertNotEqual(final.post, None)
+        self.assertEqual(id(final.get), id(another_1.get))
+        self.assertEqual(id(final.post), id(another_2.post))
+
+    def test_no_ref_should_not_have_final(self):
+        """ path item object without $ref
+        should not have 'final_obj' property
+        """
+        pi = self.app.resolve('file:///partial_path_item_2.yml#/test2')
+        self.assertEqual(pi.final_obj, None)
 
     def test_path_item_parameters(self):
         """ make sure parameters in path-item are handled
