@@ -20,6 +20,8 @@ def up(obj, app, jref):
         scanner.scan(root=ret, route=[AssignParent()])
 
     if ret.__swagger_version__ == '2.0':
+        app._cache_spec_obj(ret, *jr_split(jref), spec_version='2.0')
+
         # normalize $ref
         url, jp = jr_split(jref)
         scanner.scan(root=ret, route=[NormalizeRef(url)])
