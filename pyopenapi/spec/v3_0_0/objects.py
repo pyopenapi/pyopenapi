@@ -314,8 +314,8 @@ ResponseOrReference = if_not_ref_else(Response)
 
 class OAuthFlow(Base2_v3_0_0):
     __fields__ = {
-        'authorizationUrl': dict(builder=field, required=True),
-        'tokenUrl': dict(builder=field, required=True),
+        'authorizationUrl': dict(builder=field),
+        'tokenUrl': dict(builder=field),
         'refreshUrl': dict(builder=field),
         'scopes': dict(builder=child, child_builder=map_(is_str), required=True),
     }
