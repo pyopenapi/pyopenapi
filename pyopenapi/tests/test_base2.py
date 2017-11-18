@@ -15,8 +15,14 @@ class AObj(Base2):
     __fields__ = {
         'a': dict(builder=field),
         'b': dict(builder=field, required=True),
-        'c': dict(builder=child, child_builder=BObj),
-        'ic': dict(builder=internal),
+    }
+
+    __internal__ = {
+        'ic': dict(),
+    }
+
+    __children__ = {
+        'c': dict(child_builder=BObj),
     }
 
     __renamed__ = {
@@ -24,16 +30,16 @@ class AObj(Base2):
     }
 
 class CObj(Base2):
-    __fields__ = {
-        'cc': dict(builder=child, child_builder=map_(AObj)),
-        'ccc': dict(builder=child, child_builder=list_(AObj)),
+    __children__ = {
+        'cc': dict(child_builder=map_(AObj)),
+        'ccc': dict(child_builder=list_(AObj)),
     }
 
 class DObj(Base2):
-    __fields__ = {
-        'd1': dict(builder=child, child_builder=map_(list_(AObj))),
-        'd2': dict(builder=child, child_builder=list_(map_(AObj))),
-        'd3': dict(builder=child, child_builder=map_(map_(AObj))),
+    __children__ = {
+        'd1': dict(child_builder=map_(list_(AObj))),
+        'd2': dict(child_builder=list_(map_(AObj))),
+        'd3': dict(child_builder=map_(map_(AObj))),
     }
 
 def if_not_a(obj_class):
@@ -45,11 +51,11 @@ def if_not_a(obj_class):
     return f
 
 class EObj(Base2):
-    __fields__ = {
-        'e1': dict(builder=child, child_builder=list_(if_not_a(BObj))),
-        'e2': dict(builder=child, child_builder=if_not_a(map_(map_(AObj)))),
-        'e3': dict(builder=child, child_builder=if_not_a(DObj)),
-        'e4': dict(builder=child, child_builder=if_not_a(map_(AObj))),
+    __children__ = {
+        'e1': dict(child_builder=list_(if_not_a(BObj))),
+        'e2': dict(child_builder=if_not_a(map_(map_(AObj)))),
+        'e3': dict(child_builder=if_not_a(DObj)),
+        'e4': dict(child_builder=if_not_a(map_(AObj))),
     }
 
 class FObj(AObj):
@@ -58,10 +64,10 @@ class FObj(AObj):
     }
 
 class GObj(Base2):
-    __fields__ = {
-        'a': dict(builder=child, child_builder=BObj),
-        'b': dict(builder=child, child_builder=BObj),
-        'c': dict(builder=child, child_builder=BObj),
+    __children__ = {
+        'a': dict(child_builder=BObj),
+        'b': dict(child_builder=BObj),
+        'c': dict(child_builder=BObj),
     }
 
 class HObj(Base2):
@@ -94,7 +100,7 @@ class Base2TestCase(unittest.TestCase):
         """ check FieldMeta
         """
         # should fill __child__ with fields created by builder:child
-        self.assertEqual(AObj.__children__, ['c'])
+        self.assertEqual(AObj.__children__.keys(), ['c'])
 
     def test_field(self):
         """ make sure builder:field works

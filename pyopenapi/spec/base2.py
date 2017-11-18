@@ -355,38 +355,38 @@ class FieldMeta(type):
         """ scan through MRO to get a merged list of fields and create them
         """
         fields = spc.setdefault('__fields__', {})
-        cn = spc.setdefault('__children__', [])
-        intl = spc.setdefault('__internal__', [])
+        cn = spc.setdefault('__children__', {})
+        intl = spc.setdefault('__internal__', {})
         renm = spc.setdefault('__renamed__', {})
-        for b in bases:
-            bf = getattr(b, '__fields__', None)
-            if bf:
-                d = {}
-                for k in set(bf.keys()) - set(fields.keys()):
-                    d[k] = bf[k]
-                fields.update(d)
 
-            re = getattr(b, '__renamed__', {})
-            if re:
+        def _from_parent_(s, name):
+            p = getattr(b, name, None)
+            if p:
                 d = {}
-                for k in set(re.keys()) - set(renm.keys()):
-                    d[k] = re[k]
-                renm.update(d)
+                for k in set(p.keys()) - set(s.keys()):
+                    d[k] = p[k]
+                s.update(d)
+
+        for b in bases:
+            _from_parent_(fields, '__fields__')
+            _from_parent_(renm, '__renamed__')
+            _from_parent_(cn, '__children__')
+            _from_parent_(intl, '__internal__')
 
         for n, args in six.iteritems(fields):
             args = copy.copy(args)
 
             builder = args.pop('builder')
-            key = args.pop('key', None)
-            spc[n] = builder(key or n, **args)
-            if builder.__name__ == 'child':
-                cn.append(n)
-            elif builder.__name__ == 'internal':
-                intl.append(n)
+            spc[n] = builder(args.pop('key', None) or n, **args)
 
-        for n, args in six.iteritems(renm):
-            args = copy.copy(args)
-            spc[n] = rename(args.pop('key'))
+        def _update_to_spc(builder, fs):
+            for n, args in six.iteritems(fs):
+                args = copy.copy(args)
+                spc[n] = builder(args.pop('key', None) or n, **args)
+
+        _update_to_spc(rename, renm)
+        _update_to_spc(internal, intl)
+        _update_to_spc(child, cn)
 
         return type.__new__(metacls, name, bases, spc)
 
@@ -483,7 +483,7 @@ class Base2Obj(_Base):
                 return s == o, name
             return True, ''
 
-        for name in self.__fields__:
+        for name in self.__fields__.keys() + self.__children__.keys():
             same, n = _cmp_(jp_compose(name, base), getattr(self, name), getattr(other, name))
             if not same:
                 return same, n
@@ -497,8 +497,7 @@ class Base2Obj(_Base):
         ret = {}
 
         cs = set([name for name in self.__children__])
-        ins = set([name for name in self.__internal__])
-        fs = set([name for name in self.__fields__]) - cs - ins
+        fs = set([name for name in self.__fields__])
 
         # dump children first
         for name in cs:
@@ -529,9 +528,9 @@ class Base2Obj(_Base):
         key = desc.pop('key', None)
         setattr(kls, name, builder(key or name, **desc))
         if builder.__name__ == 'child':
-            kls.__children__.append(name)
+            kls.__children__[name] = field_descriptor
         elif builder.__name__ == 'internal':
-            kls.__internal__.append(name)
+            kls.__internal__[name] = field_descriptor
 
     @property
     def _field_names_(self):
@@ -539,7 +538,7 @@ class Base2Obj(_Base):
         :return: a list of field names
         :rtype: a list of str
         """
-        return [name for name in set(self.__fields__) - set(self.__internal__)]
+        return [name for name in set(self.__fields__) | set(self.__children__)]
 
     @property
     def _children_(self):
