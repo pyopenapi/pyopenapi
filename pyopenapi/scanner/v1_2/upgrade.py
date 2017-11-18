@@ -172,6 +172,7 @@ class Upgrade(object):
         resp = objects.Response(NullContext())
         if obj.type != 'void':
             resp.update_field('schema', convert_schema_from_datatype(obj, scope, self.__sep, app))
+        resp.update_field('description', '') # description is a required field in 2.0 Response object
         o.responses['default'] = resp
 
         path = obj._parent_.basePath + obj.path

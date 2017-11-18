@@ -13,7 +13,7 @@ def _generate_fields(obj, names):
     ret = {}
     for n in names:
         v = getattr(obj, n, None)
-        if v:
+        if v is not None:
             ret[n] = v
 
     return ret
