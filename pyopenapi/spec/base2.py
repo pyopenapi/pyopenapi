@@ -194,9 +194,15 @@ class _List(_Base):
 
     def dump(self):
         ret = []
+        if len(self.__elm) == 0:
+            return ret
+
+        is_primitive = not hasattr(self.__elm[0], 'dump')
+        if is_primitive:
+            return copy.copy(self.__elm)
+
         for e in self.__elm:
             ret.append(e.dump())
-
         return ret
 
     @property
@@ -295,8 +301,11 @@ class _Map(_Base):
 
     def dump(self):
         ret = {}
-        for n in self.__elm:
-            ret[n] = self.__elm[n].dump()
+        for k, v in six.iteritems(self.__elm):
+            if hasattr(v, 'dump') and callable(v.dump):
+                ret[k] = v.dump()
+            else:
+                ret[k] = v
 
         return ret
 
