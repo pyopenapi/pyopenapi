@@ -356,7 +356,6 @@ def to_parameter(obj, ctx, path):
 def from_parameter(obj, existing_body, consumes, path):
     ref_ = getattr(obj, '$ref', None)
     resolved_obj = deref(obj)
-    obj = final(obj)
 
     ctx = ParameterContext(obj.name, consumes=consumes)
     in_ = getattr(obj, 'in', None)

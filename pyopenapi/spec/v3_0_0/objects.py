@@ -384,6 +384,10 @@ class Operation(Base2_v3_0_0):
         'request_body': dict(key='requestBody'),
     }
 
+    __internal__ = {
+        'final_obj': dict(builder=internal),
+    }
+
 
 class PathItem(Base2_v3_0_0):
     __fields__ = {

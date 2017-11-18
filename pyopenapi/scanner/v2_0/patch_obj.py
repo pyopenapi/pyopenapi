@@ -28,36 +28,9 @@ class PatchObject(object):
             obj.update_field('produces', self._swagger.produces if len(obj.produces) == 0 else obj.produces)
             obj.update_field('consumes', self._swagger.consumes if len(obj.consumes) == 0 else obj.consumes)
 
-        # combine parameters from PathItem
-        if obj._parent_:
-            if obj.parameters:
-                for p in obj._parent_.parameters:
-                    p_final = final(p)
-                    for pp in obj.parameters:
-                        if p_final.name == final(pp).name:
-                            break
-                    else:
-                        obj.parameters.append(p)
-            else:
-                obj.update_field('parameters', copy.copy(obj._parent_.parameters))
-
-        # schemes
-        if obj.schemes:
-            obj.update_field('cached_schemes', obj.schemes)
-        elif isinstance(self._swagger, Swagger):
-            obj.update_field('cached_schemes', app.schemes if not self._swagger.schemes else self._swagger.schemes)
-        else:
-            obj.update_field('cached_schemes', app.schemes)
-
-        # primitive factory
-        setattr(obj, '_prim_factory', app.prim_factory)
-
         # inherit service-wide security requirements
         if obj.security == None and isinstance(self._swagger, Swagger):
             obj.update_field('security', self._swagger.security)
-
-        # mime_codec
-        setattr(obj, '_mime_codec', app.mime_codec)
 
     @Disp.register([PathItem])
     def _path_item(self, path, obj, app):

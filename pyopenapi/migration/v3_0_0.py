@@ -1,7 +1,7 @@
 from ..utils import jr_split
 from ..scan import Scanner, Scanner2
 from ..scanner.v2_0 import Upgrade
-from ..scanner.v3_0_0 import Merge, Resolve, NormalizeRef
+from ..scanner.v3_0_0 import Merge, Resolve, NormalizeRef, PatchObject
 
 def up(obj, app, jref):
     ret = obj
@@ -27,6 +27,9 @@ def up(obj, app, jref):
 
         # phase 3: merge path-item
         scanner.scan(root=ret, route=[Merge(app)])
+
+        # phase 4: patch objects
+        scanner.scan(root=ret, route=[PatchObject(ret, app)])
     else:
         raise Exception('unsupported migration: {} to 3.0.0'.format(obj.__swagger_version__))
 
