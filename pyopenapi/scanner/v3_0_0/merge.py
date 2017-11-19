@@ -18,7 +18,7 @@ def _merge(obj, path, app, parser):
 
     r = obj.normalized_ref
     while r:
-        ro = app.resolve(r, parser=parser, spec_version='3.0.0')
+        ro = app.resolve(r, parser=parser, spec_version='3.0.0', before_return=None)
         if not ro:
             raise Exception('unable to resolve {} when merging for {}'.format(r, path))
 

@@ -443,16 +443,24 @@ class App(object):
     """
     _create_ = create
 
-    def resolve(self, jref, parser=None, spec_version=None):
+    def resolve(self, jref, parser=None, spec_version=None, before_return=utils.final):
         """ JSON reference resolver
 
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
         :param parser: the parser corresponding to target object.
         :param str spec_version: the OpenAPI spec version 'jref' pointing to.
+        :param func before_return: a hook to patch object before returning it
         :type parser: pyopenapi.base.Context
         :return: the referenced object, wrapped by weakref.ProxyType
         :rtype: weakref.ProxyType
         :raises ValueError: if path is not valid
+
+        The initial intention for 'before_return' is to return obj.final_obj automatically.
+        Prototype of this hook is:
+
+            def your_hook(your_obj):
+                # do something to 'your_obj'
+                return your_obj
         """
 
         logger.info('resolving: [{0}]'.format(jref))
@@ -486,9 +494,12 @@ class App(object):
 
         if isinstance(obj, (six.string_types, six.integer_types, list, dict)):
             return obj
+
+        if before_return:
+            obj = before_return(obj)
         return weakref.proxy(obj)
 
-    def s(self, p, b=_shortcut_[sc_path]):
+    def s(self, p, b=_shortcut_[sc_path], before_return=utils.final):
         """ shortcut of App.resolve.
         We provide a default base for '#/paths'. ex. to access '#/paths/~1user/get',
         just call App.s('user/get')
@@ -498,9 +509,9 @@ class App(object):
         """
 
         if b[0]:
-            return self.resolve(utils.jp_compose(b[0] + p if not p.startswith(b[0]) else p, base=b[1]))
+            return self.resolve(utils.jp_compose(b[0] + p if not p.startswith(b[0]) else p, base=b[1]), before_return=before_return)
         else:
-            return self.resolve(utils.jp_compose(p, base=b[1]))
+            return self.resolve(utils.jp_compose(p, base=b[1]), before_return=before_return)
 
     def dump(self):
         """ dump into Swagger Document

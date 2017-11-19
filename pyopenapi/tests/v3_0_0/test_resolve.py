@@ -22,7 +22,7 @@ class PathItemMergeTestCase(unittest.TestCase):
     def test_merge_basic(self):
         """ one path item in root ref to an external path item
         """
-        pi = self.app.s('test1')
+        pi = self.app.s('test1', before_return=None)
 
         def _not_exist(o):
             self.assertEqual(o.delete, None)
@@ -35,7 +35,7 @@ class PathItemMergeTestCase(unittest.TestCase):
         _not_exist(pi)
         self.assertNotEqual(pi.post, None)
 
-        another = self.app.resolve('file:///partial_path_item_1.yml#/test1', PathItem, '3.0.0')
+        another = self.app.resolve('file:///partial_path_item_1.yml#/test1', PathItem, '3.0.0', before_return=None)
         self.assertNotEqual(another.get, None)
         self.assertNotEqual(another.put, None)
 
@@ -52,7 +52,7 @@ class PathItemMergeTestCase(unittest.TestCase):
         """ path item in root ref to an external path item with
         ref to yet another path item, too
         """
-        pi = self.app.s('test2')
+        pi = self.app.s('test2', before_return=None)
 
         def _not_exist(o):
             self.assertEqual(o.put, None)
@@ -66,12 +66,12 @@ class PathItemMergeTestCase(unittest.TestCase):
         self.assertEqual(pi.get, None)
         self.assertEqual(pi.post, None)
 
-        another_1 = self.app.resolve('file:///partial_path_item_1.yml#/test2')
+        another_1 = self.app.resolve('file:///partial_path_item_1.yml#/test2', before_return=None)
         _not_exist(another_1)
         self.assertNotEqual(another_1.get, None)
         self.assertEqual(another_1.post, None)
 
-        another_2 = self.app.resolve('file:///partial_path_item_2.yml#/test2')
+        another_2 = self.app.resolve('file:///partial_path_item_2.yml#/test2', before_return=None)
         _not_exist(another_2)
         self.assertEqual(another_2.get, None)
         self.assertNotEqual(another_2.post, None)
@@ -87,7 +87,7 @@ class PathItemMergeTestCase(unittest.TestCase):
         """ path item object without $ref
         should not have 'final_obj' property
         """
-        pi = self.app.resolve('file:///partial_path_item_2.yml#/test2')
+        pi = self.app.resolve('file:///partial_path_item_2.yml#/test2', before_return=None)
         self.assertEqual(pi.final_obj, None)
 
     def test_path_item_parameters(self):
@@ -119,14 +119,14 @@ class ResolveTestCase(unittest.TestCase):
     def test_normalized_ref(self):
         """ make sure all '$ref' are cached with a normalized one
         """
-        resp = self.app.s('test1').post.responses['default']
+        resp = self.app.s('test1', before_return=None).post.responses['default']
         self.assertTrue(isinstance(resp, Reference))
         self.assertEqual(resp.normalized_ref, 'file:///root.yml#/components/responses/void')
 
     def test_resolve_schema(self):
         """ make sure 'Schema' is resolved and cached
         """
-        s = self.app.resolve('#/components/schemas/partial_1')
+        s = self.app.resolve('#/components/schemas/partial_1', before_return=None)
         self.assertTrue(isinstance(s, Reference))
         self.assertEqual(s.normalized_ref, 'file:///partial_1.yml#/schemas/partial_1')
         self.assertTrue(isinstance(s.ref_obj, Schema))
@@ -135,7 +135,7 @@ class ResolveTestCase(unittest.TestCase):
     def test_resolve_parameter(self):
         """ make sure 'Parameter' is resolved and cached
         """
-        p = self.app.s('test3').get.parameters[0]
+        p = self.app.s('test3', before_return=None).get.parameters[0]
         self.assertEqual(p.normalized_ref, 'file:///root.yml#/components/parameters/test3.p1')
         self.assertTrue(isinstance(p.ref_obj, Reference))
 
@@ -158,7 +158,7 @@ class ResolveTestCase(unittest.TestCase):
     def test_resolve_header(self):
         """ make sure 'Header' is resolved and cached
         """
-        p = self.app.s('test3').delete.parameters[0]
+        p = self.app.s('test3', before_return=None).delete.parameters[0]
         self.assertTrue(isinstance(p, Reference))
         self.assertEqual(p.normalized_ref, 'file:///root.yml#/components/headers/test3.header.1')
 
@@ -181,7 +181,7 @@ class ResolveTestCase(unittest.TestCase):
     def test_resolve_request_body(self):
         """ make sure 'RequestBody' is resolved and cached
         """
-        b = self.app.s('test3').post.request_body
+        b = self.app.s('test3', before_return=None).post.request_body
         self.assertTrue(isinstance(b, Reference))
         self.assertEqual(b.normalized_ref, 'file:///root.yml#/components/requestBodies/test3.body.1')
 
@@ -213,7 +213,7 @@ class ResolveTestCase(unittest.TestCase):
     def test_resolve_response(self):
         """ make sure 'Response' is resolved and cached
         """
-        r = self.app.s('test3').get.responses['400']
+        r = self.app.s('test3', before_return=None).get.responses['400']
         self.assertTrue(isinstance(r, Reference))
         self.assertEqual(r.normalized_ref, 'file:///root.yml#/components/responses/BadRequest')
 
@@ -244,7 +244,7 @@ class ResolveTestCase(unittest.TestCase):
     def test_resolve_components_callback(self):
         """ make sure 'Callback' in components is resolved and cached
         """
-        cb = self.app.resolve('#/components/callbacks/cb.1')
+        cb = self.app.resolve('#/components/callbacks/cb.1', before_return=None)
         self.assertTrue(isinstance(cb, Reference))
         self.assertEqual(cb.normalized_ref, 'file:///partial_1.yml#/callbacks/cb.1')
 
@@ -268,7 +268,7 @@ class ResolveTestCase(unittest.TestCase):
         self.assertEqual(r.description, 'void response')
 
         # able to resolve PathItem under callback
-        p = self.app.resolve('file:///partial_1.yml#/callbacks/cb.1/~1test-cb-1')
+        p = self.app.resolve('file:///partial_1.yml#/callbacks/cb.1/~1test-cb-1', before_return=None)
         self.assertTrue(isinstance(p, PathItem))
 
     def test_resolve_operation(self):

@@ -18,7 +18,7 @@ class Resolve(object):
         if not r:
             return
 
-        ro = app.resolve(r, parser=SchemaContext, spec_version='2.0')
+        ro = app.resolve(r, parser=SchemaContext, spec_version='2.0', before_return=None)
         if not ro:
             raise ReferenceError('Unable to resolve: {0}'.format(r))
         if ro.__class__ != obj.__class__:

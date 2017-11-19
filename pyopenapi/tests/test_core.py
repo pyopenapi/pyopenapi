@@ -132,3 +132,17 @@ class SwaggerCoreTestCase(unittest.TestCase):
         obj = app._get_spec_obj_from_cache('file:///root/swagger.json', '#', '3.0.0')
         self.assertEqual(obj.__swagger_version__, '3.0.0')
 
+    def test_resolve_before_return(self):
+        """ make sure before return is called
+        """
+        app = App.create(get_test_data_folder(version='2.0', which='wordnik'))
+
+        called = {'': False}
+        def _my_before_return_hook_(obj):
+            called[''] = True
+            return obj
+
+        obj = app.resolve('#', before_return=_my_before_return_hook_)
+        self.assertNotEqual(obj, None)
+        self.assertTrue(called[''])
+

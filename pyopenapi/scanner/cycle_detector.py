@@ -17,7 +17,7 @@ import functools
 import six
 
 def _out(app, parser, path):
-    obj = app.resolve(path, parser=parser)
+    obj = app.resolve(path, parser=parser, before_return=None)
     r = obj.normalized_ref
     return [r] if r else []
 
