@@ -235,6 +235,9 @@ class _List(_Base):
     def append(self, obj):
         return self.__elm.append(obj)
 
+    def extend(self, other):
+        return self.__elm.extend(other)
+
 
 def map_(builder):
     """ class factory for _Map, would create a new class based on _Map
