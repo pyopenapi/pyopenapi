@@ -60,7 +60,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         # $ref
         expect = {
-            '$ref':'#/definitions/pet:Pet'
+            '$ref':'#/components/schemas/pet:Pet'
         }
         self.assertEqual(_diff_(
             expect,
@@ -84,7 +84,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         }
         self.assertEqual(_diff_(
             expect,
-            self.app.resolve('#/definitions/pet:Pet').properties['photoUrls'].items.dump()
+            self.app.resolve('#/components/schemas/pet:Pet').properties['photoUrls'].items.dump()
         ), [])
 
     def test_scope(self):
@@ -195,7 +195,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         expect = {
             'in':'body',
             'schema':{
-                '$ref':'#/definitions/pet:Pet'
+                '$ref':'#/components/schemas/pet:Pet'
             }
         }
         self.assertEqual(_diff_(
@@ -242,7 +242,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'schema':{
                 'type':'array',
                 'items': {
-                    '$ref':'#/definitions/pet:Pet',
+                    '$ref':'#/components/schemas/pet:Pet',
                 }
             }
         }
@@ -267,7 +267,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         }
         self.assertEqual(_diff_(
             expect,
-            self.app.resolve('#/definitions/user:User').properties['userStatus'].dump()
+            self.app.resolve('#/components/schemas/user:User').properties['userStatus'].dump()
         ), [])
 
     def test_model(self):
@@ -315,10 +315,10 @@ class Converter_v1_2_TestCase(unittest.TestCase):
                 }
             }
         }
-        d = self.app.resolve('#/definitions/pet:Pet').dump()
+        d = self.app.resolve('#/components/schemas/pet:Pet').dump()
         self.assertEqual(_diff_(
             expect,
-            self.app.resolve('#/definitions/pet:Pet').dump(),
+            self.app.resolve('#/components/schemas/pet:Pet').dump(),
             exclude=['$ref'],
         ), [])
 
@@ -427,6 +427,6 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
 
         self.assertEqual(_diff_(
             expect,
-            app.resolve('#/definitions/user:UserWithInfo').dump(),
+            app.resolve('#/components/schemas/user:UserWithInfo').dump(),
             include=['allOf']
         ), [])

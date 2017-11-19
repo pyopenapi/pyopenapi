@@ -132,9 +132,9 @@ class ResolveTestCase(unittest.TestCase):
 
     def test_ref_resolve(self):
         """ make sure pre resolve works """
-        ref = getattr(self.app.resolve('#/definitions/user!##!UserWithInfo').allOf[0], 'ref_obj')
+        ref = getattr(self.app.resolve('#/components/schemas/user!##!UserWithInfo').allOf[0], 'ref_obj')
         self.assertTrue(isinstance(ref, weakref.ProxyTypes))
-        self.assertEqual(ref, self.app.resolve('#/definitions/user!##!User'))
+        self.assertEqual(ref, self.app.resolve('#/components/schemas/user!##!User'))
 
 
 class CountParemeter3(object):

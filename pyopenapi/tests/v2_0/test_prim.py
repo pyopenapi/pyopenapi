@@ -19,7 +19,7 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_model_tag(self):
         """ test basic model """
-        t = self.app.resolve('#/definitions/Tag')
+        t = self.app.resolve('#/components/schemas/Tag')
         self.assertTrue(isinstance(t, objects.Schema))
 
         v = t._prim_(dict(id=1, name='Hairy'), self.app.prim_factory)
@@ -31,7 +31,7 @@ class SchemaTestCase(unittest.TestCase):
         """ test complex model, including
         model inheritance
         """
-        p = self.app.resolve('#/definitions/Pet')
+        p = self.app.resolve('#/components/schemas/Pet')
         self.assertTrue(isinstance(p, objects.Schema))
 
         v = p._prim_(dict(
@@ -62,7 +62,7 @@ class SchemaTestCase(unittest.TestCase):
     def test_model_employee(self):
         """ test model with allOf only
         """
-        e = self.app.resolve("#/definitions/Employee")
+        e = self.app.resolve("#/components/schemas/Employee")
         self.assertTrue(isinstance(e, objects.Schema))
 
         v = e._prim_(dict(
@@ -92,7 +92,7 @@ class SchemaTestCase(unittest.TestCase):
     def test_model_boss(self):
         """ test model with allOf and properties
         """
-        b = self.app.resolve("#/definitions/Boss")
+        b = self.app.resolve("#/components/schemas/Boss")
         self.assertTrue(isinstance(b, objects.Schema))
 
         v = b._prim_(dict(
@@ -109,25 +109,25 @@ class SchemaTestCase(unittest.TestCase):
         """ test integer,
         schema is separated into parts
         """
-        i = self.app.resolve("#/definitions/int")
+        i = self.app.resolve("#/components/schemas/int")
         self.assertRaises(errs.ValidationError, i._prim_, 200, self.app.prim_factory)
         self.assertRaises(errs.ValidationError, i._prim_, 99, self.app.prim_factory)
 
-        num_i32 = self.app.resolve('#/definitions/number_int32')
+        num_i32 = self.app.resolve('#/components/schemas/number_int32')
         self.assertRaises(errs.ValidationError, num_i32._prim_, 200, self.app.prim_factory)
         self.assertRaises(errs.ValidationError, num_i32._prim_, 99, self.app.prim_factory)
 
-        num_i64 = self.app.resolve('#/definitions/number_int64')
+        num_i64 = self.app.resolve('#/components/schemas/number_int64')
         self.assertRaises(errs.ValidationError, num_i64._prim_, 200, self.app.prim_factory)
         self.assertRaises(errs.ValidationError, num_i64._prim_, 99, self.app.prim_factory)
 
-        default_int = self.app.resolve('#/definitions/default_int')
+        default_int = self.app.resolve('#/components/schemas/default_int')
         self.assertRaises(errs.ValidationError, default_int._prim_, 200, self.app.prim_factory)
         self.assertRaises(errs.ValidationError, default_int._prim_, 99, self.app.prim_factory)
 
     def test_array_of_int(self):
         """ test array of integer """
-        i = self.app.resolve('#/definitions/array_int')
+        i = self.app.resolve('#/components/schemas/array_int')
 
         # pass
         i._prim_([1, 1, 1, 1, 1], self.app.prim_factory)
@@ -140,24 +140,24 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_num_multiple_of(self):
         """ test multipleOf """
-        i = self.app.resolve("#/definitions/num_multipleOf")
+        i = self.app.resolve("#/components/schemas/num_multipleOf")
 
         self.assertRaises(errs.ValidationError, i._prim_, 4, self.app.prim_factory)
         i._prim_(5, self.app.prim_factory) # should raise nothing
 
-        default_number = self.app.resolve('#/definitions/default_number')
+        default_number = self.app.resolve('#/components/schemas/default_number')
         default_number._prim_(5, self.app.prim_factory) # should raise nothing
 
     def test_str_enum(self):
         """ test str enum """
-        e = self.app.resolve("#/definitions/str_enum")
+        e = self.app.resolve("#/components/schemas/str_enum")
 
         self.assertRaises(errs.ValidationError, e._prim_, "yellow", self.app.prim_factory)
         e._prim_("green", self.app.prim_factory) # should raise nothing
 
     def test_byte(self):
         """ test byte """
-        b = self.app.resolve("#/definitions/byte")
+        b = self.app.resolve("#/components/schemas/byte")
 
         bv = b._prim_("BBBBB", self.app.prim_factory)
         self.assertEqual(str(bv), "BBBBB", self.app.prim_factory)
@@ -165,7 +165,7 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_date(self):
         """ test date """
-        d = self.app.resolve("#/definitions/date")
+        d = self.app.resolve("#/components/schemas/date")
 
         # test input of constructor
         self.assertEqual(str(d._prim_(float(0), self.app.prim_factory)), "1970-01-01")
@@ -178,7 +178,7 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_date_time(self):
         """ test date-time """
-        d = self.app.resolve("#/definitions/date-time")
+        d = self.app.resolve("#/components/schemas/date-time")
 
         # test input of constructor
         self.assertEqual(str(d._prim_(float(0), self.app.prim_factory)), "1970-01-01T00:00:00")
@@ -191,7 +191,7 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_model_bool(self):
         """ test a model containing boolean """
-        d = self.app.resolve("#/definitions/model_bool")
+        d = self.app.resolve("#/components/schemas/model_bool")
 
         dv = d._prim_(dict(bool_val=True), self.app.prim_factory)
         # try to access it
@@ -199,7 +199,7 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_email(self):
         """ test string in email format """
-        d = self.app.resolve('#/definitions/email')
+        d = self.app.resolve('#/components/schemas/email')
 
         dv = d._prim_('a@a.com', self.app.prim_factory)
         self.assertEqual(dv, 'a@a.com')
@@ -207,7 +207,7 @@ class SchemaTestCase(unittest.TestCase):
 
     def test_uuid(self):
         """ test string in uuid format """
-        d = self.app.resolve('#/definitions/uuid')
+        d = self.app.resolve('#/components/schemas/uuid')
 
         # string
         dv = d._prim_('12345678-1234-5678-1234-567812345678', self.app.prim_factory)
@@ -243,7 +243,7 @@ class SchemaTestCase(unittest.TestCase):
         """
 
         # no duplication, should work
-        d = self.app.resolve('#/definitions/unique_array')
+        d = self.app.resolve('#/components/schemas/unique_array')
         arr_1 = [
             ['a', 'b', 'c'],
             ['d', 'e', 'f']
@@ -263,7 +263,7 @@ class SchemaTestCase(unittest.TestCase):
     def test_unique_item_on_object(self):
         """ uniqueItem == True on array of object
         """
-        d = self.app.resolve('#/definitions/unique_object')
+        d = self.app.resolve('#/components/schemas/unique_object')
         obj_1 = {'prop_1': '1-1', 'prop_2': {'prop_2_1': '1-2-1'}}
         obj_1_2 = {'prop_1': '1-1', 'prop_2': {'prop_2_1': '1-2-1-2'}}
         obj_2 = {'prop_1': '2-1', 'prop_2': {'prop_2_1': '2-2-1'}}
@@ -361,28 +361,28 @@ class AdditionalPropertiesTestCase(unittest.TestCase):
     def test_merge(self):
         """ verify merge along with additionalProperties """
         # Schema
-        addp = self.app.resolve('#/definitions/add_prop')
+        addp = self.app.resolve('#/components/schemas/add_prop')
         final = objects.Schema(base.NullContext())
         final.merge(addp, parser.SchemaContext)
 
         # True
-        addp = self.app.resolve('#/definitions/add_prop_bool')
+        addp = self.app.resolve('#/components/schemas/add_prop_bool')
         final = objects.Schema(base.NullContext())
         final.merge(addp, parser.SchemaContext)
 
         # False
-        addp = self.app.resolve('#/definitions/add_prop_false')
+        addp = self.app.resolve('#/components/schemas/add_prop_false')
         final = objects.Schema(base.NullContext())
         final.merge(addp, parser.SchemaContext)
 
         # nested with allOf
-        addp = self.app.resolve('#/definitions/add_prop_nested')
+        addp = self.app.resolve('#/components/schemas/add_prop_nested')
         final = objects.Schema(base.NullContext())
         final.merge(addp, parser.SchemaContext)
 
     def test_with_schema(self):
         m = self.app.prim_factory.produce(
-            self.app.resolve('#/definitions/add_prop'),
+            self.app.resolve('#/components/schemas/add_prop'),
             dict(
                 name_of_map='test',
                 category1=dict(
@@ -409,7 +409,7 @@ class AdditionalPropertiesTestCase(unittest.TestCase):
         self.assertEqual(m.category3.name, 'fish')
 
     def test_with_bool(self):
-        d = self.app.resolve('#/definitions/add_prop_bool')
+        d = self.app.resolve('#/components/schemas/add_prop_bool')
         m = self.app.prim_factory.produce(
             d,
             dict(
@@ -425,7 +425,7 @@ class AdditionalPropertiesTestCase(unittest.TestCase):
         self.assertEqual(m.category2, 'test_qoo')
 
     def test_with_bool_false(self):
-        d = self.app.resolve('#/definitions/add_prop_false')
+        d = self.app.resolve('#/components/schemas/add_prop_false')
         m = self.app.prim_factory.produce(
             d,
             dict(
@@ -445,7 +445,7 @@ class AdditionalPropertiesTestCase(unittest.TestCase):
         we need to make sure nested model process those keys before
         additionalProperties intecept all keys
         """
-        d = self.app.resolve('#/definitions/add_prop_nested')
+        d = self.app.resolve('#/components/schemas/add_prop_nested')
         self.assertRaises(errs.ValidationError, self.app.prim_factory.produce,
             d,
             dict(
@@ -457,7 +457,7 @@ class AdditionalPropertiesTestCase(unittest.TestCase):
         """ special case for array of items with additionalProperties
         and without properties
         """
-        d = self.app.resolve('#/definitions/addp_no_prop')
+        d = self.app.resolve('#/components/schemas/addp_no_prop')
         m = self.app.prim_factory.produce(
             d, [
                 dict(a=1, b=2, c=3),
@@ -518,7 +518,7 @@ class PrimitiveExtensionTestCase(unittest.TestCase):
 
     def test_extend(self):
         """ extend primitives with user defined type/format handler """
-        m1 = self.app.resolve('#/definitions/m1')
+        m1 = self.app.resolve('#/components/schemas/m1')
         v = m1._prim_({
             "_id": 100,
             "name": 'Ms',
@@ -528,7 +528,7 @@ class PrimitiveExtensionTestCase(unittest.TestCase):
 
     def test_overwrite(self):
         """ overrite type/format handler used in pyopenapi """
-        m1 = self.app.resolve('#/definitions/m1')
+        m1 = self.app.resolve('#/components/schemas/m1')
         v = m1._prim_({
             "job":"man"
         }, self.app.prim_factory)
@@ -539,6 +539,6 @@ class PrimitiveExtensionTestCase(unittest.TestCase):
             version='2.0',
             which=os.path.join('schema', 'extension')
         ))
-        m1 = app.resolve('#/definitions/m1')
+        m1 = app.resolve('#/components/schemas/m1')
         self.assertRaises(errs.ValidationError, m1._prim_, {'job':'man'}, app.prim_factory)
         # should raise

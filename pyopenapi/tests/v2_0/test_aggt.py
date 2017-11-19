@@ -19,7 +19,7 @@ class AggregateTestCase(unittest.TestCase):
         """ make sure properties scattered into multiple
         Schema(s) could be aggregated.
         """
-        s1 = self.app.resolve('#/definitions/s1').final
+        s1 = self.app.resolve('#/components/schemas/s1').final
         self.assertEqual(10, s1.maxItems)
         self.assertEqual(5, s1.minItems)
         self.assertEqual('string', getattr(s1.items, 'type'))
@@ -29,7 +29,7 @@ class AggregateTestCase(unittest.TestCase):
 
     def test_object_properties_merge(self):
         """ Schema.properties should be merged """
-        s2 = self.app.resolve('#/definitions/s2').final
+        s2 = self.app.resolve('#/components/schemas/s2').final
         self.assertEqual('object', getattr(s2, 'type'))
         self.assertTrue('password' in s2.properties, 'should has password')
         self.assertTrue('age' in s2.properties, 'should has age')
@@ -48,7 +48,7 @@ class AggregateTestCase(unittest.TestCase):
     def test_schema_allof_with_ref(self):
         """ allOf composite with '$ref'
         """
-        s3 = self.app.resolve('#/definitions/s3').final
+        s3 = self.app.resolve('#/components/schemas/s3').final
         self.assertTrue('name' in s3.properties, 'should has name')
         self.assertTrue('age' in s3.properties, 'should has age')
         self.assertTrue('phone' in s3.properties, 'should has phone')
@@ -56,7 +56,7 @@ class AggregateTestCase(unittest.TestCase):
     def test_schema_allof_with_items(self):
         """ make sure items is correctly merged
         """
-        s4 = self.app.resolve('#/definitions/s4').final
+        s4 = self.app.resolve('#/components/schemas/s4').final
         self.assertEqual('integer', s4.items.final.type)
         self.assertEqual('int32', s4.items.final.format)
 

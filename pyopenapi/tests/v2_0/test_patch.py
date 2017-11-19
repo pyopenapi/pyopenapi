@@ -9,7 +9,7 @@ _xml = 'application/xml'
 
 class PatchObjTestCase(unittest.TestCase):
     """ test patch_obj.py """
-    
+
     @classmethod
     def setUpClass(kls):
         kls.app = App._create_(get_test_data_folder(
@@ -88,6 +88,6 @@ class PatchObjTestCase(unittest.TestCase):
 
     def test_schema(self):
         """ test patch Schema """
-        s = self.app.resolve('#/definitions/schema1')
+        s = self.app.resolve('#/components/schemas/schema1')
 
         self.assertEqual(s.name, 'schema1')

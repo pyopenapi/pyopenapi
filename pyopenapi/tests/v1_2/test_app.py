@@ -144,18 +144,18 @@ class AppTestCase(unittest.TestCase):
         self.assertRaises(ValueError, self.app.resolve, None)
         self.assertRaises(ValueError, self.app.resolve, '')
 
-        self.assertTrue(isinstance(self.app.resolve('#/definitions/user!##!User'), Schema))
+        self.assertTrue(isinstance(self.app.resolve('#/components/schemas/user!##!User'), Schema))
         self.assertTrue(isinstance(self.app.resolve('#/paths/~1api~1user~1{username}/put'), Operation))
         self.assertEqual(self.app.resolve('#/paths/~1api~1store~1order/post/produces'), ['application/json'])
         self.assertEqual(self.app.resolve('#/host'), 'petstore.swagger.wordnik.com')
 
         # resolve with URL part
-        # refer to 
-        #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy 
+        # refer to
+        #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy
         # for how to dereferencing weakref
         self.assertEqual(
-            self.app.resolve('#/definitions/user!##!User').__repr__(),
-            self.app.resolve('http://petstore.io/wordnik#/definitions/user!##!User').__repr__()
+            self.app.resolve('#/components/schemas/user!##!User').__repr__(),
+            self.app.resolve('http://petstore.io/wordnik#/components/schemas/user!##!User').__repr__()
         )
         self.assertEqual(
            self.app.resolve('#/paths/~1api~1user~1{username}/put').__repr__(),
@@ -206,7 +206,7 @@ class AppTestCase(unittest.TestCase):
         self.assertTrue(self.app.op['user!##!getUserByName'], Operation)
 
         # Model
-        d = self.app.resolve('#/definitions')
+        d = self.app.resolve('#/components/schemas')
         self.assertEqual(len(d.values()), 5)
         self.assertEqual(sorted(d.keys()), sorted([
             'pet!##!Category',

@@ -49,7 +49,7 @@ class ResolveTestCase(unittest.TestCase):
         """ make sure $ref to Schema works """
         p = self.app.s('/a').get
 
-        self.assertEqual(id(p.parameters[2].schema.ref_obj), id(self.app.resolve('#/definitions/d1')))
+        self.assertEqual(id(p.parameters[2].schema.ref_obj), id(self.app.resolve('#/components/schemas/d1')))
 
     def test_parameter(self):
         """ make sure $ref to Parameter works """
@@ -85,7 +85,7 @@ class DerefTestCase(unittest.TestCase):
         ))
 
     def test_deref(self):
-        od = utils.deref(self.app.resolve('#/definitions/s1'))
+        od = utils.deref(self.app.resolve('#/components/schemas/s1'))
 
-        self.assertEqual(id(od), id(self.app.resolve('#/definitions/s4')))
+        self.assertEqual(id(od), id(self.app.resolve('#/components/schemas/s4')))
 
