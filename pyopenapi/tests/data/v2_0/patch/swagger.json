@@ -164,10 +164,15 @@
          }
       },
       "/pc":{
+         "parameters":[
+             {
+                 "$ref":"#/parameters/info_parameter"
+             }
+         ],
          "get":{
             "responses":{
                "default":{
-                  "description":"void"
+                  "$ref":"#/responses/info_response"
                }
             }
          },
@@ -177,7 +182,7 @@
             ],
             "responses":{
                "default":{
-                  "description":"void"
+                  "$ref":"#/responses/info_response"
                }
             }
          },
@@ -187,7 +192,7 @@
             ],
             "responses":{
                "default":{
-                  "description":"void"
+                  "$ref":"#/responses/info_response"
                }
             }
          },
@@ -200,7 +205,7 @@
             ],
             "responses":{
                "default":{
-                  "description":"void"
+                  "$ref":"#/responses/info_response"
                }
             }
          }
@@ -209,6 +214,34 @@
    "definitions":{
       "schema1":{
          "type":"string"
+      },
+      "info":{
+          "type":"object",
+          "properties":{
+              "name":{
+                  "type":"string"
+              },
+              "email":{
+                  "type":"string"
+              }
+          }
       }
+   },
+   "parameters":{
+       "info_parameter":{
+           "name":"body",
+           "in":"body",
+           "schema":{
+               "$ref":"#/definitions/info"
+           }
+       }
+   },
+   "responses":{
+       "info_response":{
+           "description":"Info Response",
+           "schema":{
+               "$ref":"#/definitions/info"
+           }
+       }
    }
 }
