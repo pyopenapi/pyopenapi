@@ -203,6 +203,42 @@ class ResponseConverterTestCase(unittest.TestCase):
         self.assertEqual(_header['schema']['items']['type'], 'string')
         self.assertEqual(_header['schema']['type'], 'array')
 
+    def test_with_ref(self):
+        op = app.s('p4').post
+
+        # without 'schema', just keep $ref
+        obj = converters.to_response(
+            op.responses['default'],
+            op.produces,
+            'test_response_default'
+        )
+        self.assertEqual(obj['$ref'], '#/components/responses/void')
+
+        # with 'schema', should inline it
+        obj = converters.to_response(
+            op.responses['401'],
+            op.produces,
+            'test_response_401'
+        )
+        self.assertEqual(obj['description'], 'unauthorized')
+        self.assertTrue('application/json' in obj['content'])
+        o = obj['content']['application/json']
+        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+
+        self.assertTrue('application/xml' in obj['content'])
+        o = obj['content']['application/xml']
+        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+
+        # with 'schema', and without content-types as 'produces'
+        obj = converters.to_response(
+            op.responses['401'],
+            op.produces,
+            'test_response_401'
+        )
+        self.assertTrue('application/json' in obj['content'])
+        o = obj['content']['application/json']
+        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+
 
 class OperationConverterTestCase(unittest.TestCase):
     """ test case for operation """

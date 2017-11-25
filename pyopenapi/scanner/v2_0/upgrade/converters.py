@@ -395,17 +395,24 @@ def from_parameter(obj, existing_body, consumes, path):
 
 def to_response(obj, produces, path):
     ref = getattr(obj, '$ref', None)
-    if ref:
+    resolved_obj = deref(obj)
+    if ref and not resolved_obj.schema:
         return {'$ref': _patch_local_ref(ref)}
 
+    # if we have to output 'schema' part, we need
+    # to inline them here because 'produces' might
+    # be different from where '$ref' points to.
+
     ret = {}
-    ret.update(_generate_fields(obj, [
+    ret.update(_generate_fields(resolved_obj, [
         'description'
     ]))
 
-    if obj.schema:
-        if len(produces) == 0:
-            raise SchemaError('unable to convert to content: no "produces" declared, {}'.format(path))
+    if resolved_obj.schema:
+        if not produces:
+            # generate a default content-type
+            type_ = getattr(resolved_obj.schema, 'type', None)
+            produces = ['application/json' if type_ == 'object' else 'text/plain']
 
         content = ret.setdefault('content', {})
         type_ = getattr(obj.schema, 'type', None)
@@ -415,12 +422,12 @@ def to_response(obj, produces, path):
             media_type['format'] = 'binary'
         else:
             for p in produces:
-                content[p] = {'schema': to_schema(obj.schema, jp_compose('schema', base=path))}
+                content[p] = {'schema': to_schema(resolved_obj.schema, jp_compose('schema', base=path))}
 
     # header
-    if obj.headers:
+    if resolved_obj.headers:
         headers = ret.setdefault('headers', {})
-        for k, v in six.iteritems(obj.headers or {}):
+        for k, v in six.iteritems(resolved_obj.headers or {}):
             headers[k] = to_header(v, jp_compose(['headers', k], base=path))
 
     return ret
