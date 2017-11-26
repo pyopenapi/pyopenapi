@@ -1,0 +1,19 @@
+test1:
+  get:
+    operationId: test1.get
+    responses:
+      default:
+        $ref: file:///root.yml#/components/responses/void
+  put:
+    operationId: test1.put
+    responses:
+      default:
+        $ref: file:///root.yml#/components/responses/void
+
+test2:
+  $ref: file:///partial_path_item_2.yml#/test2
+  get:
+    operationId: test2.get
+    responses:
+      default:
+        $ref: file:///root.yml#/components/responses/void

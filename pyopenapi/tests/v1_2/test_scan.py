@@ -1,13 +1,17 @@
-from pyopenapi import App
-from pyopenapi.scan import Scanner, Dispatcher
-from ..utils import get_test_data_folder
-from pyopenapi.spec.v1_2.objects import (
+from ...core import App
+from ...scan import Scanner, Scanner2, Dispatcher
+from ...spec.v1_2.objects import (
     Resource,
     Authorization,
     Operation,
     ResponseMessage,
     Parameter
 )
+from ...spec.v3_0_0.objects import (
+    Header as Header3,
+    Parameter as Parameter3,
+)
+from ..utils import get_test_data_folder
 import unittest
 import weakref
 
@@ -52,11 +56,11 @@ class PathRecord(object):
 
     @Disp.register([Resource])
     def _resource(self, path, obj, _):
-        self.resource.append(path)        
+        self.resource.append(path)
 
     @Disp.register([Authorization])
     def _authorization(self, path, obj, _):
-        self.authorization.append(path) 
+        self.authorization.append(path)
 
     @Disp.register([ResponseMessage])
     def _response_message(self, path, obj, _):
@@ -69,7 +73,7 @@ class PathRecord(object):
             self.parameter.append(path)
 
 
-app = App.load(get_test_data_folder(version='1.2', which='wordnik')) 
+app = App.load(get_test_data_folder(version='1.2', which='wordnik'))
 
 
 class ScannerTestCase(unittest.TestCase):
@@ -124,11 +128,42 @@ class ResolveTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes')) 
-        
+        kls.app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes'))
+
     def test_ref_resolve(self):
         """ make sure pre resolve works """
-        ref = getattr(self.app.resolve('#/definitions/user!##!UserWithInfo').allOf[0], 'ref_obj')
+        ref = getattr(self.app.resolve('#/components/schemas/user!##!UserWithInfo').allOf[0], 'ref_obj')
         self.assertTrue(isinstance(ref, weakref.ProxyTypes))
-        self.assertEqual(ref, self.app.resolve('#/definitions/user!##!User'))
+        self.assertEqual(ref, self.app.resolve('#/components/schemas/user!##!User'))
+
+
+class CountParemeter3(object):
+    """ a scanner just for test
+    """
+    class Disp(Dispatcher): pass
+
+    def __init__(self):
+        self.total = {
+            Header3: 0,
+            Parameter3: 0,
+        }
+
+    @Disp.register([Header3, Parameter3])
+    def _count(self, path, obj):
+        self.total[obj.__class__] = self.total[obj.__class__] + 1
+
+
+class Scanner2TestCase(unittest.TestCase):
+    """ test case for Scanner2 """
+
+    def test_child_class_called_twice(self):
+        """ make a callback for 'Header' and 'Parameter' would only be called once,
+        when Header inherit Paremeter
+        """
+        header = Header3({})
+        cp = CountParemeter3()
+        Scanner2().scan(route=[cp], root=header)
+
+        self.assertEqual(cp.total[Header3], 1)
+        self.assertEqual(cp.total[Parameter3], 0)
 

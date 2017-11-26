@@ -1,0 +1,79 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: pyopenapi test case
+  license:
+    name: MIT
+servers:
+  - url: http://localhost/v1
+paths:
+  /test1:
+    $ref: file:///partial_path_item_1.yml#/test1
+    post:
+      operationId: test1.post
+      parameters:
+        - name: id_1
+          in: query
+          schema:
+            type: string
+      responses:
+        default:
+          $ref: '#/components/responses/void'
+  /test2:
+    $ref: file:///partial_path_item_1.yml#/test2
+  /test3:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/test3.p1'
+      responses:
+        default:
+          $ref: '#/components/responses/void'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      parameters:
+        - $ref: '#/components/headers/test3.header.1'
+    post:
+      requestBody:
+        $ref: '#/components/requestBodies/test3.body.1'
+  /test4:
+    get:
+      responses:
+        default:
+          $ref: '#/components/responses/void'
+    parameters:
+      - $ref: '#/components/parameters/test4.p1'
+      - $ref: '#/components/parameters/test4.p2'
+components:
+  responses:
+    void:
+      description: void response
+    BadRequest:
+      $ref: file:///partial_1.yml#/responses/test3.get.response.400
+  schemas:
+    partial_1:
+      $ref: file:///partial_1.yml#/schemas/partial_1
+    test3.body.1.schema.1:
+      $ref: file:///partial_2.yml#/schemas/test3.body.1.schema.1
+  parameters:
+    test3.p1:
+      $ref: file:///partial_1.yml#/parameters/test3.p1
+    test4.p1:
+      name: test4.p1
+      in: query
+      schema:
+        type: string
+    test4.p2:
+      name: test4.p2
+      in: query
+      schema:
+        type: string
+  headers:
+    test3.header.1:
+      $ref: file:///partial_1.yml#/headers/test3.header.1
+  requestBodies:
+    test3.body.1:
+      $ref: file:///partial_1.yml#/bodies/test3.body.1
+  callbacks:
+    cb.1:
+      $ref: file:///partial_1.yml#/callbacks/cb.1

@@ -66,7 +66,7 @@ class ExternalDocumentTestCase(unittest.TestCase):
         """  make sure partial swagger.json with Schema
         loaded correctly.
         """
-        p = self.app.resolve('#/definitions/s4')
+        p = self.app.resolve('#/components/schemas/s4')
         original_p = self.app.resolve('file:///partial/schema/swagger.json')
 
         # refer to
@@ -74,7 +74,7 @@ class ExternalDocumentTestCase(unittest.TestCase):
         # for how to dereferencing weakref
         self.assertEqual(p.items.ref_obj.__repr__(), original_p.__repr__())
 
-        p_ = self.app.resolve('#/definitions/s3')
+        p_ = self.app.resolve('#/components/schemas/s3')
         self.assertEqual(p_.__repr__(), original_p.items.ref_obj.__repr__())
 
     def test_relative_path_item(self):
@@ -115,7 +115,7 @@ class ReuseTestCase(unittest.TestCase):
         """ make sure the url prepend on $ref should be
         derived from the path of current document
         """
-        o = deref(self.app.resolve('#/definitions/QQ'))
+        o = deref(self.app.resolve('#/components/schemas/QQ'))
         self.assertEqual(o.description, 'Another simple model')
 
     def test_relative_parameter(self):

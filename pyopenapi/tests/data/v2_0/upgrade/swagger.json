@@ -158,9 +158,39 @@
                   "required":true
               }
           ]
+      },
+      "/p4":{
+          "post":{
+              "produces":[
+                  "application/json",
+                  "application/xml"
+              ],
+              "responses":{
+                  "default":{
+                      "$ref":"#/responses/void"
+                  },
+                  "401":{
+                      "$ref":"#/responses/401Unauthorized"
+                  }
+              }
+          }
       }
     },
     "definitions":{
+      "generic_response":{
+         "type":"object",
+         "properties":{
+            "status":{
+                "type":"string"
+            },
+            "subtype":{
+                "type":"string"
+            },
+            "message":{
+                "type":"string"
+            }
+         }
+      },
       "category":{
          "properties":{
             "id":{
@@ -243,6 +273,17 @@
       "some_file":{
           "type":"file"
       }
+    },
+    "responses":{
+        "void":{
+            "description":"void response"
+        },
+        "401Unauthorized":{
+            "description":"unauthorized",
+            "schema":{
+                "$ref":"#/definitions/generic_response"
+            }
+        }
     },
     "parameters":{
         "form_file":{

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from ....utils import jp_compose, final, deref
+from ....utils import jp_compose, deref
 from ....errs import SchemaError
 from ....spec.v2_0.objects import Operation
 from .constants import BASE_SCHEMA_FIELDS, SCHEMA_FIELDS, FILE_CONTENT_TYPES
@@ -13,7 +13,7 @@ def _generate_fields(obj, names):
     ret = {}
     for n in names:
         v = getattr(obj, n, None)
-        if v:
+        if v is not None:
             ret[n] = v
 
     return ret
@@ -272,35 +272,42 @@ def to_encoding(obj, content_type, path):
 def to_media_type(obj, content_type, existing, example, ctx, path):
     # parameter object need to merge several objects into one schema object
     ret = existing or {}
-    src_schema = getattr(obj, 'schema', None) or obj # if it's body parameter, we should use obj.schema
+    resolved_obj = deref(obj)
     dst_schema = ret.setdefault('schema', {})
-    if obj.required:
-        dst_schema.setdefault('required', []).append(obj.name)
+    if resolved_obj.required:
+        dst_schema.setdefault('required', []).append(resolved_obj.name)
     properties = dst_schema.setdefault('properties', {})
-    if obj.name in properties:
+    if resolved_obj.name in properties:
         raise SchemaError('duplicated name of formData parameter: {}'.format(path))
-    prop = properties.setdefault(obj.name, {})
-    prop.update(to_schema(src_schema, path, items_converter=from_items, parameter_context=ctx))
-    if getattr(obj, 'allowEmptyValue', None) == True:
+
+    src_schema = getattr(resolved_obj, 'schema', None) or resolved_obj # if it's body parameter, we should use obj.schema
+    prop = properties.setdefault(resolved_obj.name, {})
+    prop.update(
+        to_schema(
+            obj if getattr(obj, '$ref', None) else src_schema,
+            path,
+            items_converter=from_items,
+            parameter_context=ctx
+        )
+    )
+    if getattr(resolved_obj, 'allowEmptyValue', None) == True:
         prop['nullable'] = True
 
     encoding = to_encoding(src_schema, content_type, path)
     if encoding:
-        ret.setdefault('encoding', {})[obj.name] = encoding
+        ret.setdefault('encoding', {})[resolved_obj.name] = encoding
 
     return ret
 
 def to_request_body(obj, existing_body, ctx, path):
     ret = existing_body or {}
-    in_ = getattr(obj, 'in', None)
-    type_ = getattr(obj, 'type', None)
-
     content = ret.setdefault('content', {})
-    if obj.required:
+    resolved_obj = deref(obj)
+    if resolved_obj.required:
         ret['required'] = True
 
     content_types = ctx.get_valid_mime_type()
-    if ctx.is_file or in_ == 'formData':
+    if ctx.is_file or ctx.is_form:
         for c in content_types:
             existing_media_type = content.setdefault(c, {})
             content[c] = to_media_type(obj, c, existing_media_type, None, ctx, path)
@@ -308,15 +315,19 @@ def to_request_body(obj, existing_body, ctx, path):
         if existing_body:
             raise SchemaError('multiple bodies found: {}'.format(path))
 
-        ret.update(_generate_fields(obj, [
+        ret.update(_generate_fields(resolved_obj, [
             'description',
         ]))
 
         for c in content_types:
             media_type = content.setdefault(c, {})
-            media_type['schema'] = to_schema(obj.schema, jp_compose('schema', base=path), parameter_context=ctx)
+            media_type['schema'] = to_schema(resolved_obj.schema, jp_compose('schema', base=path), parameter_context=ctx)
     else:
-        raise SchemaError('unrecognized "in" parameter for request body: {}'.format(in_))
+        raise SchemaError(
+            'invalid parameter context: {},{},{} for request body: {}'.format(
+                ctx.is_file, ctx.is_form, ctx.is_body, path
+            )
+        )
 
     return ret
 
@@ -356,11 +367,10 @@ def to_parameter(obj, ctx, path):
 def from_parameter(obj, existing_body, consumes, path):
     ref_ = getattr(obj, '$ref', None)
     resolved_obj = deref(obj)
-    obj = final(obj)
 
-    ctx = ParameterContext(obj.name, consumes=consumes)
-    in_ = getattr(obj, 'in', None)
-    type_ = getattr(obj, 'type', None)
+    ctx = ParameterContext(resolved_obj.name, consumes=consumes)
+    in_ = getattr(resolved_obj, 'in', None)
+    type_ = getattr(resolved_obj, 'type', None)
 
     ret = None
     if type_ == 'file':
@@ -372,7 +382,7 @@ def from_parameter(obj, existing_body, consumes, path):
     elif in_ == 'body':
         ctx.update(
             is_body=True,
-            is_file=getattr(deref(obj.schema), 'type', None) == 'file'
+            is_file=getattr(deref(resolved_obj.schema), 'type', None) == 'file'
         )
         ret = to_request_body(obj, existing_body, ctx, ref_ or path)
     else:
@@ -385,17 +395,24 @@ def from_parameter(obj, existing_body, consumes, path):
 
 def to_response(obj, produces, path):
     ref = getattr(obj, '$ref', None)
-    if ref:
+    resolved_obj = deref(obj)
+    if ref and not resolved_obj.schema:
         return {'$ref': _patch_local_ref(ref)}
 
+    # if we have to output 'schema' part, we need
+    # to inline them here because 'produces' might
+    # be different from where '$ref' points to.
+
     ret = {}
-    ret.update(_generate_fields(obj, [
+    ret.update(_generate_fields(resolved_obj, [
         'description'
     ]))
 
-    if obj.schema:
-        if len(produces) == 0:
-            raise SchemaError('unable to convert to content: no "produces" declared, {}'.format(path))
+    if resolved_obj.schema:
+        if not produces:
+            # generate a default content-type
+            type_ = getattr(resolved_obj.schema, 'type', None)
+            produces = ['application/json' if type_ == 'object' else 'text/plain']
 
         content = ret.setdefault('content', {})
         type_ = getattr(obj.schema, 'type', None)
@@ -405,17 +422,17 @@ def to_response(obj, produces, path):
             media_type['format'] = 'binary'
         else:
             for p in produces:
-                content[p] = {'schema': to_schema(obj.schema, jp_compose('schema', base=path))}
+                content[p] = {'schema': to_schema(resolved_obj.schema, jp_compose('schema', base=path))}
 
     # header
-    if obj.headers:
+    if resolved_obj.headers:
         headers = ret.setdefault('headers', {})
-        for k, v in six.iteritems(obj.headers or {}):
+        for k, v in six.iteritems(resolved_obj.headers or {}):
             headers[k] = to_header(v, jp_compose(['headers', k], base=path))
 
     return ret
 
-def to_operation(obj, root_url, path):
+def to_operation(obj, body, root_url, path):
     ret = {}
     ret.update(_generate_fields(obj, [
         'tags',
@@ -424,8 +441,6 @@ def to_operation(obj, root_url, path):
         'operationId',
         'deprecated',
     ]))
-
-    body = None
 
     # parameters
     if obj.parameters:
@@ -513,13 +528,14 @@ def to_path_item(obj, root_url, path, consumes=None):
         ret['$ref'] = obj.normalized_ref
 
     # parameters
+    body = None
     if obj.parameters:
         consumes, parameters = consumes or [], None
         for index, p in enumerate(obj.parameters):
             new_path = jp_compose(['parameters', str(index)], base=path)
-            new_p, pctx = from_parameter(p, None, consumes, jp_compose(['parameters', str(index)], base=path))
+            new_p, pctx = from_parameter(p, body, consumes, jp_compose(['parameters', str(index)], base=path))
             if pctx.is_file or pctx.is_body:
-                continue
+                body = new_p
             else:
                 if not parameters:
                     parameters = ret.setdefault('parameters', [])
@@ -537,7 +553,7 @@ def to_path_item(obj, root_url, path, consumes=None):
     ):
         op = getattr(obj, method, None)
         if op:
-            ret[method] = to_operation(op, root_url, jp_compose(method, base=path))
+            ret[method] = to_operation(op, body, root_url, jp_compose(method, base=path))
 
     return ret
 

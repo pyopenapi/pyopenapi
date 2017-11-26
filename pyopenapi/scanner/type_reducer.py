@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from ..scan import Dispatcher
 from ..errs import SchemaError
-from ..spec.v2_0.objects import Operation
+from ..spec.v3_0_0.objects import Operation
 from ..utils import scope_compose
 from ..consts import private
 

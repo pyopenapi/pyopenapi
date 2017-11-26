@@ -29,14 +29,14 @@ class StringTestCase(unittest.TestCase):
         opt = self.rnd.default()
         for _ in six.moves.xrange(50):
             s = self.rnd.render(
-                self.app.resolve('#/definitions/string.1'),
+                self.app.resolve('#/components/schemas/string.1'),
                 opt=opt
             )
             self.assertTrue(isinstance(s, six.string_types), 'should be string, not {0}'.format(s))
             self.assertTrue(len(s) <= opt['max_str_length'])
 
     def test_string_min_max(self):
-        obj = self.app.resolve('#/definitions/string.2')
+        obj = self.app.resolve('#/components/schemas/string.2')
         for _ in six.moves.xrange(50):
             s = self.rnd.render(
                 obj,
@@ -52,7 +52,7 @@ class StringTestCase(unittest.TestCase):
         opt = self.rnd.default()
         for _ in six.moves.xrange(50):
             s = self.rnd.render(
-                self.app.resolve('#/definitions/password.1'),
+                self.app.resolve('#/components/schemas/password.1'),
                 opt=opt
             )
             self.assertTrue(isinstance(s, six.string_types), 'should be string, not {0}'.format(s))
@@ -60,7 +60,7 @@ class StringTestCase(unittest.TestCase):
 
     def test_uuid(self):
         u = self.rnd.render(
-            self.app.resolve('#/definitions/uuid.1'),
+            self.app.resolve('#/components/schemas/uuid.1'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(u, uuid.UUID), 'should be UUID, not {0}'.format(u))
@@ -68,7 +68,7 @@ class StringTestCase(unittest.TestCase):
     def test_byte(self):
         b64s = list(string.digits) + list(string.ascii_letters) + ['/', '+']
         bt = self.rnd.render(
-            self.app.resolve('#/definitions/byte.1'),
+            self.app.resolve('#/components/schemas/byte.1'),
             opt=self.rnd.default()
         )
         # verify it's base64
@@ -80,14 +80,14 @@ class StringTestCase(unittest.TestCase):
 
     def test_date(self):
         d = self.rnd.render(
-            self.app.resolve('#/definitions/date.1'),
+            self.app.resolve('#/components/schemas/date.1'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(d, datetime.date), 'should be a datetime.date, not {0}'.format(d))
 
     def test_datetime(self):
         d = self.rnd.render(
-            self.app.resolve('#/definitions/datetime.1'),
+            self.app.resolve('#/components/schemas/datetime.1'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(d, datetime.datetime), 'should be a datetime.date, not {0}'.format(d))
@@ -95,7 +95,7 @@ class StringTestCase(unittest.TestCase):
     def test_email(self):
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
-                self.app.resolve('#/definitions/email.1'),
+                self.app.resolve('#/components/schemas/email.1'),
                 opt=self.rnd.default()
             )
             self.assertTrue(isinstance(e, six.string_types), 'should be string, not {0}'.format(e))
@@ -115,7 +115,7 @@ class OtherTestCase(unittest.TestCase):
     def test_integer(self):
         for _ in six.moves.xrange(50):
             i = self.rnd.render(
-                self.app.resolve('#/definitions/integer.1'),
+                self.app.resolve('#/components/schemas/integer.1'),
                 opt=self.rnd.default()
             )
             self.assertTrue(isinstance(i, six.integer_types), 'should be integer, not {0}'.format(i))
@@ -126,7 +126,7 @@ class OtherTestCase(unittest.TestCase):
     def test_float(self):
         for _ in six.moves.xrange(50):
             f = self.rnd.render(
-                self.app.resolve('#/definitions/float.1'),
+                self.app.resolve('#/components/schemas/float.1'),
                 opt=self.rnd.default()
             )
             self.assertTrue(isinstance(f, float), 'should be float, not {0}'.format(f))
@@ -136,13 +136,13 @@ class OtherTestCase(unittest.TestCase):
 
     def test_bool(self):
         b = self.rnd.render(
-            self.app.resolve('#/definitions/bool.1'),
+            self.app.resolve('#/components/schemas/bool.1'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(b, bool), 'should be bool, not {0}'.format(b))
 
     def test_enum_string(self):
-        obj = self.app.resolve('#/definitions/enum.string')
+        obj = self.app.resolve('#/components/schemas/enum.string')
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
                 obj,
@@ -161,7 +161,7 @@ class OtherTestCase(unittest.TestCase):
             )
 
     def test_enum_integer(self):
-        obj = self.app.resolve('#/definitions/enum.integer')
+        obj = self.app.resolve('#/componnets/schemas/enum.integer')
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
                 obj,
@@ -171,7 +171,7 @@ class OtherTestCase(unittest.TestCase):
             self.assertTrue(e in obj.enum, 'should be one of {0}, not {1}'.format(obj.enum, e))
 
     def test_enum_boolean(self):
-        obj = self.app.resolve('#/definitions/enum.boolean')
+        obj = self.app.resolve('#/components/schemas/enum.boolean')
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
                 obj,
@@ -181,7 +181,7 @@ class OtherTestCase(unittest.TestCase):
             self.assertTrue(e in obj.enum, 'should be one of {0}, not {1}'.format(obj.enum, e))
 
     def test_enum_uuid(self):
-        obj = self.app.resolve('#/definitions/enum.uuid')
+        obj = self.app.resolve('#/components/schemas/enum.uuid')
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
                 obj,
@@ -191,7 +191,7 @@ class OtherTestCase(unittest.TestCase):
             self.assertTrue(str(e) in obj.enum, 'should be an element in enum, not {0}'.format(e))
 
     def test_enum_date(self):
-        obj = self.app.resolve('#/definitions/enum.date')
+        obj = self.app.resolve('#/components/schemas/enum.date')
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
                 obj,
@@ -204,7 +204,7 @@ class OtherTestCase(unittest.TestCase):
         # note: can't compare non-timezone datetime with timezone'd' datetime
         # note: isoformat() of datetime is not unique
         # therefore, I compare their timestamp here.
-        obj = self.app.resolve('#/definitions/enum.datetime')
+        obj = self.app.resolve('#/components/schemas/enum.datetime')
         es = [time.mktime(from_iso8601(t).timetuple()) for t in obj.enum]
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
@@ -216,7 +216,7 @@ class OtherTestCase(unittest.TestCase):
 
     def test_enum_email(self):
         """ always trust enum when rendering """
-        obj = self.app.resolve('#/definitions/enum.email')
+        obj = self.app.resolve('#/components/schemas/enum.email')
         for _ in six.moves.xrange(50):
             e = self.rnd.render(
                 obj,
@@ -239,7 +239,7 @@ class ArrayTestCase(unittest.TestCase):
     def test_array_of_email(self):
         """ basic case with email """
         a = self.rnd.render(
-            self.app.resolve('#/definitions/array.email'),
+            self.app.resolve('#/components/schemas/array.email'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(a, list), 'should be a list, not {0}'.format(a))
@@ -250,7 +250,7 @@ class ArrayTestCase(unittest.TestCase):
     def test_array_allOf(self):
         """ lots of allOf """
         a = self.rnd.render(
-            self.app.resolve('#/definitions/array.allOf'),
+            self.app.resolve('#/components/schemas/array.allOf'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(a, list), 'should be a list, not {0}'.format(a))
@@ -262,7 +262,7 @@ class ArrayTestCase(unittest.TestCase):
     def test_array_with_object(self):
         """ array with object """
         a = self.rnd.render(
-            self.app.resolve('#/definitions/array.object'),
+            self.app.resolve('#/components/schemas/array.object'),
             opt=self.rnd.default()
         )
         self.assertTrue(isinstance(a, list), 'should be a list, not {0}'.format(a))
@@ -291,7 +291,7 @@ class ObjectTestCase(unittest.TestCase):
         opt['minimal_property'] = True
         for _ in six.moves.xrange(50):
             o = self.rnd.render(
-                self.app.resolve('#/definitions/user'),
+                self.app.resolve('#/components/schemas/user'),
                 opt=opt
             )
             self.assertTrue(isinstance(o, dict), 'should be a dict, not {0}'.format(o))
@@ -303,7 +303,7 @@ class ObjectTestCase(unittest.TestCase):
         yes = no = 0
         for _ in six.moves.xrange(50):
             o = self.rnd.render(
-                self.app.resolve('#/definitions/user'),
+                self.app.resolve('#/components/schemas/user'),
                 opt=opt
             )
             self.assertTrue(isinstance(o, dict), 'should be a dict, not {0}'.format(o))
@@ -321,7 +321,7 @@ class ObjectTestCase(unittest.TestCase):
         opt['minimal_property'] = True
         for _ in six.moves.xrange(50):
             o = self.rnd.render(
-                self.app.resolve('#/definitions/object.addp'),
+                self.app.resolve('#/components/schemas/object.addp'),
                 opt=opt
             )
             self.assertTrue(isinstance(o, dict), 'should be a dict, not {0}'.format(o))
@@ -340,7 +340,7 @@ class ObjectTestCase(unittest.TestCase):
             'id': id_,
             'name': 'test-user'
         })
-        obj = self.app.resolve('#/definitions/comment')
+        obj = self.app.resolve('#/components/schemas/comment')
         for _ in six.moves.xrange(50):
             o = self.rnd.render(
                 obj,
@@ -355,7 +355,7 @@ class ObjectTestCase(unittest.TestCase):
         """ make sure max_property works """
         opt = self.rnd.default()
         opt['max_property'] = True
-        obj = self.app.resolve('#/definitions/user2')
+        obj = self.app.resolve('#/components/schemas/user2')
         for _ in six.moves.xrange(50):
             o = self.rnd.render(
                 obj,

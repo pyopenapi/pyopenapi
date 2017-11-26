@@ -177,7 +177,7 @@ class Parameter(six.with_metaclass(FieldMeta, BaseSchema)):
     }
 
     __internal_fields__ = {
-        'final': None,
+        'ref_obj': None,
         'normalized_ref': None,
     }
 
@@ -215,7 +215,7 @@ class Response(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
     }
 
     __internal_fields__ = {
-        'final': None,
+        'ref_obj': None,
         'normalized_ref': None,
     }
 
@@ -313,7 +313,8 @@ class PathItem(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
     }
 
     __internal_fields__ = {
-        'normalized_ref': None
+        'ref_obj': None,
+        'normalized_ref': None,
     }
 
 

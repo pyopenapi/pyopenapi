@@ -1,5 +1,5 @@
 from pyopenapi.spec.base2 import (
-    Base2, field, child,
+    Base2, field, child, internal,
     map_, list_,
     _Map, _List,
     )
@@ -15,20 +15,31 @@ class AObj(Base2):
     __fields__ = {
         'a': dict(builder=field),
         'b': dict(builder=field, required=True),
-        'c': dict(builder=child, child_builder=BObj),
+    }
+
+    __internal__ = {
+        'ic': dict(),
+    }
+
+    __children__ = {
+        'c': dict(child_builder=BObj),
+    }
+
+    __renamed__ = {
+        'd3_renamed': dict(key='a')
     }
 
 class CObj(Base2):
-    __fields__ = {
-        'cc': dict(builder=child, child_builder=map_(AObj)),
-        'ccc': dict(builder=child, child_builder=list_(AObj)),
+    __children__ = {
+        'cc': dict(child_builder=map_(AObj)),
+        'ccc': dict(child_builder=list_(AObj)),
     }
 
 class DObj(Base2):
-    __fields__ = {
-        'd1': dict(builder=child, child_builder=map_(list_(AObj))),
-        'd2': dict(builder=child, child_builder=list_(map_(AObj))),
-        'd3': dict(builder=child, child_builder=map_(map_(AObj))),
+    __children__ = {
+        'd1': dict(child_builder=map_(list_(AObj))),
+        'd2': dict(child_builder=list_(map_(AObj))),
+        'd3': dict(child_builder=map_(map_(AObj))),
     }
 
 def if_not_a(obj_class):
@@ -40,11 +51,11 @@ def if_not_a(obj_class):
     return f
 
 class EObj(Base2):
-    __fields__ = {
-        'e1': dict(builder=child, child_builder=list_(if_not_a(BObj))),
-        'e2': dict(builder=child, child_builder=if_not_a(map_(map_(AObj)))),
-        'e3': dict(builder=child, child_builder=if_not_a(DObj)),
-        'e4': dict(builder=child, child_builder=if_not_a(map_(AObj))),
+    __children__ = {
+        'e1': dict(child_builder=list_(if_not_a(BObj))),
+        'e2': dict(child_builder=if_not_a(map_(map_(AObj)))),
+        'e3': dict(child_builder=if_not_a(DObj)),
+        'e4': dict(child_builder=if_not_a(map_(AObj))),
     }
 
 class FObj(AObj):
@@ -53,10 +64,10 @@ class FObj(AObj):
     }
 
 class GObj(Base2):
-    __fields__ = {
-        'a': dict(builder=child, child_builder=BObj),
-        'b': dict(builder=child, child_builder=BObj),
-        'c': dict(builder=child, child_builder=BObj),
+    __children__ = {
+        'a': dict(child_builder=BObj),
+        'b': dict(child_builder=BObj),
+        'c': dict(child_builder=BObj),
     }
 
 class HObj(Base2):
@@ -89,7 +100,7 @@ class Base2TestCase(unittest.TestCase):
         """ check FieldMeta
         """
         # should fill __child__ with fields created by builder:child
-        self.assertEqual(AObj.__children__, ['c'])
+        self.assertEqual(AObj.__children__.keys(), ['c'])
 
     def test_field(self):
         """ make sure builder:field works
@@ -101,6 +112,19 @@ class Base2TestCase(unittest.TestCase):
         # when required, raise exception when none
         self.assertRaises(Exception, lambda: AObj({}).b)
         self.assertEqual(AObj({'b': 2}).b, 2)
+
+    def test_internal(self):
+        """ make sure builder:internal works
+        """
+        a = AObj({'a': 1, 'b': 2, 'ic': 3})
+        self.assertEqual(sorted(a._field_names_), ['a', 'b', 'c']) # internal is not included in '_field_names_'
+        self.assertEqual(a.ic, None) # internal is separated from input spec (in __fields__)
+
+        a.ic = 4
+        self.assertEqual(a.ic, 4)
+
+        # make sure we won't dump internal fields
+        self.assertEqual(a.dump(), {'a': 1, 'b': 2})
 
     def test_child(self):
         """ make sure builder:child works
@@ -433,3 +457,14 @@ class Base2TestCase(unittest.TestCase):
         d = DObj({'d3': {'key1':{'key11':{'b':1}, 'key12':{'b':2}}, 'key2':{'key21':{'b':3}, 'key22':{'b':4}}}})
         self.assertEqual(d.d3['key1']['key11'].path, 'd3/key1/key11')
 
+    def test_renamed(self):
+        """ make sure renamed works
+        """
+        a = AObj({'a': 101})
+        self.assertEqual(a.a, 101)
+        self.assertEqual(a.d3_renamed, 101)
+
+        # should inherit __renamed__
+        f = FObj({'a': 102})
+        self.assertEqual(f.a, 102)
+        self.assertEqual(f.d3_renamed, 102)

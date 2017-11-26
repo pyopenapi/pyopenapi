@@ -91,7 +91,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         r = o.responses['default']
         self.assertEqual(r.headers, {})
         self.assertEqual(r.schema.type, 'array')
-        self.assertEqual(r.schema.items.normalized_ref, _pf('/definitions/pet!##!Pet'))
+        self.assertEqual(r.schema.items.normalized_ref, _pf('/components/schemas/pet!##!Pet'))
 
         # createUser
         o = self.app.root.paths['/api/user'].post
@@ -121,7 +121,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         p = [p for p in o.parameters if getattr(p, 'in') == 'body'][0]
         self.assertEqual(getattr(p, 'in'), 'body')
         self.assertEqual(p.required, True)
-        self.assertEqual(p.schema.normalized_ref, _pf('/definitions/pet!##!Pet'))
+        self.assertEqual(p.schema.normalized_ref, _pf('/components/schemas/pet!##!Pet'))
 
         # form
         o = self.app.root.paths['/api/pet/uploadImage'].post
@@ -163,7 +163,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         self.assertEqual(p.maximum, 100)
 
         p = d.properties['category']
-        self.assertEqual(p.normalized_ref, _pf('/definitions/pet!##!Category'))
+        self.assertEqual(p.normalized_ref, _pf('/components/schemas/pet!##!Category'))
 
         p = d.properties['photoUrls']
         self.assertEqual(p.type, 'array')
@@ -171,7 +171,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
 
         p = d.properties['tags']
         self.assertEqual(p.type, 'array')
-        self.assertEqual(p.items.normalized_ref, _pf('/definitions/pet!##!Tag'))
+        self.assertEqual(p.items.normalized_ref, _pf('/components/schemas/pet!##!Tag'))
 
         p = d.properties['status']
         self.assertEqual(p.type, 'string')

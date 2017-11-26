@@ -3,13 +3,13 @@ from .resolve import Resolver
 from .primitives import Primitive, MimeCodec
 from .spec.v1_2.parser import ResourceListContext
 from .spec.v2_0.parser import SwaggerContext
-from .spec.v2_0.objects import Operation
-from .spec.base import BaseObj
-from .spec.base2 import Base2Obj
+from .spec.v2_0.objects import Swagger, Operation
+from .spec.v3_0_0.objects import OpenApi
+from .spec.base import BaseObj, Context
+from .spec.base2 import _Base
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
-from .scanner.v1_2 import Upgrade
-from .scanner.v2_0 import AssignParent, Merge, Resolve, PatchObject, YamlFixer, Aggregate, NormalizeRef
+from .scanner.v2_0 import Aggregate
 from pyopenapi import utils, errs, consts
 from distutils.version import StrictVersion
 import copy
@@ -18,6 +18,7 @@ import six
 import weakref
 import logging
 import pkgutil
+import inspect
 
 
 logger = logging.getLogger(__name__)
@@ -180,38 +181,55 @@ class App(object):
     def load_obj(self, jref, getter=None, parser=None):
         """ load a object(those in spec._version_.objects) from a JSON reference.
         """
-        obj = self.__resolver.resolve(jref, getter)
+        src_spec = self.__resolver.resolve(jref, getter)
 
         # get root document to check its swagger version.
         tmp = {'_tmp_': {}}
-        version = utils.get_swagger_version(obj)
+        obj = None
+        version = utils.get_swagger_version(src_spec)
         if version == '1.2':
             # swagger 1.2
             with ResourceListContext(tmp, '_tmp_') as ctx:
-                ctx.parse(obj, jref, self.__resolver, getter)
+                ctx.parse(src_spec, jref, self.__resolver, getter)
+            obj = tmp['_tmp_']
+
         elif version == '2.0':
             # swagger 2.0
             with SwaggerContext(tmp, '_tmp_') as ctx:
-                ctx.parse(obj)
-        elif version == None and parser:
-            with parser(tmp, '_tmp_') as ctx:
-                ctx.parse(obj)
+                ctx.parse(src_spec)
+            obj = tmp['_tmp_']
+        elif version == '3.0.0':
+            # openapi 3.0.0
+            obj = OpenApi(src_spec, jref)
 
-            version = tmp['_tmp_'].__swagger_version__ if hasattr(tmp['_tmp_'], '__swagger_version__') else version
+        elif version == None and parser:
+            if inspect.isclass(parser) and issubclass(parser, Context):
+                with parser(tmp, '_tmp_') as ctx:
+                    ctx.parse(src_spec)
+                obj = tmp['_tmp_']
+
+            else:
+                obj = parser(src_spec, jref)
+
+            version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
         else:
             raise NotImplementedError('Unsupported Swagger Version: {0} from {1}'.format(version, jref))
 
-        if not tmp['_tmp_']:
+        if not obj:
             raise Exception('Unable to parse object from {0}'.format(jref))
 
         logger.info('version: {0}'.format(version))
 
-        return tmp['_tmp_'], version
+        # cache obj before migration, or we may load an object multiple times when resolve
+        # $ref in the same spec
+        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=version)
+
+        return obj, version
 
     def _cache_spec_obj(self, obj, url, jp, spec_version):
         """ cache 'prepared' spec objects (those under pyopenapi.spec)
         """
-        if not issubclass(type(obj), (BaseObj, Base2Obj)):
+        if not issubclass(type(obj), (BaseObj, _Base)):
             raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
 
         self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
@@ -328,8 +346,8 @@ class App(object):
         url = utils.normalize_url(url)
         app = kls(url, url_load_hook=url_load_hook, sep=sep, prim=prim, mime_codec=mime_codec, resolver=resolver)
         app.__raw, app.__version = app.load_obj(url, getter=getter, parser=parser)
-        if app.__version not in ['1.2', '2.0']:
-            raise NotImplementedError('Unsupported Version: {0}'.format(self.__version))
+        if app.__version not in ['1.2', '2.0', '3.0.0']:
+            raise NotImplementedError('Unsupported Version: {0}'.format(app.__version))
 
         # update schem if any
         p = six.moves.urllib.parse.urlparse(url)
@@ -361,18 +379,17 @@ class App(object):
         """
 
         self.validate(strict=strict)
+
+        # extract schemes from the url to load spec
+        self.__schemes = [six.moves.urllib.parse.urlparse(self.__url).scheme]
+
         self.__root = self.prepare_obj(self.raw, self.__url)
 
-        if hasattr(self.__root, 'schemes') and self.__root.schemes:
-            if len(self.__root.schemes) > 0:
-                self.__schemes = self.__root.schemes
-            else:
-                # extract schemes from the url to load spec
-                self.__schemes = [six.moves.urlparse(self.__url).schemes]
+        # upadte schemes if available
+        if isinstance(self.__root, Swagger) and hasattr(self.__root, 'schemes') and self.__root.schemes:
+            self.__schemes = self.__root.schemes
 
         s = Scanner(self)
-        s.scan(root=self.__root, route=[Merge()])
-        s.scan(root=self.__root, route=[PatchObject()])
         s.scan(root=self.__root, route=[Aggregate()])
 
         # reducer for Operation
@@ -426,16 +443,24 @@ class App(object):
     """
     _create_ = create
 
-    def resolve(self, jref, parser=None, spec_version=None):
+    def resolve(self, jref, parser=None, spec_version=None, before_return=utils.final):
         """ JSON reference resolver
 
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
         :param parser: the parser corresponding to target object.
         :param str spec_version: the OpenAPI spec version 'jref' pointing to.
+        :param func before_return: a hook to patch object before returning it
         :type parser: pyopenapi.base.Context
         :return: the referenced object, wrapped by weakref.ProxyType
         :rtype: weakref.ProxyType
         :raises ValueError: if path is not valid
+
+        The initial intention for 'before_return' is to return obj.final_obj automatically.
+        Prototype of this hook is:
+
+            def your_hook(your_obj):
+                # do something to 'your_obj'
+                return your_obj
         """
 
         logger.info('resolving: [{0}]'.format(jref))
@@ -469,9 +494,12 @@ class App(object):
 
         if isinstance(obj, (six.string_types, six.integer_types, list, dict)):
             return obj
+
+        if before_return:
+            obj = before_return(obj)
         return weakref.proxy(obj)
 
-    def s(self, p, b=_shortcut_[sc_path]):
+    def s(self, p, b=_shortcut_[sc_path], before_return=utils.final):
         """ shortcut of App.resolve.
         We provide a default base for '#/paths'. ex. to access '#/paths/~1user/get',
         just call App.s('user/get')
@@ -481,9 +509,9 @@ class App(object):
         """
 
         if b[0]:
-            return self.resolve(utils.jp_compose(b[0] + p if not p.startswith(b[0]) else p, base=b[1]))
+            return self.resolve(utils.jp_compose(b[0] + p if not p.startswith(b[0]) else p, base=b[1]), before_return=before_return)
         else:
-            return self.resolve(utils.jp_compose(p, base=b[1]))
+            return self.resolve(utils.jp_compose(p, base=b[1]), before_return=before_return)
 
     def dump(self):
         """ dump into Swagger Document

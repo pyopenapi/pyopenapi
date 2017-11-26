@@ -1,7 +1,7 @@
 from ..utils import jr_split
 from ..scan import Scanner
 from ..scanner.v1_2 import Upgrade
-from ..scanner.v2_0 import AssignParent, NormalizeRef, YamlFixer, Resolve
+from ..scanner.v2_0 import AssignParent, Resolve, PatchObject, YamlFixer, NormalizeRef
 from ..spec.v2_0.objects import Operation
 
 
@@ -20,6 +20,8 @@ def up(obj, app, jref):
         scanner.scan(root=ret, route=[AssignParent()])
 
     if ret.__swagger_version__ == '2.0':
+        app._cache_spec_obj(ret, *jr_split(jref), spec_version='2.0')
+
         # normalize $ref
         url, jp = jr_split(jref)
         scanner.scan(root=ret, route=[NormalizeRef(url)])
@@ -32,6 +34,7 @@ def up(obj, app, jref):
         # pre resolve Schema Object
         # note: make sure this object is cached before using 'Resolve' scanner
         scanner.scan(root=ret, route=[Resolve()])
+        scanner.scan(root=ret, route=[PatchObject(ret)])
     else:
         raise Exception('unsupported migration: {} to 2.0'.format(ret.__swagger_version__))
 

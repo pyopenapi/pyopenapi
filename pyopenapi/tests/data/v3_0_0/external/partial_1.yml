@@ -1,0 +1,42 @@
+schemas:
+  partial_1:
+    type: string
+parameters:
+  test3.p1:
+    name: test3.p1
+    in: query
+    schema:
+      $ref: file:///partial_2.yml#/schemas/test3.p1.schema
+headers:
+  test3.header.1:
+    schema:
+      $ref: file:///partial_2.yml#/schemas/test3.header.1.schema
+bodies:
+  test3.body.1:
+    content:
+      application/json:
+        schema:
+          $ref: file:///root.yml#/components/schemas/test3.body.1.schema.1
+responses:
+  test3.get.response.400:
+    description: 'test description'
+    headers:
+      test-x-device-id:
+        $ref: file:///partial_2.yml#/headers/test3.get.response.400.header.1
+    links:
+      some-link:
+        $ref: file:///partial_2.yml#/links/test3.get.response.400.link.1
+callbacks:
+  cb.1:
+    /test-cb-1:
+      summary: 'some test path item for callback'
+      get:
+        operationId: cb.1.get
+        parameters:
+          - name: cb.1.p.1
+            in: query
+            schema:
+              type: string
+        responses:
+          default:
+            $ref: file:///root.yml#/components/responses/void

@@ -1,0 +1,24 @@
+schemas:
+  test3.p1.schema:
+    type: string
+    format: password
+  test3.header.1.schema:
+    type: integer
+    format: int32
+  test3.body.1.schema.1:
+    type: object
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+        format: password
+links:
+  test3.get.response.400.link.1:
+      operationRef: file:///root.yml#/paths/~1test1/post
+      parameters:
+        id_1: $response.body#/id_1
+headers:
+  test3.get.response.400.header.1:
+    schema:
+      type: string

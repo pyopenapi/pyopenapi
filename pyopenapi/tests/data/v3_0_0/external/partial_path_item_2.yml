@@ -1,0 +1,6 @@
+test2:
+  post:
+    operationId: test2.post
+    responses:
+      default:
+        $ref: file:///root.yml#/components/responses/void

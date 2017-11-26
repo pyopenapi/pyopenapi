@@ -36,6 +36,26 @@ def internal(key, default=None):
             return self.internal[key]
         return default
 
+    def _setter_(self, v):
+        self.internal[key] = v
+
+    return property(_getter_, _setter_)
+
+
+def rename(key):
+    """ property factory for 'renamed' property.
+    For some camel-cased property, we would make them snake-stype
+    for fulfill python's usage.
+
+    For child that might be targeted by '$ref', we can't rename it
+    directly because the resolving would be failed.
+
+    This property factory provide a redirection to actual property
+    and should only declared under __renamed__
+    """
+    def _getter_(self):
+        return getattr(self, key)
+
     return property(_getter_, None)
 
 
@@ -174,9 +194,15 @@ class _List(_Base):
 
     def dump(self):
         ret = []
+        if len(self.__elm) == 0:
+            return ret
+
+        is_primitive = not hasattr(self.__elm[0], 'dump')
+        if is_primitive:
+            return copy.copy(self.__elm)
+
         for e in self.__elm:
             ret.append(e.dump())
-
         return ret
 
     @property
@@ -189,12 +215,10 @@ class _List(_Base):
         for idx, obj in enumerate(self.__elm):
             if isinstance(obj, Base2Obj):
                 ret[str(idx)] = obj
-            elif isinstance(obj, (Map, List,)):
-                c = self.__elm[name]._children_
+            elif isinstance(obj, (_Map, _List,)):
+                c = obj._children_
                 for cc in c:
-                    ret[jp_compose(str(idx), cc)] = c[cc]
-            else:
-                raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
+                    ret[jp_compose([str(idx), cc])] = c[cc]
 
         return ret
 
@@ -205,8 +229,14 @@ class _List(_Base):
     def __getitem__(self, idx):
         return self.__elm[idx]
 
+    def __len__(self):
+        return len(self.__elm)
+
     def append(self, obj):
         return self.__elm.append(obj)
+
+    def extend(self, other):
+        return self.__elm.extend(other)
 
 
 def map_(builder):
@@ -269,7 +299,7 @@ class _Map(_Base):
             return False, jp_compose(diff[0], base=base)
 
         for name in self.__elm:
-            s, n = self.__elm[name].compare(other[name], base=jp_compose(name, base))
+            s, n = self.__elm[name].compare(other[name], base=jp_compose(name, base=base))
             if not s:
                 return s, n
 
@@ -277,8 +307,11 @@ class _Map(_Base):
 
     def dump(self):
         ret = {}
-        for n in self.__elm:
-            ret[n] = self.__elm[n].dump()
+        for k, v in six.iteritems(self.__elm):
+            if hasattr(v, 'dump') and callable(v.dump):
+                ret[k] = v.dump()
+            else:
+                ret[k] = v
 
         return ret
 
@@ -292,15 +325,13 @@ class _Map(_Base):
     @property
     def _children_(self):
         ret = {}
-        for name in self.__elm:
+        for name, obj in six.iteritems(self.__elm):
             if isinstance(obj, Base2Obj):
-                ret[name] = self.__elm[name]
+                ret[name] = obj
             elif isinstance(obj, (_Map, _List,)):
-                c = self.__elm[name]._children_
+                c = obj._children_
                 for cc in c:
-                    ret[jp_compose(name, cc)] = c[cc]
-            else:
-                raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
+                    ret[jp_compose([name, cc])] = c[cc]
 
         return ret
 
@@ -313,6 +344,9 @@ class _Map(_Base):
     def __contains__(self, elm):
         return elm in self.__elm
 
+    def iteritems(self):
+        return self.__elm.iteritems()
+
 
 class FieldMeta(type):
     """ metaclass to init fields, similar to the one in base.py
@@ -321,27 +355,38 @@ class FieldMeta(type):
         """ scan through MRO to get a merged list of fields and create them
         """
         fields = spc.setdefault('__fields__', {})
-        cn = spc.setdefault('__children__', [])
-        intl = spc.setdefault('__internal__', [])
+        cn = spc.setdefault('__children__', {})
+        intl = spc.setdefault('__internal__', {})
+        renm = spc.setdefault('__renamed__', {})
+
+        def _from_parent_(s, name):
+            p = getattr(b, name, None)
+            if p:
+                d = {}
+                for k in set(p.keys()) - set(s.keys()):
+                    d[k] = p[k]
+                s.update(d)
+
         for b in bases:
-            d = {}
-            bf = getattr(b, '__fields__', None)
-            if not bf:
-                continue
-            for k in set(bf.keys()) - set(fields.keys()):
-                d[k] = bf[k]
-            fields.update(d)
+            _from_parent_(fields, '__fields__')
+            _from_parent_(renm, '__renamed__')
+            _from_parent_(cn, '__children__')
+            _from_parent_(intl, '__internal__')
 
         for n, args in six.iteritems(fields):
             args = copy.copy(args)
 
             builder = args.pop('builder')
-            key = args.pop('key', None)
-            spc[n] = builder(key or n, **args)
-            if builder.__name__ == 'child':
-                cn.append(n)
-            elif builder.__name__ == 'internal':
-                intl.append(n)
+            spc[n] = builder(args.pop('key', None) or n, **args)
+
+        def _update_to_spc(builder, fs):
+            for n, args in six.iteritems(fs):
+                args = copy.copy(args)
+                spc[n] = builder(args.pop('key', None) or n, **args)
+
+        _update_to_spc(rename, renm)
+        _update_to_spc(internal, intl)
+        _update_to_spc(child, cn)
 
         return type.__new__(metacls, name, bases, spc)
 
@@ -358,6 +403,11 @@ class Base2Obj(_Base):
         super(Base2Obj, self).__init__(spec, path)
         self.children = {}
         self.internal = {}
+
+        # for example, we would rename 'requestBodies' to 'request_bodies' for
+        # snake-stye in python, however, to be able to resolve such fields,
+        # we need to add these properties to target to correct fields.
+        self.renamed = {}
 
         # traverse through children
         for name in self.__children__:
@@ -392,9 +442,6 @@ class Base2Obj(_Base):
         """ merge 1st layer of children from other object,
         :param BaseObj other: the source object to be merged from.
         """
-        if type(self) != type(other):
-            raise ValueError('different type to merge: {}, {}, {}'.format(str(type(self)), str(type(other)), self.path))
-
         for name in self.__children__:
             if not getattr(self, name):
                 o = getattr(other, name)
@@ -436,7 +483,7 @@ class Base2Obj(_Base):
                 return s == o, name
             return True, ''
 
-        for name in self.__fields__:
+        for name in self.__fields__.keys() + self.__children__.keys():
             same, n = _cmp_(jp_compose(name, base), getattr(self, name), getattr(other, name))
             if not same:
                 return same, n
@@ -450,8 +497,7 @@ class Base2Obj(_Base):
         ret = {}
 
         cs = set([name for name in self.__children__])
-        ins = set([name for name in self.__internal__])
-        fs = set([name for name in self.__fields__]) - cs - ins
+        fs = set([name for name in self.__fields__])
 
         # dump children first
         for name in cs:
@@ -482,9 +528,9 @@ class Base2Obj(_Base):
         key = desc.pop('key', None)
         setattr(kls, name, builder(key or name, **desc))
         if builder.__name__ == 'child':
-            kls.__children__.append(name)
+            kls.__children__[name] = field_descriptor
         elif builder.__name__ == 'internal':
-            kls.__internal__.append(name)
+            kls.__internal__[name] = field_descriptor
 
     @property
     def _field_names_(self):
@@ -492,7 +538,7 @@ class Base2Obj(_Base):
         :return: a list of field names
         :rtype: a list of str
         """
-        return [name for name in self.__fields__]
+        return [name for name in set(self.__fields__) | set(self.__children__)]
 
     @property
     def _children_(self):
@@ -509,7 +555,7 @@ class Base2Obj(_Base):
             elif isinstance(obj, (_Map, _List,)):
                 c = obj._children_
                 for cc in c:
-                    ret[jp_compose(name, cc)] = c[cc]
+                    ret[jp_compose([name, cc])] = c[cc]
             else:
                 raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
 

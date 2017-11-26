@@ -5,12 +5,11 @@ import unittest
 import os
 import six
 
-
 app = App.load(get_test_data_folder(
     version='2.0',
     which='upgrade'
 ))
-app.prepare(strict=False)
+app.migrate(spec_version='2.0')
 
 class ExternalDocConverterTestCase(unittest.TestCase):
     """ test case for externalDoc converter """
@@ -204,6 +203,42 @@ class ResponseConverterTestCase(unittest.TestCase):
         self.assertEqual(_header['schema']['items']['type'], 'string')
         self.assertEqual(_header['schema']['type'], 'array')
 
+    def test_with_ref(self):
+        op = app.s('p4').post
+
+        # without 'schema', just keep $ref
+        obj = converters.to_response(
+            op.responses['default'],
+            op.produces,
+            'test_response_default'
+        )
+        self.assertEqual(obj['$ref'], '#/components/responses/void')
+
+        # with 'schema', should inline it
+        obj = converters.to_response(
+            op.responses['401'],
+            op.produces,
+            'test_response_401'
+        )
+        self.assertEqual(obj['description'], 'unauthorized')
+        self.assertTrue('application/json' in obj['content'])
+        o = obj['content']['application/json']
+        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+
+        self.assertTrue('application/xml' in obj['content'])
+        o = obj['content']['application/xml']
+        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+
+        # with 'schema', and without content-types as 'produces'
+        obj = converters.to_response(
+            op.responses['401'],
+            op.produces,
+            'test_response_401'
+        )
+        self.assertTrue('application/json' in obj['content'])
+        o = obj['content']['application/json']
+        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+
 
 class OperationConverterTestCase(unittest.TestCase):
     """ test case for operation """
@@ -211,7 +246,7 @@ class OperationConverterTestCase(unittest.TestCase):
     def test_basic(self):
         op = app.s('p1').get
 
-        obj = converters.to_operation(op, 'test_root', '')
+        obj = converters.to_operation(op, None, 'test_root', '')
         self.assertTrue('responses' in obj and '200' in obj['responses'])
         _response = obj['responses']['200']
         self.assertEqual(_response['description'], 'successful operation')
@@ -238,7 +273,7 @@ class OperationConverterTestCase(unittest.TestCase):
     def test_multiple_file_with_other_type(self):
         op = app.s('p1').post
 
-        obj = converters.to_operation(op, 'test_root', '')
+        obj = converters.to_operation(op, None, 'test_root', '')
 
         # requestBody
         self.assertEqual(obj['requestBody']['required'], True)
@@ -260,7 +295,7 @@ class OperationConverterTestCase(unittest.TestCase):
         """
         op = app.s('p2').post
 
-        obj = converters.to_operation(op, 'test_root', '')
+        obj = converters.to_operation(op, None, 'test_root', '')
         _content = obj['requestBody']['content']
         self.assertTrue('application/x-www-form-urlencoded' in _content)
         _properties = _content['application/x-www-form-urlencoded']['schema']['properties']
@@ -320,19 +355,19 @@ class PathItemConverterTestCase(unittest.TestCase):
         _post = obj['post']
         self.assertFalse('parameters' in _post)
 
-        def _check(o):
-            self.assertTrue('encoding' in o)
-            self.assertEqual(o['encoding']['description']['contentType'], 'text/plain')
-            self.assertEqual(o['encoding']['form_file']['contentType'], 'application/octet-stream')
-
-            self.assertTrue('schema' in o)
-            self.assertEqual(o['schema']['required'], ['description'])
-            self.assertEqual(o['schema']['properties']['description']['$ref'], '#/components/requestBodies/form_string/content/application~1x-www-form-urlencoded/schema/properties/description')
-            self.assertEqual(o['schema']['properties']['form_file']['$ref'], '#/components/requestBodies/form_file/content/multipart~1form-data/schema/properties/form_file')
-
         self.assertTrue('requestBody' in _post)
-        _check(_post['requestBody']['content']['multipart/form-data'])
-        _check(_post['requestBody']['content']['application/x-www-form-urlencoded'])
+        o = _post['requestBody']['content']['multipart/form-data']
+        self.assertTrue('encoding' in o)
+        self.assertEqual(o['encoding']['form_file']['contentType'], 'application/octet-stream')
+        self.assertTrue('schema' in o)
+        self.assertEqual(o['schema']['properties']['form_file']['$ref'], '#/components/requestBodies/form_file/content/multipart~1form-data/schema/properties/form_file')
+
+        o = _post['requestBody']['content']['application/x-www-form-urlencoded']
+        self.assertTrue('encoding' in o)
+        self.assertEqual(o['encoding']['description']['contentType'], 'text/plain')
+        self.assertTrue('schema' in o)
+        self.assertEqual(o['schema']['required'], ['description'])
+        self.assertEqual(o['schema']['properties']['description']['$ref'], '#/components/requestBodies/form_string/content/application~1x-www-form-urlencoded/schema/properties/description')
 
         self.assertTrue('parameters' in obj)
         _parameters = obj['parameters']

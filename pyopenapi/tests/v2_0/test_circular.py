@@ -1,6 +1,6 @@
 from pyopenapi import App, utils, primitives, errs
 from ..utils import get_test_data_folder
-from ...scanner import CycleDetector 
+from ...scanner import CycleDetector
 from ...scan import Scanner
 import unittest
 import os
@@ -70,12 +70,12 @@ class CircularRefTestCase(unittest.TestCase):
         s.scan(root=app.raw, route=[c])
         self.maxDiff = None
         self.assertEqual(sorted(c.cycles['schema']), sorted([
-            [_pf('/definitions/s10'), _pf('/definitions/s11'), _pf('/definitions/s9'), _pf('/definitions/s10')],
-            [_pf('/definitions/s5'), _pf('/definitions/s5')],
-            [_pf('/definitions/s1'), _pf('/definitions/s2'), _pf('/definitions/s3'), _pf('/definitions/s4'), _pf('/definitions/s1')],
-            [_pf('/definitions/s12'), _pf('/definitions/s13'), _pf('/definitions/s12')],
-            [_pf('/definitions/s6'), _pf('/definitions/s7'), _pf('/definitions/s6')],
-            [_pf('/definitions/s14'), _pf('/definitions/s15'), _pf('/definitions/s14')]
+            [_pf('/components/schemas/s10'), _pf('/components/schemas/s11'), _pf('/components/schemas/s9'), _pf('/components/schemas/s10')],
+            [_pf('/components/schemas/s5'), _pf('/components/schemas/s5')],
+            [_pf('/components/schemas/s1'), _pf('/components/schemas/s2'), _pf('/components/schemas/s3'), _pf('/components/schemas/s4'), _pf('/components/schemas/s1')],
+            [_pf('/components/schemas/s12'), _pf('/components/schemas/s13'), _pf('/components/schemas/s12')],
+            [_pf('/components/schemas/s6'), _pf('/components/schemas/s7'), _pf('/components/schemas/s6')],
+            [_pf('/components/schemas/s14'), _pf('/components/schemas/s15'), _pf('/components/schemas/s14')]
         ]))
 
     def test_deref(self):
@@ -86,7 +86,7 @@ class CircularRefTestCase(unittest.TestCase):
             strict=False
         )
 
-        s = app.resolve('#/definitions/s1')
+        s = app.resolve('#/components/schemas/s1')
         self.assertRaises(errs.CycleDetectionError, utils.deref, s)
 
     def test_primfactory(self):
@@ -97,6 +97,6 @@ class CircularRefTestCase(unittest.TestCase):
             strict=False
         )
 
-        s = app.resolve('#/definitions/s1')
+        s = app.resolve('#/components/schemas/s1')
         self.assertRaises(errs.CycleDetectionError, app.prim_factory.produce, s, {})
- 
+

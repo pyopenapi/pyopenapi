@@ -274,7 +274,7 @@ def deref(obj, guard=None):
     return cur
 
 def final(obj):
-    return obj.final if getattr(obj, 'final', None) else obj
+    return getattr(obj, 'final_obj', None) or obj
 
 def get_dict_as_tuple(d):
     """ get the first item in dict,
@@ -388,6 +388,8 @@ def get_swagger_version(obj):
             return obj['swaggerVersion']
         elif 'swagger' in obj:
             return obj['swagger']
+        elif 'openapi' in obj:
+            return obj['openapi']
         return None
     else:
         # should be an instance of BaseObj

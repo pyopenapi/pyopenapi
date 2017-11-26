@@ -1,5 +1,6 @@
 from pyopenapi import App
 from ..utils import get_test_data_folder
+from ...utils import final, deref
 import unittest
 
 
@@ -9,7 +10,7 @@ _xml = 'application/xml'
 
 class PatchObjTestCase(unittest.TestCase):
     """ test patch_obj.py """
-    
+
     @classmethod
     def setUpClass(kls):
         kls.app = App._create_(get_test_data_folder(
@@ -23,38 +24,41 @@ class PatchObjTestCase(unittest.TestCase):
         """
         p = self.app.s('/pc')
 
-        self.assertEqual(p.get.produces, [_json])
-        self.assertEqual(p.get.consumes, [_json])
-        self.assertEqual(p.post.produces, [_xml])
-        self.assertEqual(p.post.consumes, [_json])
-        self.assertEqual(p.put.produces, [_json])
-        self.assertEqual(p.put.consumes, [_xml])
-        self.assertEqual(p.delete.produces, [_xml])
-        self.assertEqual(p.delete.consumes, [_xml])
+        self.assertTrue(_json in p.get.request_body.content)
+        self.assertTrue(_json in p.get.responses['default'].content)
+        self.assertTrue(_xml in p.post.responses['default'].content)
+        self.assertTrue(_json in p.post.request_body.content)
+        self.assertTrue(_json in p.put.responses['default'].content)
+        self.assertTrue(_xml in p.put.request_body.content)
+        self.assertTrue(_xml in p.delete.responses['default'].content)
+        self.assertTrue(_xml in p.delete.request_body.content)
 
     def test_operation_parameters(self):
         """ test patch Operation with parameters """
         p = self.app.s('/param')
 
-        pp = p.get.parameters
+        pp = final(p.get).parameters
         self.assertEqual(len(pp), 2)
 
         self.assertEqual(pp[0].name, 'p1')
         self.assertEqual(getattr(pp[0], 'in'), 'query')
-        self.assertEqual(getattr(pp[0], 'type'), 'string')
+        self.assertEqual(getattr(pp[0].schema, 'type'), 'string')
         self.assertEqual(pp[1].name, 'p2')
         self.assertEqual(getattr(pp[1], 'in'), 'query')
-        self.assertEqual(getattr(pp[1], 'type'), 'string')
+        self.assertEqual(getattr(pp[1].schema, 'type'), 'string')
 
-        pp = p.post.parameters
-        self.assertEqual(len(pp), 2)
+        pp = final(p.post).parameters
+        self.assertEqual(len(pp), 3)
 
         self.assertEqual(pp[0].name, 'p1')
         self.assertEqual(getattr(pp[0], 'in'), 'path')
-        self.assertEqual(getattr(pp[0], 'type'), 'string')
-        self.assertEqual(pp[1].name, 'p2')
+        self.assertEqual(getattr(pp[0].schema, 'type'), 'string')
+        self.assertEqual(pp[1].name, 'p1')
         self.assertEqual(getattr(pp[1], 'in'), 'query')
-        self.assertEqual(getattr(pp[1], 'type'), 'string')
+        self.assertEqual(getattr(pp[1].schema, 'type'), 'string')
+        self.assertEqual(pp[2].name, 'p2')
+        self.assertEqual(getattr(pp[2], 'in'), 'query')
+        self.assertEqual(getattr(pp[2].schema, 'type'), 'string')
 
     def test_operation_scheme(self):
         """ test patch Operation with scheme """
@@ -88,6 +92,6 @@ class PatchObjTestCase(unittest.TestCase):
 
     def test_schema(self):
         """ test patch Schema """
-        s = self.app.resolve('#/definitions/schema1')
+        s = self.app.resolve('#/components/schemas/schema1')
 
         self.assertEqual(s.name, 'schema1')
