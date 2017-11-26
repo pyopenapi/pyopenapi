@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from .resolve import Resolver
 from .primitives import Primitive, MimeCodec
 from .spec.v1_2.parser import ResourceListContext
-from .spec.v2_0.parser import SwaggerContext
 from .spec.v2_0.objects import Swagger, Operation
 from .spec.v3_0_0.objects import OpenApi
 from .spec.base import BaseObj, Context
@@ -195,9 +194,7 @@ class App(object):
 
         elif version == '2.0':
             # swagger 2.0
-            with SwaggerContext(tmp, '_tmp_') as ctx:
-                ctx.parse(src_spec)
-            obj = tmp['_tmp_']
+            obj = Swagger(src_spec, jref)
         elif version == '3.0.0':
             # openapi 3.0.0
             obj = OpenApi(src_spec, jref)
