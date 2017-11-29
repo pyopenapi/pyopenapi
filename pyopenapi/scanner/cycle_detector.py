@@ -7,12 +7,6 @@ from ..spec.v2_0.objects import (
     Response,
     PathItem,
     )
-from ..spec.v2_0.parser import (
-    SchemaContext,
-    ParameterContext,
-    ResponseContext,
-    PathItemContext,
-    )
 import functools
 import six
 
@@ -72,7 +66,7 @@ class CycleDetector(object):
     def _parameter(self, path, _, app):
          self.cycles['parameter'] = walk(
             path,
-            functools.partial(_out, app, ParameterContext),
+            functools.partial(_out, app, Parameter),
             self.cycles['parameter']
         )
 
@@ -80,7 +74,7 @@ class CycleDetector(object):
     def _response(self, path, _, app):
         self.cycles['response'] = walk(
             path,
-            functools.partial(_out, app, ResponseContext),
+            functools.partial(_out, app, Response),
             self.cycles['response']
         )
 
@@ -88,7 +82,7 @@ class CycleDetector(object):
     def _path_item(self, path, _, app):
         self.cycles['path_item'] = walk(
             path,
-            functools.partial(_out, app, PathItemContext),
+            functools.partial(_out, app, PathItem),
             self.cycles['path_item']
         )
 

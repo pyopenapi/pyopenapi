@@ -195,6 +195,7 @@ class App(object):
         elif version == '2.0':
             # swagger 2.0
             obj = Swagger(src_spec, jref)
+
         elif version == '3.0.0':
             # openapi 3.0.0
             obj = OpenApi(src_spec, jref)

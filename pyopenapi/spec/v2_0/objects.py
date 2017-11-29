@@ -300,6 +300,7 @@ class Response(BaseObj_v2_0):
     }
 
 ResponseOrReference = if_not_ref_else(Response)
+MapOfResponseOrReference = map_(ResponseOrReference)
 
 
 class Operation(BaseObj_v2_0):
@@ -318,7 +319,7 @@ class Operation(BaseObj_v2_0):
         'produces': dict(child_builder=list_(is_str)),
         'schemes': dict(child_builder=list_(is_str)),
         'parameters': dict(child_builder=list_(ParameterOrReference)),
-        'responses': dict(child_builder=map_(ResponseOrReference)),
+        'responses': dict(child_builder=MapOfResponseOrReference),
         'security': dict(child_builder=list_(map_(list_(is_str)))),
         'externalDocs': dict(child_builder=ExternalDocumentation),
     }

@@ -3,7 +3,6 @@ from ...scan import Dispatcher
 from ...errs import CycleDetectionError
 from ...spec.v2_0.objects import Schema
 from ...spec.base import NullContext
-from ...spec.v2_0.parser import SchemaContext
 from ...utils import deref, CycleGuard
 import six
 
