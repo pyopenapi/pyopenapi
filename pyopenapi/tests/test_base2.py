@@ -468,3 +468,22 @@ class Base2TestCase(unittest.TestCase):
         f = FObj({'a': 102})
         self.assertEqual(f.a, 102)
         self.assertEqual(f.d3_renamed, 102)
+
+    def test_parent(self):
+        c = CObj({'cc':{'key1':{'a':1}, 'key2':{'b':2}}, 'ccc':[{'a':1}, {'a':2}]})
+        self.assertEqual(id(c.cc.parent), id(c))
+        self.assertEqual(id(c.ccc.parent), id(c))
+
+        map_c = c.cc
+        self.assertEqual(id(map_c['key1'].parent), id(map_c))
+        self.assertEqual(id(map_c['key2'].parent), id(map_c))
+
+        list_c = c.ccc
+        self.assertEqual(id(list_c[0].parent), id(list_c))
+        self.assertEqual(id(list_c[1].parent), id(list_c))
+
+        a = c.cc['key1']
+        b = BObj({'bb': 1})
+        a.attach_child('c', b)
+        self.assertEqual(id(b.parent), id(a))
+

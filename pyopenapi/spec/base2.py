@@ -101,7 +101,8 @@ def child(key, child_builder=None, required=False, default=None):
 
 class _Base(object):
     def __init__(self, spec, path=None):
-        self.__path = path
+        self._path = path
+        self._parent = None
         self.spec = spec
 
     def is_set(self, k):
@@ -110,7 +111,7 @@ class _Base(object):
         :return: True if the key is setted. False otherwise, it means we would get value
         from default from Field.
         """
-        return k in self.__spec
+        return k in self.spec
 
     @property
     def parent(self):
@@ -118,15 +119,19 @@ class _Base(object):
         :return: the parent object.
         :rtype: a subclass of BaseObj.
         """
-        return self.__parent
+        return self._parent
 
     @parent.setter
-    def parent(self, value):
-        self.__parent = value
+    def parent(self, v):
+        self._parent = v
 
     @property
     def path(self):
-        return self.__path
+        return self._path
+
+    @path.setter
+    def path(self, v):
+        self._path = v
 
 
 def list_(builder):
@@ -161,9 +166,11 @@ class _List(_Base):
         # generate children for all keys in spec
         for idx, e in enumerate(spec):
             path = jp_compose(str(idx), base=self.path)
-            self.__elm.append(
-                self.__child_builder__.__func__(e, path=path) if self.__child_builder_unbound__ else self.__child_builder__(e, path=path)
-            )
+            elm = self.__child_builder__.__func__(e, path=path) if self.__child_builder_unbound__ else self.__child_builder__(e, path=path)
+            if hasattr(elm, 'parent'):
+                elm.parent = self
+
+            self.__elm.append(elm)
 
     def resolve(self, ts):
         if isinstance(ts, six.string_types):
@@ -272,7 +279,11 @@ class _Map(_Base):
         # generate children for all keys in spec
         for k in spec:
             path = jp_compose(str(k), base=self.path)
-            self.__elm[k] = self.__child_builder__.__func__(spec[k], path=path) if self.__child_builder_unbound__ else self.__child_builder__(spec[k], path=path)
+            elm = self.__child_builder__.__func__(spec[k], path=path) if self.__child_builder_unbound__ else self.__child_builder__(spec[k], path=path)
+            if hasattr(elm, 'parent'):
+                elm.parent = self
+
+            self.__elm[k] = elm
 
     def resolve(self, ts):
         if isinstance(ts, six.string_types):
@@ -413,7 +424,7 @@ class Base2Obj(_Base):
         for name in self.__children__:
             # trigger the getter of children, it will create it if exist
             chd = getattr(self, name)
-            if chd:
+            if chd and hasattr(chd, 'parent'):
                 chd.parent = self
 
     def resolve(self, ts):
@@ -519,6 +530,8 @@ class Base2Obj(_Base):
             raise Exception('attemp to attach a children not in child fields {}:{}, {}'.format(str(type(self)), name, self.path))
 
         setattr(self, name, obj)
+        if hasattr(obj, 'parent'):
+            obj.parent = self
 
     @classmethod
     def attach_field(kls, name, **field_descriptor):
