@@ -569,8 +569,6 @@ class Base2Obj(_Base):
                 c = obj._children_
                 for cc in c:
                     ret[jp_compose([name, cc])] = c[cc]
-            else:
-                raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
 
         return ret
 
