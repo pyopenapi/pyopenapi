@@ -193,7 +193,11 @@ class _List(_Base):
             return False, ''
 
         for idx, (s, o) in enumerate(zip(self, other)):
-            same, name = s.compare(o, base=jp_compose(str(idx), base=base))
+            new_base = jp_compose(str(idx), base=base)
+            if isinstance(s, six.string_types + six.integer_types):
+                return s == o, new_base
+
+            same, name = s.compare(o, base=new_base)
             if not same:
                 return same, name
 
@@ -310,7 +314,11 @@ class _Map(_Base):
             return False, jp_compose(diff[0], base=base)
 
         for name in self.__elm:
-            s, n = self.__elm[name].compare(other[name], base=jp_compose(name, base=base))
+            new_base = jp_compose(name, base=base)
+            if isinstance(self.__elm[name], six.string_types + six.integer_types):
+                return self.__elm[name] == other[name], new_base
+
+            s, n = self.__elm[name].compare(other[name], base=new_base)
             if not s:
                 return s, n
 
@@ -465,10 +473,10 @@ class Base2Obj(_Base):
             return False, ''
 
         def _cmp_(name, s, o):
+            if isinstance(s, six.string_types + six.integer_types):
+                return s == o, name
             if type(s) != type(o):
                 return False, name
-            if isinstance(s, six.string_types + six.integer_types) :
-                return s == o, name
             if isinstance(s, (Base2Obj, _Map, _List)):
                 return s.compare(o, base=name)
             if isinstance(s, list):
