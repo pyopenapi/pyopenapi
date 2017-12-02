@@ -1,7 +1,7 @@
 from ...core import App
 from ...scan import Scanner, Scanner2, Dispatcher
 from ...spec.v1_2.objects import (
-    Resource,
+    ApiDeclaration,
     Authorization,
     Operation,
     ResponseMessage,
@@ -24,17 +24,17 @@ class CountObject(object):
 
     def __init__(self):
         self.total = {
-            Resource: 0,
+            ApiDeclaration: 0,
             Authorization: 0,
             Operation: 0,
             ResponseMessage: 0
         }
         self.long_name = ''
 
-    @Disp.register([Resource, Authorization, Operation, ResponseMessage])
+    @Disp.register([ApiDeclaration, Authorization, Operation, ResponseMessage])
     def _count(self, path, obj, _):
         self.total[obj.__class__] = self.total[obj.__class__] + 1
-        return path.rsplit('/', 1)[1]
+        return path
 
     @Disp.result
     def _result(self, name):
@@ -49,14 +49,14 @@ class PathRecord(object):
     class Disp(Dispatcher): pass
 
     def __init__(self):
-        self.resource = []
+        self.api_declaration = []
         self.authorization = []
         self.response_message = []
         self.parameter = []
 
-    @Disp.register([Resource])
-    def _resource(self, path, obj, _):
-        self.resource.append(path)
+    @Disp.register([ApiDeclaration])
+    def _api_declaration(self, path, obj, _):
+        self.api_declaration.append(path)
 
     @Disp.register([Authorization])
     def _authorization(self, path, obj, _):
@@ -64,13 +64,11 @@ class PathRecord(object):
 
     @Disp.register([ResponseMessage])
     def _response_message(self, path, obj, _):
-        if path.startswith('#/apis/store'):
-            self.response_message.append(path)
+        self.response_message.append(path)
 
     @Disp.register([Parameter])
     def _parameter(self, path, obj, _):
-        if path.startswith('#/apis/pet/apis/updatePetWithForm'):
-            self.parameter.append(path)
+        self.parameter.append(path)
 
 
 app = App.load(get_test_data_folder(version='1.2', which='wordnik'))
@@ -82,11 +80,13 @@ class ScannerTestCase(unittest.TestCase):
         s = Scanner(app)
         co = CountObject()
         s.scan(route=[co], root=app.raw)
+        for name in app.raw.cached_apis:
+            s.scan(route=[co], root=app.raw.cached_apis[name])
 
-        self.assertEqual(co.long_name, 'createUsersWithArrayInput')
+        self.assertEqual(co.long_name, '#/apis/3/operations/0/responseMessages/0')
         self.assertEqual(co.total, {
             Authorization: 1,
-            Resource: 3,
+            ApiDeclaration: 3,
             Operation: 20,
             ResponseMessage: 23
         })
@@ -95,11 +95,14 @@ class ScannerTestCase(unittest.TestCase):
         s = Scanner(app)
         co = CountObject()
         s.scan(route=[co], root=app.raw, leaves=[Operation])
+        for name in app.raw.cached_apis:
+            s.scan(route=[co], root=app.raw.cached_apis[name], leaves=[Operation])
+
         # the scanning would stop at Operation, so ResponseMessage
         # would not be counted.
         self.assertEqual(co.total, {
             Authorization: 1,
-            Resource: 3,
+            ApiDeclaration: 3,
             Operation: 20,
             ResponseMessage: 0
         })
@@ -110,17 +113,22 @@ class ScannerTestCase(unittest.TestCase):
         s = Scanner(app)
         p = PathRecord()
         s.scan(route=[p], root=app.raw)
+        s.scan(route=[p], root=app.raw.cached_apis['store'])
 
-        self.assertEqual(sorted(p.resource), sorted(['#/apis/store', '#/apis/user', '#/apis/pet']))
+        self.assertEqual(sorted(p.api_declaration), sorted(['#']))
         self.assertEqual(p.authorization, ['#/authorizations/oauth2'])
         self.assertEqual(sorted(p.response_message), sorted([
-            '#/apis/store/apis/placeOrder/responseMessages/0',
-            '#/apis/store/apis/deleteOrder/responseMessages/1',
-            '#/apis/store/apis/deleteOrder/responseMessages/0',
-            '#/apis/store/apis/getOrderById/responseMessages/1',
-            '#/apis/store/apis/getOrderById/responseMessages/0'
+            '#/apis/0/operations/0/responseMessages/0',
+            '#/apis/1/operations/0/responseMessages/1',
+            '#/apis/1/operations/0/responseMessages/0',
+            '#/apis/1/operations/1/responseMessages/1',
+            '#/apis/1/operations/1/responseMessages/0'
         ]))
-        self.assertEqual(len(p.parameter), 3)
+        self.assertEqual(sorted(p.parameter), sorted([
+            '#/apis/0/operations/0/parameters/0',
+            '#/apis/1/operations/0/parameters/0',
+            '#/apis/1/operations/1/parameters/0',
+        ]))
 
 
 class ResolveTestCase(unittest.TestCase):

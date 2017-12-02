@@ -13,7 +13,11 @@ def up(obj, app, jref):
         converter = Upgrade(app.sep)
 
         scanner.scan(root=ret, route=[converter])
-        ret = converter.swagger
+        # scan through each resource
+        for name in ret.cached_apis:
+            scanner.scan(root=ret.cached_apis[name], route=[converter])
+
+        ret = converter.get_swagger()
         if not ret:
             raise Exception('unable to upgrade from 1.2: {}'.format(jref))
 

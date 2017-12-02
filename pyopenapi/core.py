@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from .resolve import Resolver
 from .primitives import Primitive, MimeCodec
-from .spec.v1_2.parser import ResourceListContext
+from .spec.v1_2.objects import ResourceListing, ApiDeclaration
 from .spec.v2_0.objects import Swagger, Operation
 from .spec.v3_0_0.objects import OpenApi
 from .spec.base import BaseObj, Context
@@ -183,14 +183,29 @@ class App(object):
         src_spec = self.__resolver.resolve(jref, getter)
 
         # get root document to check its swagger version.
-        tmp = {'_tmp_': {}}
         obj = None
         version = utils.get_swagger_version(src_spec)
         if version == '1.2':
-            # swagger 1.2
-            with ResourceListContext(tmp, '_tmp_') as ctx:
-                ctx.parse(src_spec, jref, self.__resolver, getter)
-            obj = tmp['_tmp_']
+            obj = ResourceListing(src_spec, jref)
+
+            resources = []
+            for r in obj.apis:
+                resources.append(r.path)
+
+            base = utils.url_dirname(jref)
+            urls = zip(
+                map(lambda u: utils.url_join(base,  u[1:]), resources),
+                map(lambda u: u[1:], resources)
+            )
+
+            cached_apis = {}
+            for url, name in urls:
+                resource_spec = self.resolver.resolve(url, getter)
+                if resource_spec is None:
+                    raise Exception('unable to resolve {} when load spec from {}'.format(url, jref))
+                cached_apis[name] = ApiDeclaration(resource_spec, utils.jp_compose(name, base=url))
+
+            obj.cached_apis = cached_apis
 
         elif version == '2.0':
             # swagger 2.0
@@ -201,14 +216,7 @@ class App(object):
             obj = OpenApi(src_spec, jref)
 
         elif version == None and parser:
-            if inspect.isclass(parser) and issubclass(parser, Context):
-                with parser(tmp, '_tmp_') as ctx:
-                    ctx.parse(src_spec)
-                obj = tmp['_tmp_']
-
-            else:
-                obj = parser(src_spec, jref)
-
+            obj = parser(src_spec, jref)
             version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
         else:
             raise NotImplementedError('Unsupported Swagger Version: {0} from {1}'.format(version, jref))

@@ -5,8 +5,8 @@ from ...errs import SchemaError
 from ...utils import scope_compose, get_or_none
 from ...consts import private
 from ...spec.v1_2.objects import (
-    ResourceList,
-    Resource,
+    ResourceListing,
+    ApiDeclaration,
     Operation,
     Authorization,
     Parameter,
@@ -15,6 +15,10 @@ from ...spec.v1_2.objects import (
 from ...spec.v2_0.objects import Swagger
 import os
 import six
+
+
+def _get_name(path):
+    return path.split('/', 3)[2]
 
 
 def update_type_and_ref(dst, src, scope, sep, app):
@@ -87,8 +91,8 @@ class Upgrade(object):
         self.__swagger = None
         self.__sep = sep
 
-    @Disp.register([ResourceList])
-    def _resource_list(self, path, obj, app):
+    @Disp.register([ResourceListing])
+    def _resource_listing(self, path, obj, app):
         swagger_spec = {}
         swagger_spec['swagger'] = '2.0'
         swagger_spec['schemes'] = ['http', 'https']
@@ -127,9 +131,9 @@ class Upgrade(object):
 
         self.__swagger = swagger_spec
 
-    @Disp.register([Resource])
-    def _resource(self, path, obj, app):
-        name = obj.get_name(path)
+    @Disp.register([ApiDeclaration])
+    def _api_declaration(self, path, obj, app):
+        name = obj.resource_path[1:]
         for t in self.__swagger['tags']:
             if t['name'] == name:
                 break
@@ -142,7 +146,7 @@ class Upgrade(object):
     def _operation(self, path, obj, app):
         op_spec = {}
 
-        scope = obj._parent_.get_name(path)
+        scope = _get_name(path)
         op_spec['tags'] = [scope]
         op_spec['operationId'] = obj.nickname
         op_spec['summary'] = obj.summary
@@ -202,7 +206,7 @@ class Upgrade(object):
             ss_spec['name'] = obj.keyname
             o.update_field('in', obj.passAs)
 
-        self.__swagger['securityDefinitions'][obj.get_name(path)] = ss_spec
+        self.__swagger['securityDefinitions'][_get_name(path)] = ss_spec
 
     @Disp.register([Parameter])
     def _parameter(self, path, obj, app):
@@ -252,9 +256,11 @@ class Upgrade(object):
 
     @Disp.register([Model])
     def _model(self, path, obj, app):
-        scope = obj._parent_.get_name(path)
+        scope = _get_name(path)
 
-        s = scope_compose(scope, obj.get_name(path), sep=self.__sep)
+        # Ex. a 'Status' model under 'Pet' resource
+        # => new model-id would be 'Pet##Status'
+        s = scope_compose(scope, obj.id, sep=self.__sep)
         s_spec = self.__swagger['definitions'].setdefault(s, {})
 
         props = {}
@@ -278,8 +284,7 @@ class Upgrade(object):
             new_ref['$ref'] = '#/definitions/' + s
             sub_o_spec.setdefault('allOf', []).append(new_ref)
 
-    @property
-    def swagger(self):
+    def get_swagger(self):
         """ some preparation before returning Swagger object
         """
         # prepare Swagger.host & Swagger.basePath
