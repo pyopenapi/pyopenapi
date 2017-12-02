@@ -81,6 +81,47 @@ def convert_items(o, app):
 
     return items_spec
 
+def convert_operation(op, api, api_decl, swagger, sep, app):
+    op_spec = {}
+
+    scope = api_decl.resourcePath[1:]
+    op_spec['tags'] = [scope]
+    op_spec['operationId'] = op.nickname
+    op_spec['summary'] = op.summary
+    op_spec['description'] = op.notes
+    op_spec['deprecated'] = op.deprecated == 'true'
+
+    c = op.consumes if op.consumes else api_decl.consumes
+    op_spec['consumes'] = c if c else []
+
+    p = op.produces if op.produces else api_decl.produces
+    op_spec['produces'] = p if p else []
+
+    op_spec['parameters'] = []
+    op_spec['security'] = []
+
+    # if there is not authorizations in this operation,
+    # looking for it in api-declaration object.
+    _auth = op.authorizations if op.authorizations else api_decl.authorizations
+    if _auth:
+        for name, scopes in six.iteritems(_auth):
+            op_spec['security'].append({name: [v.scope for v in scopes]})
+
+    # Operation return value
+    op_spec['responses'] = {}
+    resp_spec = {}
+    if op.type != 'void':
+        resp_spec['schema'] = convert_schema_from_datatype(op, scope, sep, app)
+    resp_spec['description'] = '' # description is a required field in 2.0 Response object
+    op_spec['responses']['default'] = resp_spec
+
+    path = api_decl.base_path + api.path
+    if path not in swagger['paths']:
+        swagger['paths'][path] = {}
+
+    method = op.method.lower()
+    swagger['paths'][path][method] = op_spec
+
 
 class Upgrade(object):
     """ convert 1.2 object to 2.0 object
@@ -142,47 +183,9 @@ class Upgrade(object):
             tag_spec['name'] = name
             self.__swagger['tags'].append(tag_spec)
 
-    @Disp.register([Operation])
-    def _operation(self, path, obj, app):
-        op_spec = {}
-
-        scope = _get_name(path)
-        op_spec['tags'] = [scope]
-        op_spec['operationId'] = obj.nickname
-        op_spec['summary'] = obj.summary
-        op_spec['description'] = obj.notes
-        op_spec['deprecated'] = obj.deprecated == 'true'
-
-        c = obj.consumes if obj.consumes and len(obj.consumes) > 0 else obj._parent_.consumes
-        op_spec['consumes'] = c if c else []
-
-        p = obj.produces if obj.produces and len(obj.produces) > 0 else obj._parent_.produces
-        op_spec['produces'] = p if p else []
-
-        op_spec['parameters'] = []
-        op_spec['security'] = []
-
-        # if there is not authorizations in this operation,
-        # looking for it in resource object.
-        _auth = obj.authorizations if obj.authorizations and len(obj.authorizations) > 0 else obj._parent_.authorizations
-        if _auth:
-            for name, scopes in six.iteritems(_auth):
-                op_spec['security'].append({name: [v.scope for v in scopes]})
-
-        # Operation return value
-        op_spec['responses'] = {}
-        resp_spec = {}
-        if obj.type != 'void':
-            resp_spec['schema'] = convert_schema_from_datatype(obj, scope, self.__sep, app)
-        resp_spec['description'] = '' # description is a required field in 2.0 Response object
-        op_spec['responses']['default'] = resp_spec
-
-        path = obj._parent_.basePath + obj.path
-        if path not in self.__swagger['paths']:
-            self.__swagger['paths'][path] = {}
-
-        method = obj.method.lower()
-        self.__swagger['paths'][path][method] = op_spec
+        for api in obj.apis:
+            for op in api.operations:
+                convert_operation(op, api, obj, self.__swagger, self.__sep, app)
 
     @Disp.register([Authorization])
     def _authorization(self, path, obj, app):
