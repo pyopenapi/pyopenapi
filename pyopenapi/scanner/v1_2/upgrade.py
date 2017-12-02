@@ -81,6 +81,46 @@ def convert_items(o, app):
 
     return items_spec
 
+def convert_parameter(param, scope, sep, app):
+    p_spec = {}
+    p_spec['name'] = param.name
+    p_spec['required'] = param.required
+    p_spec['description'] = param.description
+
+    if param.paramType == 'form':
+        p_spec['in'] = 'formData'
+    else:
+        p_spec['in'] = param.paramType
+
+    if 'body' == p_spec['in']:
+        p_spec['schema'] = convert_schema_from_datatype(param, scope, sep, app)
+    else:
+        if getattr(param, '$ref'):
+            raise SchemaError('Can\'t have $ref in non-body Parameters')
+
+        if param.allowMultiple == True and param.items == None:
+            p_spec['type'] = 'array'
+            p_spec['collectionFormat'] = 'csv'
+            p_spec['uniqueItems'] = param.uniqueItems
+            p_spec['items'] = convert_items(param, app)
+            if param.is_set("defaultValue"):
+                p_spec['default'] = [param.defaultValue]
+            p_spec['items']['enum'] = param.enum
+        else:
+            p_spec['type'] = param.type.lower()
+            p_spec['format'] = param.format
+            if param.is_set("defaultValue"):
+                p_spec['default'] = param.defaultValue
+            convert_min_max(p_spec, param)
+            p_spec['enum'] = param.enum
+
+        if param.items:
+            p_spec['collectionFormat'] = 'csv'
+            p_spec['uniqueItems'] = param.uniqueItems
+            p_spec['items'] = convert_items(param.items, app)
+
+    return p_spec
+
 def convert_operation(op, api, api_decl, swagger, sep, app):
     op_spec = {}
 
@@ -97,7 +137,9 @@ def convert_operation(op, api, api_decl, swagger, sep, app):
     p = op.produces if op.produces else api_decl.produces
     op_spec['produces'] = p if p else []
 
-    op_spec['parameters'] = []
+    parameters = op_spec.setdefault('parameters', [])
+    for p in op.parameters:
+        parameters.append(convert_parameter(p, scope, sep, app))
     op_spec['security'] = []
 
     # if there is not authorizations in this operation,
@@ -210,52 +252,6 @@ class Upgrade(object):
             o.update_field('in', obj.passAs)
 
         self.__swagger['securityDefinitions'][_get_name(path)] = ss_spec
-
-    @Disp.register([Parameter])
-    def _parameter(self, path, obj, app):
-        p_spec = {}
-        scope = obj._parent_._parent_.get_name(path)
-
-        p_spec['name'] = obj.name
-        p_spec['required'] = obj.required
-        p_spec['description'] = obj.description
-
-        if obj.paramType == 'form':
-            p_spec['in'] = 'formData'
-        else:
-            p_spec['in'] = obj.paramType
-
-        if 'body' == p_spec['in']:
-            p_spec['schema'] = convert_schema_from_datatype(obj, scope, self.__sep, app)
-        else:
-            if getattr(obj, '$ref'):
-                raise SchemaError('Can\'t have $ref in non-body Parameters')
-
-            if obj.allowMultiple == True and obj.items == None:
-                p_spec['type'] = 'array'
-                p_spec['collectionFormat'] = 'csv'
-                p_spec['uniqueItems'] = obj.uniqueItems
-                p_spec['items'] = convert_items(obj, app)
-                if obj.is_set("defaultValue"):
-                    p_spec['default'] = [obj.defaultValue]
-                p_spec['items']['enum'] = obj.enum
-            else:
-                p_spec['type'] = obj.type.lower()
-                p_spec['format'] = obj.format
-                if obj.is_set("defaultValue"):
-                    p_spec['default'] = obj.defaultValue
-                convert_min_max(p_spec, obj)
-                p_spec['enum'] = obj.enum
-
-            if obj.items:
-                p_spec['collectionFormat'] = 'csv'
-                p_spec['uniqueItems'] = obj.uniqueItems
-                p_spec['items'] = convert_items(obj.items, app)
-
-        path = obj._parent_._parent_.basePath + obj._parent_.path
-        method = obj._parent_.method.lower()
-        op = self.__swagger['paths'][path][method]
-        op['parameters'].append(p_spec)
 
     @Disp.register([Model])
     def _model(self, path, obj, app):
