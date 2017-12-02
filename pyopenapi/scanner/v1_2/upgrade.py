@@ -164,6 +164,35 @@ def convert_operation(op, api, api_decl, swagger, sep, app):
     method = op.method.lower()
     swagger['paths'][path][method] = op_spec
 
+def convert_model(model, api_decl, swagger, sep, app):
+    scope = api_decl.resourcePath[1:]
+
+    # Ex. a 'Status' model under 'Pet' resource
+    # => new model-id would be 'Pet##Status'
+    s = scope_compose(scope, model.id, sep=sep)
+    s_spec = swagger['definitions'].setdefault(s, {})
+
+    props = {}
+    for name, prop in six.iteritems(model.properties):
+        props[name] = convert_schema_from_datatype(prop, scope, sep, app)
+        props[name]['description'] = prop.description
+
+    s_spec.setdefault('properties', {}).update(props)
+
+    s_spec['required'] = model.required
+    s_spec['discriminator'] = model.discriminator
+    s_spec['description'] = model.description
+
+    for t in model.subTypes or []:
+        # here we assume those child models belongs to
+        # the same resource.
+        sub_s = scope_compose(scope, t, sep=sep)
+        sub_o_spec = swagger['definitions'].setdefault(sub_s, {})
+
+        new_ref = {}
+        new_ref['$ref'] = '#/definitions/' + s
+        sub_o_spec.setdefault('allOf', []).append(new_ref)
+
 
 class Upgrade(object):
     """ convert 1.2 object to 2.0 object
@@ -228,6 +257,8 @@ class Upgrade(object):
         for api in obj.apis:
             for op in api.operations:
                 convert_operation(op, api, obj, self.__swagger, self.__sep, app)
+        for _, model in obj.models.iteritems():
+            convert_model(model, obj, self.__swagger, self.__sep, app)
 
     @Disp.register([Authorization])
     def _authorization(self, path, obj, app):
@@ -252,36 +283,6 @@ class Upgrade(object):
             o.update_field('in', obj.passAs)
 
         self.__swagger['securityDefinitions'][_get_name(path)] = ss_spec
-
-    @Disp.register([Model])
-    def _model(self, path, obj, app):
-        scope = _get_name(path)
-
-        # Ex. a 'Status' model under 'Pet' resource
-        # => new model-id would be 'Pet##Status'
-        s = scope_compose(scope, obj.id, sep=self.__sep)
-        s_spec = self.__swagger['definitions'].setdefault(s, {})
-
-        props = {}
-        for name, prop in six.iteritems(obj.properties):
-            props[name] = convert_schema_from_datatype(prop, scope, self.__sep, app)
-            props[name]['description'] = prop.description
-
-        s_spec.setdefault('properties', {}).update(props)
-
-        s_spec['required'] = obj.required
-        s_spec['discriminator'] = obj.discriminator
-        s_spec['description'] = obj.description
-
-        for t in obj.subTypes or []:
-            # here we assume those child models belongs to
-            # the same resource.
-            sub_s = scope_compose(scope, t, sep=self.__sep)
-            sub_o_spec = self.__swagger['definitions'].setdefault(sub_s, {})
-
-            new_ref = {}
-            new_ref['$ref'] = '#/definitions/' + s
-            sub_o_spec.setdefault('allOf', []).append(new_ref)
 
     def get_swagger(self):
         """ some preparation before returning Swagger object
