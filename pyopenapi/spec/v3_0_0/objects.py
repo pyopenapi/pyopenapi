@@ -9,7 +9,7 @@ class Base2_v3_0_0(Base2):
 
 class Reference(Base2_v3_0_0):
     __fields__ = {
-        '$ref': dict(builder=field, required=True),
+        '$ref': dict(required=True),
     }
 
     __internal__ = {
@@ -49,25 +49,25 @@ def is_str_or_int(spec, path):
 
 class Contact(Base2_v3_0_0):
     __fields__ = {
-        'name': dict(builder=field),
-        'url': dict(builder=field),
-        'email': dict(builder=field),
+        'name': dict(),
+        'url': dict(),
+        'email': dict(),
     }
 
 
 class License(Base2_v3_0_0):
     __fields__ = {
-        'name': dict(builder=field, required=True),
-        'url': dict(builder=field),
+        'name': dict(required=True),
+        'url': dict(),
     }
 
 
 class Info(Base2_v3_0_0):
     __fields__ = {
-        'title': dict(builder=field, required=True),
-        'description': dict(builder=field),
-        'termsOfService': dict(builder=field),
-        'version': dict(builder=field, required=True),
+        'title': dict(required=True),
+        'description': dict(),
+        'termsOfService': dict(),
+        'version': dict(required=True),
     }
 
     __children__ = {
@@ -82,8 +82,8 @@ class Info(Base2_v3_0_0):
 
 class ServerVariable(Base2_v3_0_0):
     __fields__ = {
-        'default': dict(builder=field, required=True),
-        'description': dict(builder=field),
+        'default': dict(required=True),
+        'description': dict(),
     }
 
     __children__ = {
@@ -97,8 +97,8 @@ class ServerVariable(Base2_v3_0_0):
 
 class Server(Base2_v3_0_0):
     __fields__ = {
-        'url': dict(builder=field, required=True),
-        'description': dict(builder=field),
+        'url': dict(required=True),
+        'description': dict(),
     }
 
     __children__ = {
@@ -108,10 +108,10 @@ class Server(Base2_v3_0_0):
 
 class Example(Base2_v3_0_0):
     __fields__ = {
-        'summary': dict(builder=field),
-        'description': dict(builder=field),
-        'value': dict(builder=field),
-        'externalValue': dict(builder=field),
+        'summary': dict(),
+        'description': dict(),
+        'value': dict(),
+        'externalValue': dict(),
     }
 
     __internal__ = {
@@ -123,24 +123,24 @@ ExampleOrReference = if_not_ref_else(Example)
 
 class XML_(Base2_v3_0_0):
     __fields__ = {
-        'name': dict(builder=field),
-        'namespace': dict(builder=field),
-        'prefix': dict(builder=field),
-        'attribute': dict(builder=field),
-        'wrapped': dict(builder=field),
+        'name': dict(),
+        'namespace': dict(),
+        'prefix': dict(),
+        'attribute': dict(),
+        'wrapped': dict(),
     }
 
 
 class ExternalDocumentation(Base2_v3_0_0):
     __fields__ = {
-        'description': dict(builder=field),
-        'url': dict(builder=field, required=True),
+        'description': dict(),
+        'url': dict(required=True),
     }
 
 
 class Discriminator(Base2_v3_0_0):
     __fields__ = {
-        'propertyName': dict(key='propertyName', builder=field),
+        'propertyName': dict(key='propertyName', ),
     }
 
     __children__ = {
@@ -154,31 +154,31 @@ class Discriminator(Base2_v3_0_0):
 
 class Schema(Base2_v3_0_0):
     __fields__ = {
-        'title': dict(builder=field),
-        'multipleOf': dict(builder=field),
-        'maximum': dict(builder=field),
-        'exclusiveMaximum': dict(builder=field),
-        'minimum': dict(builder=field),
-        'exclusiveMinimum': dict(builder=field),
-        'maxLength': dict(builder=field),
-        'minLength': dict(builder=field),
-        'pattern': dict(builder=field),
-        'maxItems': dict(builder=field),
-        'minItems': dict(builder=field),
-        'uniqueItems': dict(builder=field),
-        'maxProperties': dict(builder=field),
-        'minProperties': dict(builder=field),
-        'required': dict(builder=field),
-        'enum': dict(builder=field),
-        'type': dict(builder=field),
-        'description': dict(builder=field),
-        'format': dict(builder=field),
-        'default': dict(builder=field),
-        'nullable': dict(builder=field),
-        'readOnly': dict(builder=field),
-        'writeOnly': dict(builder=field),
-        'example': dict(builder=field),
-        'depreated': dict(builder=field),
+        'title': dict(),
+        'multipleOf': dict(),
+        'maximum': dict(),
+        'exclusiveMaximum': dict(),
+        'minimum': dict(),
+        'exclusiveMinimum': dict(),
+        'maxLength': dict(),
+        'minLength': dict(),
+        'pattern': dict(),
+        'maxItems': dict(),
+        'minItems': dict(),
+        'uniqueItems': dict(),
+        'maxProperties': dict(),
+        'minProperties': dict(),
+        'required': dict(),
+        'enum': dict(),
+        'type': dict(),
+        'description': dict(),
+        'format': dict(),
+        'default': dict(),
+        'nullable': dict(),
+        'readOnly': dict(),
+        'writeOnly': dict(),
+        'example': dict(),
+        'depreated': dict(),
     }
 
     __children__ = {
@@ -231,16 +231,16 @@ Schema.attach_field(
 
 class Parameter(Base2_v3_0_0):
     __fields__ = {
-        'name': dict(builder=field, required=True),
-        'in': dict(builder=field, required=True),
-        'description': dict(builder=field),
-        'required': dict(builder=field),
-        'deprecated': dict(builder=field),
-        'allowEmptyValue': dict(builder=field),
-        'style': dict(builder=field),
-        'explode': dict(builder=field),
-        'allowReserved': dict(builder=field),
-        'example': dict(builder=field),
+        'name': dict(required=True),
+        'in': dict(required=True),
+        'description': dict(),
+        'required': dict(),
+        'deprecated': dict(),
+        'allowEmptyValue': dict(),
+        'style': dict(),
+        'explode': dict(),
+        'allowReserved': dict(),
+        'example': dict(),
     }
 
     __children__ = {
@@ -259,8 +259,8 @@ ParameterOrReference = if_not_ref_else(Parameter)
 
 class Header(Parameter):
     __fields__ = {
-        'name': dict(builder=field, restricted=True),
-        'in': dict(builder=field, restricted=True, default='header')
+        'name': dict(restricted=True),
+        'in': dict(restricted=True, default='header')
     }
 
     __internal__ = {
@@ -272,10 +272,10 @@ HeaderOrReference = if_not_ref_else(Header)
 
 class Encoding(Base2_v3_0_0):
     __fields__ = {
-        'contentType': dict(builder=field),
-        'stype': dict(builder=field),
-        'explode': dict(builder=field),
-        'allowReserved': dict(builder=field),
+        'contentType': dict(),
+        'stype': dict(),
+        'explode': dict(),
+        'allowReserved': dict(),
     }
 
     __children__ = {
@@ -290,7 +290,7 @@ class Encoding(Base2_v3_0_0):
 
 class MediaType(Base2_v3_0_0):
     __fields__ = {
-        'example': dict(builder=field),
+        'example': dict(),
     }
 
     __children__ = {
@@ -305,8 +305,8 @@ Parameter.attach_field('content', builder=child, child_builder=map_(MediaType))
 
 class RequestBody(Base2_v3_0_0):
     __fields__ = {
-        'description': dict(builder=field),
-        'required': dict(builder=field),
+        'description': dict(),
+        'required': dict(),
     }
 
     __children__ = {
@@ -318,10 +318,10 @@ RequestBodyOrReference = if_not_ref_else(RequestBody)
 
 class Link(Base2_v3_0_0):
     __fields__ = {
-        'operationRef': dict(builder=field),
-        'operationId': dict(builder=field),
-        'requestBody': dict(builder=field),
-        'description': dict(builder=field),
+        'operationRef': dict(),
+        'operationId': dict(),
+        'requestBody': dict(),
+        'description': dict(),
     }
 
     __children__ = {
@@ -340,7 +340,7 @@ LinkOrReference = if_not_ref_else(Link)
 
 class Response(Base2_v3_0_0):
     __fields__ = {
-        'description': dict(builder=field, required=True),
+        'description': dict(required=True),
     }
 
     __children__ = {
@@ -354,9 +354,9 @@ ResponseOrReference = if_not_ref_else(Response)
 
 class OAuthFlow(Base2_v3_0_0):
     __fields__ = {
-        'authorizationUrl': dict(builder=field),
-        'tokenUrl': dict(builder=field),
-        'refreshUrl': dict(builder=field),
+        'authorizationUrl': dict(),
+        'tokenUrl': dict(),
+        'refreshUrl': dict(),
     }
 
     __children__ = {
@@ -386,13 +386,13 @@ class OAuthFlows(Base2_v3_0_0):
 
 class SecurityScheme(Base2_v3_0_0):
     __fields__ = {
-        'type': dict(builder=field, required=True),
-        'description': dict(builder=field),
-        'name': dict(builder=field),
-        'in': dict(builder=field),
-        'scheme': dict(builder=field),
-        'bearerFormat': dict(builder=field),
-        'openIdConnectUrl': dict(builder=field),
+        'type': dict(required=True),
+        'description': dict(),
+        'name': dict(),
+        'in': dict(),
+        'scheme': dict(),
+        'bearerFormat': dict(),
+        'openIdConnectUrl': dict(),
     }
 
     __children__ = {
@@ -411,10 +411,10 @@ SecuritySchemeOrReference = if_not_ref_else(SecurityScheme)
 
 class Operation(Base2_v3_0_0):
     __fields__ = {
-        'summary': dict(builder=field),
-        'description': dict(builder=field),
-        'operationId': dict(builder=field),
-        'deprecated': dict(builder=field),
+        'summary': dict(),
+        'description': dict(),
+        'operationId': dict(),
+        'deprecated': dict(),
     }
 
     __children__ = {
@@ -438,9 +438,9 @@ class Operation(Base2_v3_0_0):
 
 class PathItem(Base2_v3_0_0):
     __fields__ = {
-        '$ref': dict(builder=field),
-        'summary': dict(builder=field),
-        'description': dict(builder=field),
+        '$ref': dict(),
+        'summary': dict(),
+        'description': dict(),
     }
 
     __internal__ = {
@@ -494,8 +494,8 @@ class Components(Base2_v3_0_0):
 
 class Tag(Base2_v3_0_0):
     __fields__ = {
-        'name': dict(builder=field, required=True),
-        'description': dict(builder=field),
+        'name': dict(required=True),
+        'description': dict(),
     }
 
     __children__ = {
@@ -509,7 +509,7 @@ class Tag(Base2_v3_0_0):
 
 class OpenApi(Base2_v3_0_0):
     __fields__ = {
-        'openapi': dict(builder=field),
+        'openapi': dict(),
     }
 
     __children__ = {

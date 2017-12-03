@@ -12,9 +12,9 @@ class Items(BaseObj_v1_2):
     """ Items Object
     """
     __fields__ = {
-        '$ref': dict(builder=field),
-        'type': dict(builder=field),
-        'format': dict(builder=field),
+        '$ref': dict(),
+        'type': dict(),
+        'format': dict(),
     }
 
     __internal__ = {
@@ -28,14 +28,14 @@ class DataTypeObj(BaseObj_v1_2):
     """ Data Type Fields
     """
     __fields__ = {
-        'type': dict(builder=field),
-        '$ref': dict(builder=field),
-        'format': dict(builder=field),
-        'defaultValue': dict(builder=field),
-        'enum': dict(builder=field),
-        'minimum': dict(builder=field),
-        'maximum': dict(builder=field),
-        'uniqueItems': dict(builder=field),
+        'type': dict(),
+        '$ref': dict(),
+        'format': dict(),
+        'defaultValue': dict(),
+        'enum': dict(),
+        'minimum': dict(),
+        'maximum': dict(),
+        'uniqueItems': dict(),
     }
 
     __children__ = {
@@ -56,8 +56,8 @@ class Scope(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'scope': dict(builder=field, required=True),
-        'description': dict(builder=field),
+        'scope': dict(required=True),
+        'description': dict(),
     }
 
 
@@ -66,7 +66,7 @@ class LoginEndpoint(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'url': dict(builder=field, required=True),
+        'url': dict(required=True),
     }
 
 
@@ -75,7 +75,7 @@ class Implicit(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'tokenName': dict(builder=field),
+        'tokenName': dict(),
     }
 
     __children__ = {
@@ -93,9 +93,9 @@ class TokenRequestEndpoint(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'url': dict(builder=field, required=True),
-        'clientIdName': dict(builder=field),
-        'clientSecretName': dict(builder=field),
+        'url': dict(required=True),
+        'clientIdName': dict(),
+        'clientSecretName': dict(),
     }
 
     __internal__ = {
@@ -109,8 +109,8 @@ class TokenEndpoint(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'url': dict(builder=field, required=True),
-        'tokenName': dict(builder=field),
+        'url': dict(required=True),
+        'tokenName': dict(),
     }
 
     __internal__ = {
@@ -148,8 +148,8 @@ class Authorizations(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'scope': dict(builder=field),
-        'description': dict(builder=field),
+        'scope': dict(),
+        'description': dict(),
     }
 
 
@@ -158,9 +158,9 @@ class Authorization(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'type': dict(builder=field),
-        'passAs': dict(builder=field),
-        'keyname': dict(builder=field),
+        'type': dict(),
+        'passAs': dict(),
+        'keyname': dict(),
     }
 
     __children__ = {
@@ -180,9 +180,9 @@ class ResponseMessage(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'code': dict(builder=field, required=True),
-        'message': dict(builder=field, required=True),
-        'responseModel': dict(builder=field),
+        'code': dict(required=True),
+        'message': dict(required=True),
+        'responseModel': dict(),
     }
 
     __internal__ = {
@@ -195,11 +195,11 @@ class Parameter(DataTypeObj):
     """
 
     __fields__ = {
-        'paramType': dict(builder=field, required=True),
-        'name': dict(builder=field, required=True),
-        'description': dict(builder=field),
-        'required': dict(builder=field),
-        'allowMultiple': dict(builder=field),
+        'paramType': dict(required=True),
+        'name': dict(required=True),
+        'description': dict(),
+        'required': dict(),
+        'allowMultiple': dict(),
     }
 
     __internal__ = {
@@ -213,13 +213,13 @@ class Operation(DataTypeObj):
     """
 
     __fields__ = {
-        'method': dict(builder=field, required=True),
-        'summary': dict(builder=field),
-        'notes': dict(builder=field),
-        'nickname': dict(builder=field, required=True),
-        'produces': dict(builder=field),
-        'consumes': dict(builder=field),
-        'deprecated': dict(builder=field),
+        'method': dict(required=True),
+        'summary': dict(),
+        'notes': dict(),
+        'nickname': dict(required=True),
+        'produces': dict(),
+        'consumes': dict(),
+        'deprecated': dict(),
     }
 
     __children__ = {
@@ -238,8 +238,8 @@ class Api(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'path': dict(builder=field, required=True),
-        'description': dict(builder=field),
+        'path': dict(required=True),
+        'description': dict(),
     }
 
     __children__ = {
@@ -252,7 +252,7 @@ class Property(DataTypeObj):
     """
 
     __fields__ = {
-        'description': dict(builder=field),
+        'description': dict(),
     }
 
 
@@ -261,11 +261,11 @@ class Model(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'id': dict(builder=field, required=True),
-        'description': dict(builder=field),
-        'required': dict(builder=field),
-        'subTypes': dict(builder=field),
-        'discriminator': dict(builder=field),
+        'id': dict(required=True),
+        'description': dict(),
+        'required': dict(),
+        'subTypes': dict(),
+        'discriminator': dict(),
     }
 
     __children__ = {
@@ -284,13 +284,13 @@ class ApiDeclaration(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'swaggerVersion': dict(builder=field, required=True),
-        'apiVersion': dict(builder=field),
-        'basePath': dict(builder=field, required=True),
-        'resourcePath': dict(builder=field),
-        'produces': dict(builder=field),
-        'consumes': dict(builder=field),
-        'description': dict(builder=field),
+        'swaggerVersion': dict(required=True),
+        'apiVersion': dict(),
+        'basePath': dict(required=True),
+        'resourcePath': dict(),
+        'produces': dict(),
+        'consumes': dict(),
+        'description': dict(),
     }
 
     __children__ = {
@@ -312,12 +312,12 @@ class Info(BaseObj_v1_2):
     """
 
     __fields__ = {
-        'title': dict(builder=field, required=True),
-        'description': dict(builder=field, required=True),
-        'termsOfServiceUrl': dict(builder=field),
-        'contact': dict(builder=field),
-        'license': dict(builder=field),
-        'licenseUrl': dict(builder=field),
+        'title': dict(required=True),
+        'description': dict(required=True),
+        'termsOfServiceUrl': dict(),
+        'contact': dict(),
+        'license': dict(),
+        'licenseUrl': dict(),
     }
 
     __internal__ = {
@@ -330,8 +330,8 @@ class ResourceInListing(BaseObj_v1_2):
     """ Resource object in "Resource Listing"
     """
     __fields__ = {
-        'path': dict(builder=field),
-        'description': dict(builder=field),
+        'path': dict(),
+        'description': dict(),
     }
 
 
@@ -339,8 +339,8 @@ class ResourceListing(BaseObj_v1_2):
     """ Resource List Object
     """
     __fields__ = {
-        'swaggerVersion': dict(builder=field, required=True),
-        'apiVersion': dict(builder=field),
+        'swaggerVersion': dict(required=True),
+        'apiVersion': dict(),
     }
 
     __children__ = {

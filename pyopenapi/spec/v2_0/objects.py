@@ -33,7 +33,7 @@ class Reference(BaseObj_v2_0):
     """ $ref
     """
     __fields__ = {
-        '$ref': dict(builder=field),
+        '$ref': dict(),
     }
 
     __internal__ = {
@@ -47,11 +47,11 @@ class XMLObject(BaseObj_v2_0):
     """ XML Object
     """
     __fields__ = {
-        'name': dict(builder=field),
-        'namespace': dict(builder=field),
-        'prefix': dict(builder=field),
-        'attribute': dict(builder=field),
-        'wrapped': dict(builder=field),
+        'name': dict(),
+        'namespace': dict(),
+        'prefix': dict(),
+        'attribute': dict(),
+        'wrapped': dict(),
     }
 
 
@@ -60,8 +60,8 @@ class ExternalDocumentation(BaseObj_v2_0):
     """
 
     __fields__ = {
-        'description': dict(builder=field),
-        'url': dict(builder=field),
+        'description': dict(),
+        'url': dict(),
     }
 
 
@@ -69,8 +69,8 @@ class Tag(BaseObj_v2_0):
     """ Tag Object
     """
     __fields__ = {
-        'name': dict(builder=field),
-        'description': dict(builder=field),
+        'name': dict(),
+        'description': dict(),
     }
 
     __children__ = {
@@ -87,21 +87,21 @@ class BaseSchema(BaseObj_v2_0):
     """
 
     __fields__ = {
-        'type': dict(builder=field),
-        'format': dict(builder=field),
-        'default': dict(builder=field),
-        'maximum': dict(builder=field),
-        'exclusiveMaximum': dict(builder=field),
-        'minimum': dict(builder=field),
-        'exclusiveMinimum': dict(builder=field),
-        'maxLength': dict(builder=field),
-        'minLength': dict(builder=field),
-        'maxItems': dict(builder=field),
-        'minItems': dict(builder=field),
-        'multipleOf': dict(builder=field),
-        'enum': dict(builder=field),
-        'pattern': dict(builder=field),
-        'uniqueItems': dict(builder=field),
+        'type': dict(),
+        'format': dict(),
+        'default': dict(),
+        'maximum': dict(),
+        'exclusiveMaximum': dict(),
+        'minimum': dict(),
+        'exclusiveMinimum': dict(),
+        'maxLength': dict(),
+        'minLength': dict(),
+        'maxItems': dict(),
+        'minItems': dict(),
+        'multipleOf': dict(),
+        'enum': dict(),
+        'pattern': dict(),
+        'uniqueItems': dict(),
     }
 
     __renamed__ = {
@@ -123,7 +123,7 @@ class Items(BaseSchema):
     """
 
     __fields__ = {
-        'collectionFormat': dict(builder=field, default='csv'),
+        'collectionFormat': dict(default='csv'),
     }
 
     __renamed__ = {
@@ -141,15 +141,15 @@ class Schema(BaseSchema):
     """ Schema Object
     """
     __fields__ = {
-        '$ref': dict(builder=field),
-        'maxProperties': dict(builder=field),
-        'minProperties': dict(builder=field),
-        'title': dict(builder=field),
-        'description': dict(builder=field),
-        'discriminator': dict(builder=field),
-        'readOnly': dict(builder=field),
-        'example': dict(builder=field),
-        'required': dict(builder=field, default=[]),
+        '$ref': dict(),
+        'maxProperties': dict(),
+        'minProperties': dict(),
+        'title': dict(),
+        'description': dict(),
+        'discriminator': dict(),
+        'readOnly': dict(),
+        'example': dict(),
+        'required': dict(default=[]),
     }
 
     __children__ = {
@@ -187,9 +187,9 @@ class Contact(BaseObj_v2_0):
     """ Contact Object
     """
     __fields__ = {
-        'name': dict(builder=field),
-        'url': dict(builder=field),
-        'email': dict(builder=field),
+        'name': dict(),
+        'url': dict(),
+        'email': dict(),
     }
 
 
@@ -197,8 +197,8 @@ class License(BaseObj_v2_0):
     """ License Object
     """
     __fields__ = {
-        'name': dict(builder=field),
-        'url': dict(builder=field),
+        'name': dict(),
+        'url': dict(),
     }
 
 
@@ -206,10 +206,10 @@ class Info(BaseObj_v2_0):
     """ Info Object
     """
     __fields__ = {
-        'version': dict(builder=field),
-        'title': dict(builder=field),
-        'description': dict(builder=field),
-        'termsOfService': dict(builder=field),
+        'version': dict(),
+        'title': dict(),
+        'description': dict(),
+        'termsOfService': dict(),
     }
 
     __children__ = {
@@ -226,12 +226,12 @@ class Parameter(BaseSchema):
     """ Parameter Object
     """
     __fields__ = {
-        'name': dict(builder=field),
-        'in':  dict(builder=field),
-        'required': dict(builder=field),
-        'collectionFormat': dict(builder=field, default='csv'),
-        'description': dict(builder=field),
-        'allowEmptyValue': dict(builder=field),
+        'name': dict(),
+        'in':  dict(),
+        'required': dict(),
+        'collectionFormat': dict(default='csv'),
+        'description': dict(),
+        'allowEmptyValue': dict(),
     }
 
     __children__ = {
@@ -259,8 +259,8 @@ class Header(BaseSchema):
     """ Header Object
     """
     __fields__ = {
-        'collectionFormat': dict(builder=field, default='csv'),
-        'description': dict(builder=field),
+        'collectionFormat': dict(default='csv'),
+        'description': dict(),
     }
 
     __children__ = {
@@ -279,8 +279,8 @@ class Response(BaseObj_v2_0):
     """ Response Object
     """
     __fields__ = {
-        'description': dict(builder=field),
-        'examples': dict(builder=field),
+        'description': dict(),
+        'examples': dict(),
     }
 
     __children__ = {
@@ -301,10 +301,10 @@ class Operation(BaseObj_v2_0):
     """ Operation Object
     """
     __fields__ = {
-        'operationId': dict(builder=field),
-        'deprecated': dict(builder=field),
-        'description': dict(builder=field),
-        'summary': dict(builder=field),
+        'operationId': dict(),
+        'deprecated': dict(),
+        'description': dict(),
+        'summary': dict(),
     }
 
     __children__ = {
@@ -383,7 +383,7 @@ class PathItem(BaseObj_v2_0):
     """ Path Item Object
     """
     __fields__ = {
-        '$ref': dict(builder=field),
+        '$ref': dict(),
     }
 
     __children__ = {
@@ -409,13 +409,13 @@ class SecurityScheme(BaseObj_v2_0):
     """ Security Scheme Object
     """
     __fields__ = {
-        'type': dict(builder=field),
-        'description': dict(builder=field),
-        'name': dict(builder=field),
-        'in': dict(builder=field),
-        'flow': dict(builder=field),
-        'authorizationUrl': dict(builder=field),
-        'tokenUrl': dict(builder=field),
+        'type': dict(),
+        'description': dict(),
+        'name': dict(),
+        'in': dict(),
+        'flow': dict(),
+        'authorizationUrl': dict(),
+        'tokenUrl': dict(),
     }
 
     __children__ = {
@@ -433,9 +433,9 @@ class Swagger(BaseObj_v2_0):
     """
 
     __fields__ = {
-        'swagger': dict(builder=field),
-        'host': dict(builder=field),
-        'basePath': dict(builder=field),
+        'swagger': dict(),
+        'host': dict(),
+        'basePath': dict(),
     }
 
     __children__ = {

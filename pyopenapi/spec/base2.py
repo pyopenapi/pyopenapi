@@ -390,18 +390,13 @@ class FieldMeta(type):
             _from_parent_(cn, '__children__')
             _from_parent_(intl, '__internal__')
 
-        for n, args in six.iteritems(fields):
-            args = copy.copy(args)
-
-            builder = args.pop('builder')
-            spc[n] = builder(args.pop('key', None) or n, **args)
-
         def _update_to_spc(default_builder, fs):
             for n, args in six.iteritems(fs):
                 args = copy.copy(args)
                 builder = args.pop('builder', None) or default_builder
                 spc[n] = builder(args.pop('key', None) or n, **args)
 
+        _update_to_spc(field, fields)
         _update_to_spc(internal, intl)
         _update_to_spc(child, cn)
 
