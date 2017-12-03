@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from ..base2 import Base2, field, child, list_, map_
+from ..base2 import Base2, field, child, rename, list_, map_
 import six
 import copy
 
@@ -17,10 +17,10 @@ class Items(BaseObj_v1_2):
         'format': dict(builder=field),
     }
 
-    __renamed__ = {
-        'ref': dict(key='$ref'),
-        'type_': dict(key='type'),
-        'format_': dict(key='format'),
+    __internal__ = {
+        'ref': dict(key='$ref', builder=rename),
+        'type_': dict(key='type', builder=rename),
+        'format_': dict(key='format', builder=rename),
     }
 
 
@@ -42,12 +42,12 @@ class DataTypeObj(BaseObj_v1_2):
         'items': dict(child_builder=Items),
     }
 
-    __renamed__ = {
-        'type_': dict(key='type'),
-        'ref': dict(key='$ref'),
-        'format_': dict(key='format'),
-        'default_value': dict(key='defaultValue'),
-        'unique_items': dict(key='uniqueItems'),
+    __internal__ = {
+        'type_': dict(key='type', builder=rename),
+        'ref': dict(key='$ref', builder=rename),
+        'format_': dict(key='format', builder=rename),
+        'default_value': dict(key='defaultValue', builder=rename),
+        'unique_items': dict(key='uniqueItems', builder=rename),
     }
 
 
@@ -82,9 +82,9 @@ class Implicit(BaseObj_v1_2):
         'loginEndpoint': dict(child_builder=LoginEndpoint, required=True),
     }
 
-    __renamed__ = {
-        'token_name': dict(key='tokenName'),
-        'login_endpoint': dict(key='loginEndpoint'),
+    __internal__ = {
+        'token_name': dict(key='tokenName', builder=rename),
+        'login_endpoint': dict(key='loginEndpoint', builder=rename),
     }
 
 
@@ -98,9 +98,9 @@ class TokenRequestEndpoint(BaseObj_v1_2):
         'clientSecretName': dict(builder=field),
     }
 
-    __renamed__ = {
-        'client_id_name': dict(key='clientIdName'),
-        'client_secret_name': dict(key='clientSecretName'),
+    __internal__ = {
+        'client_id_name': dict(key='clientIdName', builder=rename),
+        'client_secret_name': dict(key='clientSecretName', builder=rename),
     }
 
 
@@ -113,8 +113,8 @@ class TokenEndpoint(BaseObj_v1_2):
         'tokenName': dict(builder=field),
     }
 
-    __renamed__ = {
-        'token_name': dict(key='tokenName'),
+    __internal__ = {
+        'token_name': dict(key='tokenName', builder=rename),
     }
 
 
@@ -127,9 +127,9 @@ class AuthorizationCode(BaseObj_v1_2):
         'tokenEndpoint': dict(child_builder=TokenEndpoint),
     }
 
-    __renamed__ = {
-        'token_request_endpoint': dict(key='tokenRequestEndpoint'),
-        'token_endpoint': dict(key='tokenEndpoint'),
+    __internal__ = {
+        'token_request_endpoint': dict(key='tokenRequestEndpoint', builder=rename),
+        'token_endpoint': dict(key='tokenEndpoint', builder=rename),
     }
 
 
@@ -168,10 +168,10 @@ class Authorization(BaseObj_v1_2):
         'grantTypes': dict(child_builder=GrantTypes),
     }
 
-    __renamed__ = {
-        'type_': dict(key='type'),
-        'pass_as': dict(key='passAs'),
-        'grantTypes': dict(key='grant_types'),
+    __internal__ = {
+        'type_': dict(key='type', builder=rename),
+        'pass_as': dict(key='passAs', builder=rename),
+        'grantTypes': dict(key='grant_types', builder=rename),
     }
 
 
@@ -185,8 +185,8 @@ class ResponseMessage(BaseObj_v1_2):
         'responseModel': dict(builder=field),
     }
 
-    __renamed__ = {
-        'response_model': dict(key='responseModel'),
+    __internal__ = {
+        'response_model': dict(key='responseModel', builder=rename),
     }
 
 
@@ -202,9 +202,9 @@ class Parameter(DataTypeObj):
         'allowMultiple': dict(builder=field),
     }
 
-    __renamed__ = {
-        'param_type': dict(key='paramType'),
-        'allow_multiple': dict(key='allowMultiple'),
+    __internal__ = {
+        'param_type': dict(key='paramType', builder=rename),
+        'allow_multiple': dict(key='allowMultiple', builder=rename),
     }
 
 
@@ -228,8 +228,8 @@ class Operation(DataTypeObj):
         'responseMessages': dict(child_builder=list_(ResponseMessage)),
     }
 
-    __renamed__ = {
-        'response_messages': dict(key='responseMessages')
+    __internal__ = {
+        'response_messages': dict(key='responseMessages', builder=rename)
     }
 
 
@@ -272,9 +272,9 @@ class Model(BaseObj_v1_2):
         'properties': dict(child_builder=map_(Property), required=True),
     }
 
-    __renamed__ = {
-        'id_': dict(key='id'),
-        'sub_types': dict(key='subTypes'),
+    __internal__ = {
+        'id_': dict(key='id', builder=rename),
+        'sub_types': dict(key='subTypes', builder=rename),
     }
 
 
@@ -299,11 +299,11 @@ class ApiDeclaration(BaseObj_v1_2):
         'authorizations': dict(child_builder=map_(list_(Authorizations))),
     }
 
-    __renamed__ = {
-        'swagger_version': dict(key='swaggerVersion'),
-        'api_version': dict(key='apiVersion'),
-        'base_path': dict(key='basePath'),
-        'resource_path': dict(key='resourcePath'),
+    __internal__ = {
+        'swagger_version': dict(key='swaggerVersion', builder=rename),
+        'api_version': dict(key='apiVersion', builder=rename),
+        'base_path': dict(key='basePath', builder=rename),
+        'resource_path': dict(key='resourcePath', builder=rename),
     }
 
 
@@ -320,9 +320,9 @@ class Info(BaseObj_v1_2):
         'licenseUrl': dict(builder=field),
     }
 
-    __renamed__ = {
-        'terms_of_service_url': dict(key='termsOfServiceUrl'),
-        'license_url': dict(key='licenseUrl'),
+    __internal__ = {
+        'terms_of_service_url': dict(key='termsOfServiceUrl', builder=rename),
+        'license_url': dict(key='licenseUrl', builder=rename),
     }
 
 
@@ -349,11 +349,8 @@ class ResourceListing(BaseObj_v1_2):
         'authorizations': dict(child_builder=map_(Authorization)),
     }
 
-    __renamed__ = {
-        'swagger_version': dict(key='swaggerVersion'),
-        'api_version': dict(key='apiVersion'),
-    }
-
     __internal__ = {
         'cached_apis': dict(),
+        'swagger_version': dict(key='swaggerVersion', builder=rename),
+        'api_version': dict(key='apiVersion', builder=rename),
     }

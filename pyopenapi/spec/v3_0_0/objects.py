@@ -15,10 +15,8 @@ class Reference(Base2_v3_0_0):
     __internal__ = {
         'normalized_ref': dict(),
         'ref_obj': dict(),
-    }
 
-    __renamed__ = {
-        'ref': dict(key='$ref')
+        'ref': dict(key='$ref', builder=rename)
     }
 
 
@@ -77,8 +75,8 @@ class Info(Base2_v3_0_0):
         'license': dict(child_builder=License),
     }
 
-    __renamed__ = {
-        'terms_of_service': dict(key='termsOfService'),
+    __internal__ = {
+        'terms_of_service': dict(key='termsOfService', builder=rename),
     }
 
 
@@ -92,8 +90,8 @@ class ServerVariable(Base2_v3_0_0):
         'enum': dict(child_builder=list_(is_str)),
     }
 
-    __renamed__ = {
-        'enum': dict(key='enum_')
+    __internal__ = {
+        'enum_': dict(key='enum', builder=rename)
     }
 
 
@@ -116,8 +114,8 @@ class Example(Base2_v3_0_0):
         'externalValue': dict(builder=field),
     }
 
-    __renamed__ = {
-        'external_value': dict(key='externalValue'),
+    __internal__ = {
+        'external_value': dict(key='externalValue', builder=rename),
     }
 
 ExampleOrReference = if_not_ref_else(Example)
@@ -149,8 +147,8 @@ class Discriminator(Base2_v3_0_0):
         'mapping': dict(child_builder=map_(is_str)),
     }
 
-    __renamed__ = {
-        'property_name': dict(key='propertyName'),
+    __internal__ = {
+        'property_name': dict(key='propertyName', builder=rename),
     }
 
 
@@ -189,30 +187,30 @@ class Schema(Base2_v3_0_0):
         'externalDocs':  dict(child_builder=ExternalDocumentation),
     }
 
-    __renamed__ = {
-        'multiple_of': dict(key='multipleOf'),
-        'exclusive_maximum': dict(key='exclusiveMaximum'),
-        'exclusive_minimum': dict(key='exclusiveMinimum'),
-        'max_length': dict(key='maxLength'),
-        'min_length': dict(key='minLength'),
-        'max_items': dict(key='maxItems'),
-        'min_items': dict(key='minItems'),
-        'unique_items': dict(key='uniqueItems'),
-        'max_properties': dict(key='maxProperties'),
-        'min_properties': dict(key='minProperties'),
-        'enum_': dict(key='enum'),
-        'type_': dict(key='type'),
-        'format_': dict(key='format'),
-        'read_only': dict(key='readOnly'),
-        'write_only': dict(key='writeOnly'),
-        'xml_': dict(key='xml'),
-        'external_docs': dict(key='externalDocs'),
+    __internal__ = {
+        'multiple_of': dict(key='multipleOf', builder=rename),
+        'exclusive_maximum': dict(key='exclusiveMaximum', builder=rename),
+        'exclusive_minimum': dict(key='exclusiveMinimum', builder=rename),
+        'max_length': dict(key='maxLength', builder=rename),
+        'min_length': dict(key='minLength', builder=rename),
+        'max_items': dict(key='maxItems', builder=rename),
+        'min_items': dict(key='minItems', builder=rename),
+        'unique_items': dict(key='uniqueItems', builder=rename),
+        'max_properties': dict(key='maxProperties', builder=rename),
+        'min_properties': dict(key='minProperties', builder=rename),
+        'enum_': dict(key='enum', builder=rename),
+        'type_': dict(key='type', builder=rename),
+        'format_': dict(key='format', builder=rename),
+        'read_only': dict(key='readOnly', builder=rename),
+        'write_only': dict(key='writeOnly', builder=rename),
+        'xml_': dict(key='xml', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
 
-        'all_of': dict(key='allOf'),
-        'one_of': dict(key='oneOf'),
-        'any_of': dict(key='anyOf'),
-        'not_': dict(key='not'),
-        'additional_properties': dict(key='additionalProperties'),
+        'all_of': dict(key='allOf', builder=rename),
+        'one_of': dict(key='oneOf', builder=rename),
+        'any_of': dict(key='anyOf', builder=rename),
+        'not_': dict(key='not', builder=rename),
+        'additional_properties': dict(key='additionalProperties', builder=rename),
     }
 
 SchemaOrReference = if_not_ref_else(Schema)
@@ -250,10 +248,10 @@ class Parameter(Base2_v3_0_0):
         'schema': dict(child_builder=SchemaOrReference),
     }
 
-    __renamed__ = {
-        'in_': dict(key='in'),
-        'allow_empty_value': dict(key='allowEmptyValue'),
-        'allow_reserved': dict(key='allowReserved'),
+    __internal__ = {
+        'in_': dict(key='in', builder=rename),
+        'allow_empty_value': dict(key='allowEmptyValue', builder=rename),
+        'allow_reserved': dict(key='allowReserved', builder=rename),
     }
 
 ParameterOrReference = if_not_ref_else(Parameter)
@@ -265,8 +263,8 @@ class Header(Parameter):
         'in': dict(builder=field, restricted=True, default='header')
     }
 
-    __renamed__ = {
-        'in_': dict(key='in'),
+    __internal__ = {
+        'in_': dict(key='in', builder=rename),
     }
 
 HeaderOrReference = if_not_ref_else(Header)
@@ -284,9 +282,9 @@ class Encoding(Base2_v3_0_0):
         'headers': dict(child_builder=map_(HeaderOrReference)),
     }
 
-    __renamed__ = {
-        'content_type': dict(key='contentType'),
-        'allow_reserved': dict(key='allowReserved'),
+    __internal__ = {
+        'content_type': dict(key='contentType', builder=rename),
+        'allow_reserved': dict(key='allowReserved', builder=rename),
     }
 
 
@@ -331,10 +329,10 @@ class Link(Base2_v3_0_0):
         'parameters': dict(child_builder=map_(is_str)),
     }
 
-    __renamed__ = {
-        'operation_ref': dict(key='operationRef'),
-        'operation_id': dict(key='operationId'),
-        'request_body': dict(key='requestBody'),
+    __internal__ = {
+        'operation_ref': dict(key='operationRef', builder=rename),
+        'operation_id': dict(key='operationId', builder=rename),
+        'request_body': dict(key='requestBody', builder=rename),
     }
 
 LinkOrReference = if_not_ref_else(Link)
@@ -365,10 +363,10 @@ class OAuthFlow(Base2_v3_0_0):
         'scopes': dict(child_builder=map_(is_str), required=True),
     }
 
-    __renamed__ = {
-        'authorization_url': dict(key='authorizationUrl'),
-        'token_url': dict(key='tokenUrl'),
-        'refresh_url': dict(key='refreshUrl'),
+    __internal__ = {
+        'authorization_url': dict(key='authorizationUrl', builder=rename),
+        'token_url': dict(key='tokenUrl', builder=rename),
+        'refresh_url': dict(key='refreshUrl', builder=rename),
     }
 
 
@@ -380,9 +378,9 @@ class OAuthFlows(Base2_v3_0_0):
         'authorizationCode': dict(child_builder=OAuthFlow),
     }
 
-    __renamed__ = {
-        'client_credentials': dict(key='clientCredential'),
-        'authorization_code': dict(key='authorizationCode'),
+    __internal__ = {
+        'client_credentials': dict(key='clientCredential', builder=rename),
+        'authorization_code': dict(key='authorizationCode', builder=rename),
     }
 
 
@@ -401,11 +399,11 @@ class SecurityScheme(Base2_v3_0_0):
         'flows': dict(child_builder=OAuthFlows),
     }
 
-    __renamed__ = {
-        'type_': dict(key='type'),
-        'in_': dict(key='in'),
-        'bearer_format': dict(key='bearerFormat'),
-        'openid_connect_url': dict(key='openIdConnectUrl'),
+    __internal__ = {
+        'type_': dict(key='type', builder=rename),
+        'in_': dict(key='in', builder=rename),
+        'bearer_format': dict(key='bearerFormat', builder=rename),
+        'openid_connect_url': dict(key='openIdConnectUrl', builder=rename),
     }
 
 SecuritySchemeOrReference = if_not_ref_else(SecurityScheme)
@@ -429,14 +427,12 @@ class Operation(Base2_v3_0_0):
         'servers': dict(child_builder=list_(Server)),
     }
 
-    __renamed__ = {
-        'external_docs': dict(key='externalDocs'),
-        'operation_id': dict(key='operationId'),
-        'request_body': dict(key='requestBody'),
-    }
-
     __internal__ = {
         'final_obj': dict(),
+
+        'external_docs': dict(key='externalDocs', builder=rename),
+        'operation_id': dict(key='operationId', builder=rename),
+        'request_body': dict(key='requestBody', builder=rename),
     }
 
 
@@ -451,6 +447,8 @@ class PathItem(Base2_v3_0_0):
         'normalized_ref': dict(),
         'ref_obj': dict(),
         'final_obj': dict(),
+
+        'ref': dict(key='$ref', builder=rename),
     }
 
     __children__ = {
@@ -464,10 +462,6 @@ class PathItem(Base2_v3_0_0):
         'trace': dict(child_builder=Operation),
         'servers': dict(child_builder=list_(Server)),
         'parameters': dict(child_builder=list_(ParameterOrReference)),
-    }
-
-    __renamed__ = {
-        'ref': dict(key='$ref'),
     }
 
 
@@ -492,9 +486,9 @@ class Components(Base2_v3_0_0):
         'callbacks': dict(child_builder=map_(CallbackOrReference)),
     }
 
-    __renamed__ = {
-        'request_bodies': dict(key='requestBodies'),
-        'security_schemes': dict(key='securitySchemes'),
+    __internal__ = {
+        'request_bodies': dict(key='requestBodies', builder=rename),
+        'security_schemes': dict(key='securitySchemes', builder=rename),
     }
 
 
@@ -508,8 +502,8 @@ class Tag(Base2_v3_0_0):
         'externalDocs': dict(child_builder=ExternalDocumentation),
     }
 
-    __renamed__ = {
-        'external_docs': dict(key='externalDocs'),
+    __internal__ = {
+        'external_docs': dict(key='externalDocs', builder=rename),
     }
 
 
@@ -528,7 +522,7 @@ class OpenApi(Base2_v3_0_0):
         'externalDocs': dict(child_builder=ExternalDocumentation),
     }
 
-    __renamed__ = {
-        'external_docs': dict(key='externalDocs'),
+    __internal__ = {
+        'external_docs': dict(key='externalDocs', builder=rename),
     }
 

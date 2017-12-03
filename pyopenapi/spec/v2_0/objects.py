@@ -36,12 +36,10 @@ class Reference(BaseObj_v2_0):
         '$ref': dict(builder=field),
     }
 
-    __renamed__ = {
-        'ref': dict(key='$ref'),
-    }
-
     __internal__ = {
         'ref_obj': dict(),
+
+        'ref': dict(key='$ref', builder=rename),
     }
 
 
@@ -159,21 +157,19 @@ class Schema(BaseSchema):
         'externalDocs': dict(child_builder=ExternalDocumentation),
     }
 
-    __renamed__ = {
-        'ref': dict(key='$ref'),
-        'max_properties': dict(key='maxProperties'),
-        'min_properties': dict(key='minProperties'),
-        'read_only': dict(key='readOnly'),
-        'external_docs': dict(key='externalDocs'),
-        'all_of': dict(key='allOf'),
-        'additional_properties': dict(key='additionalProperties'),
-    }
-
     __internal__ = {
         'ref_obj': dict(),
         'final': dict(),
         'name': dict(),
         'normalized_ref': dict(),
+
+        'ref': dict(key='$ref', builder=rename),
+        'max_properties': dict(key='maxProperties', builder=rename),
+        'min_properties': dict(key='minProperties', builder=rename),
+        'read_only': dict(key='readOnly', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
+        'all_of': dict(key='allOf', builder=rename),
+        'additional_properties': dict(key='additionalProperties', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
@@ -221,8 +217,8 @@ class Info(BaseObj_v2_0):
         'license': dict(child_builder=License),
     }
 
-    __renamed__ = {
-        'terms_of_service': dict(key='termsOfService'),
+    __internal__ = {
+        'terms_of_service': dict(key='termsOfService', builder=rename),
     }
 
 
@@ -243,15 +239,13 @@ class Parameter(BaseSchema):
         'items': dict(child_builder=Items),
     }
 
-    __renamed__ = {
-        'in_': dict(key='in'),
-        'collection_format': dict(key='collectionFormat'),
-        'allow_empty_value': dict(key='allowEmptyValue'),
-    }
-
     __internal__ = {
         'ref_obj': dict(),
         'normalized_ref': dict(),
+
+        'in_': dict(key='in', builder=rename),
+        'collection_format': dict(key='collectionFormat', builder=rename),
+        'allow_empty_value': dict(key='allowEmptyValue', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
@@ -273,8 +267,8 @@ class Header(BaseSchema):
         'items': dict(child_builder=Items),
     }
 
-    __renamed__ = {
-        'collection_format': dict(key='collectionFormat'),
+    __internal__ = {
+        'collection_format': dict(key='collectionFormat', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
@@ -294,9 +288,9 @@ class Response(BaseObj_v2_0):
         'headers': dict(child_builder=map_(Header)),
     }
 
-    __internal_fields__ = {
-        'ref_obj': None,
-        'normalized_ref': None,
+    __internal__ = {
+        'ref_obj': dict(),
+        'normalized_ref': dict(),
     }
 
 ResponseOrReference = if_not_ref_else(Response)
@@ -324,11 +318,6 @@ class Operation(BaseObj_v2_0):
         'externalDocs': dict(child_builder=ExternalDocumentation),
     }
 
-    __renamed__ = {
-        'operation_id': dict(key='operationId'),
-        'external_docs': dict(key='externalDocs'),
-    }
-
     __internal__ = {
         'method': dict(),
         'url': dict(),
@@ -338,6 +327,9 @@ class Operation(BaseObj_v2_0):
         'cached_consumes': dict(default=[]),
         'cached_produces': dict(default=[]),
         'cached_security': dict(),
+
+        'operation_id': dict(key='operationId', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
     }
 
     def __call__(self, **k):
@@ -408,10 +400,8 @@ class PathItem(BaseObj_v2_0):
     __internal__ = {
         'ref_obj': dict(),
         'normalized_ref': dict(),
-    }
 
-    __renamed__ = {
-        'ref': dict(key='$ref'),
+        'ref': dict(key='$ref', builder=rename),
     }
 
 
@@ -432,9 +422,9 @@ class SecurityScheme(BaseObj_v2_0):
         'scopes': dict(child_builder=map_(is_str))
     }
 
-    __renamed__ = {
-        'type_': dict(key='type'),
-        'in_': dict(key='in'),
+    __internal__ = {
+        'type_': dict(key='type', builder=rename),
+        'in_': dict(key='in', builder=rename),
     }
 
 
@@ -463,9 +453,9 @@ class Swagger(BaseObj_v2_0):
         'externalDocs': dict(child_builder=ExternalDocumentation),
     }
 
-    __renamed__ = {
-        'base_path': dict(key='basePath'),
-        'security_definitions': dict(key='securityDefinitions'),
-        'external_docs': dict(key='externalDocs'),
+    __internal__ = {
+        'base_path': dict(key='basePath', builder=rename),
+        'security_definitions': dict(key='securityDefinitions', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
     }
 

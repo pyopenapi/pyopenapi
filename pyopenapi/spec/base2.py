@@ -51,7 +51,7 @@ def rename(key):
     directly because the resolving would be failed.
 
     This property factory provide a redirection to actual property
-    and should only declared under __renamed__
+    and should only declared under __internal__
     """
     def _getter_(self):
         return getattr(self, key)
@@ -376,7 +376,6 @@ class FieldMeta(type):
         fields = spc.setdefault('__fields__', {})
         cn = spc.setdefault('__children__', {})
         intl = spc.setdefault('__internal__', {})
-        renm = spc.setdefault('__renamed__', {})
 
         def _from_parent_(s, name):
             p = getattr(b, name, None)
@@ -388,7 +387,6 @@ class FieldMeta(type):
 
         for b in bases:
             _from_parent_(fields, '__fields__')
-            _from_parent_(renm, '__renamed__')
             _from_parent_(cn, '__children__')
             _from_parent_(intl, '__internal__')
 
@@ -398,12 +396,12 @@ class FieldMeta(type):
             builder = args.pop('builder')
             spc[n] = builder(args.pop('key', None) or n, **args)
 
-        def _update_to_spc(builder, fs):
+        def _update_to_spc(default_builder, fs):
             for n, args in six.iteritems(fs):
                 args = copy.copy(args)
+                builder = args.pop('builder', None) or default_builder
                 spc[n] = builder(args.pop('key', None) or n, **args)
 
-        _update_to_spc(rename, renm)
         _update_to_spc(internal, intl)
         _update_to_spc(child, cn)
 
@@ -422,11 +420,6 @@ class Base2Obj(_Base):
         super(Base2Obj, self).__init__(spec, path)
         self.children = {}
         self.internal = {}
-
-        # for example, we would rename 'requestBodies' to 'request_bodies' for
-        # snake-stye in python, however, to be able to resolve such fields,
-        # we need to add these properties to target to correct fields.
-        self.renamed = {}
 
         # traverse through children
         for name in self.__children__:

@@ -1,5 +1,5 @@
 from pyopenapi.spec.base2 import (
-    Base2, field, child, internal,
+    Base2, field, child, internal, rename,
     map_, list_,
     _Map, _List,
     )
@@ -19,15 +19,14 @@ class AObj(Base2):
 
     __internal__ = {
         'ic': dict(),
+
+        'd3_renamed': dict(key='a', builder=rename)
     }
 
     __children__ = {
         'c': dict(child_builder=BObj),
     }
 
-    __renamed__ = {
-        'd3_renamed': dict(key='a')
-    }
 
 class CObj(Base2):
     __children__ = {
