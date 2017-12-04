@@ -242,7 +242,7 @@ def jp_compose(s, base=None):
         ss.insert(0, base)
     return '/'.join(ss)
 
-def jp_split(s):
+def jp_split(s, max_split=-1):
     """ split/decode a string from json-pointer
     """
     if s == '' or s == None:
@@ -252,7 +252,7 @@ def jp_split(s):
         s = s.replace('~1', '/')
         return s.replace('~0', '~')
 
-    return [_decode(ss) for ss in s.split('/')]
+    return [_decode(ss) for ss in s.split('/', max_split)]
 
 def jr_split(s):
     """ split a json-reference into (url, json-pointer)
