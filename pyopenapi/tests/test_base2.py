@@ -42,10 +42,10 @@ class DObj(Base2):
     }
 
 def if_not_a(obj_class):
-    def f(spec, path=None):
+    def f(spec, path=None, override=None):
         if 'a' in spec:
-            return AObj(spec, path=path)
-        return obj_class(spec, path=path)
+            return AObj(spec, path=path, override=override)
+        return obj_class(spec, path=path, override=override)
     f.__name__ = 'if_not_a_or_' + obj_class.__name__
     return f
 
@@ -485,4 +485,27 @@ class Base2TestCase(unittest.TestCase):
         b = BObj({'bb': 1})
         a.attach_child('c', b)
         self.assertEqual(id(b.parent), id(a))
+
+    def test_override_children(self):
+        spec = {'cc':{'key1':{'a':1,'b':3}, 'key2':{'b':2}, 'key3':{'b':3}, 'key4':{'c':{'bb':5}}}, 'ccc':[{'a':1}, {'a':2}]}
+        a1 = AObj(spec['cc']['key1'])
+        a2 = AObj(spec['cc']['key2'])
+        a3 = AObj(spec['ccc'][0])
+        a4 = AObj(spec['ccc'][1])
+        b = BObj(spec['cc']['key4']['c'])
+
+        c = CObj(spec, override={
+            'cc/key1': a1,
+            'cc/key2': a2,
+            'cc/key4/c': b,
+            'ccc/0': a3,
+            'ccc/1': a4
+        })
+
+        # make sure we didn't create new children
+        self.assertEqual(id(c.cc['key1']), id(a1))
+        self.assertEqual(id(c.cc['key2']), id(a2))
+        self.assertEqual(id(c.cc['key4'].c), id(b))
+        self.assertEqual(id(c.ccc[0]), id(a3))
+        self.assertEqual(id(c.ccc[1]), id(a4))
 

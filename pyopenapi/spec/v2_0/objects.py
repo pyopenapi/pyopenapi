@@ -3,24 +3,24 @@ from ..base2 import Base2, field, rename, child, list_, map_
 import six
 
 
-def is_str(spec, path):
+def is_str(spec, path, override):
     if isinstance(spec, six.string_types):
         return spec
     raise Exception('should be a string, not {}, {}'.format(str(type(spec)), path))
 
 def if_not_ref_else(class_builder):
-    def _f(spec, path):
+    def _f(spec, path, override):
         if '$ref' in spec:
-            return Reference(spec, path=path)
-        return class_builder(spec, path=path)
+            return Reference(spec, path=path, override=override)
+        return class_builder(spec, path=path, override=override)
     _f.__name__ = 'if_not_ref_else_' + class_builder.__name__
     return _f
 
 def if_not_bool_else(class_builder):
-    def _f(spec, path):
+    def _f(spec, path, override):
         if isinstance(spec, bool):
             return spec
-        return class_builder(spec, path=path)
+        return class_builder(spec, path=path, override=override)
     _f.__name__ = 'if_not_bool_else_' + class_builder.__name__
     return _f
 

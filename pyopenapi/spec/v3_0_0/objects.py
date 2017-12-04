@@ -21,27 +21,31 @@ class Reference(Base2_v3_0_0):
 
 
 def if_not_ref_else(class_builder):
-    def _f(spec, path):
+    def _f(spec, path, override):
         if '$ref' in spec:
-            return Reference(spec, path=path)
-        return class_builder(spec, path=path)
+            return Reference(spec, path=path, override=override)
+        return class_builder(spec, path=path, override=override)
     _f.__name__ = 'if_not_ref_else_' + class_builder.__name__
     return _f
 
 def if_not_bool_else(class_builder):
-    def _f(spec, path):
+    def _f(spec, path, override):
         if isinstance(spec, bool):
             return spec
-        return class_builder(spec, path=path)
+        return class_builder(spec, path=path, override=override)
     _f.__name__ = 'if_not_bool_else_' + class_builder.__name__
     return _f
 
-def is_str(spec, path):
+def is_str(spec, path, override):
+    if override:
+        raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types):
         return spec
     raise Exception('should be a string, not {}, {}'.format(str(type(spec)), path))
 
-def is_str_or_int(spec, path):
+def is_str_or_int(spec, path, override):
+    if override:
+        raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types + six.integer_types):
         return spec
     raise Exception('should be a string or int, not {}'.format(str(type(spec)), path))

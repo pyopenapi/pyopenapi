@@ -1,4 +1,4 @@
-from ..utils import jp_compose
+from ..utils import jp_compose, jp_split
 from ..errs import FieldNotExist
 import six
 import types
@@ -72,6 +72,13 @@ def child(key, child_builder=None, required=False, default=None):
         if key in self.children:
             return self.children[key]
 
+        # check if we have any overriden children
+        ovr = self.override.get(key, {})
+        chd = ovr.get('', None)
+        if chd:
+            self.children[key] = chd
+            return chd
+
         # lazy initialize of children
         val = None
         if key in self.spec:
@@ -84,7 +91,7 @@ def child(key, child_builder=None, required=False, default=None):
             val = copy.copy(default)
 
         if val is not None:
-            chd = child_builder(val, path=jp_compose(key, base=self.path))
+            chd = child_builder(val, path=jp_compose(key, base=self.path), override=ovr)
             self.children[key] = chd
             return chd
         else:
@@ -100,10 +107,23 @@ def child(key, child_builder=None, required=False, default=None):
 
 
 class _Base(object):
-    def __init__(self, spec, path=None):
+    def __init__(self, spec, path=None, override=None):
         self._path = path
         self._parent = None
         self.spec = spec
+        self.override = {}
+        # inside 'override':
+        #   (first token of jp_split) => (reminder of jp_split, value)
+
+        # setup override
+        for k, v in six.iteritems(override or {}):
+            tokens = jp_split(k, 1)
+            if len(tokens) > 0:
+                self.override.setdefault(tokens[0], {}).update({
+                    tokens[1] if len(tokens) > 1 else '': v
+                })
+            else:
+                raise Exception('invalid token found for "override": {}, in {}'.format(k, path))
 
     def is_set(self, k):
         """ check if a key is setted from Swagger API document
@@ -156,8 +176,8 @@ class _List(_Base):
     object with the same property-set. The constructor would call its __child_class__
     on all those objects.
     """
-    def __init__(self, spec, path=None):
-        super(_List, self).__init__(spec, path)
+    def __init__(self, spec, path=None, override=None):
+        super(_List, self).__init__(spec, path, override)
         self.__elm = []
 
         if not isinstance(spec, list):
@@ -165,8 +185,17 @@ class _List(_Base):
 
         # generate children for all keys in spec
         for idx, e in enumerate(spec):
-            path = jp_compose(str(idx), base=self.path)
-            elm = self.__child_builder__.__func__(e, path=path) if self.__child_builder_unbound__ else self.__child_builder__(e, path=path)
+            idx = str(idx)
+
+            ovr = self.override.get(idx, {})
+            elm = ovr.get('', None)
+            if not elm:
+                path = jp_compose(idx, base=self.path)
+                if self.__child_builder_unbound__:
+                    elm = self.__child_builder__.__func__(e, path=path, override=ovr)
+                else:
+                    elm = self.__child_builder__(e, path=path, override=ovr)
+
             if hasattr(elm, 'parent'):
                 elm.parent = self
 
@@ -273,8 +302,8 @@ class _Map(_Base):
     objects with the same property-set. The constructor would call its __child_class__
     on all those objects.
     """
-    def __init__(self, spec, path=None):
-        super(_Map, self).__init__(spec, path)
+    def __init__(self, spec, path=None, override=None):
+        super(_Map, self).__init__(spec, path, override)
         self.__elm = {}
 
         if not isinstance(spec, dict):
@@ -282,8 +311,15 @@ class _Map(_Base):
 
         # generate children for all keys in spec
         for k in spec:
-            path = jp_compose(str(k), base=self.path)
-            elm = self.__child_builder__.__func__(spec[k], path=path) if self.__child_builder_unbound__ else self.__child_builder__(spec[k], path=path)
+            ovr = self.override.get(k, {})
+            elm = ovr.get('', None)
+            if not elm:
+                path = jp_compose(str(k), base=self.path)
+                if self.__child_builder_unbound__:
+                    elm = self.__child_builder__.__func__(spec[k], path=path, override=ovr)
+                else:
+                    elm = self.__child_builder__(spec[k], path=path, override=ovr)
+
             if hasattr(elm, 'parent'):
                 elm.parent = self
 
@@ -407,12 +443,14 @@ class Base2Obj(_Base):
     """ Base implementation of all Open API objects
     """
 
-    def __init__(self, spec, path=None):
+    def __init__(self, spec, path=None, override=None):
         """ constructor
         Args:
             - spec: the open api spec in dict
+            - path:
+            - override:
         """
-        super(Base2Obj, self).__init__(spec, path)
+        super(Base2Obj, self).__init__(spec, path, override)
         self.children = {}
         self.internal = {}
 

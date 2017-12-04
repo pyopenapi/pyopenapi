@@ -186,7 +186,7 @@ class App(object):
         obj = None
         version = utils.get_swagger_version(src_spec)
         if version == '1.2':
-            obj = ResourceListing(src_spec, jref)
+            obj = ResourceListing(src_spec, jref, {})
 
             resources = []
             for r in obj.apis:
@@ -203,20 +203,20 @@ class App(object):
                 resource_spec = self.resolver.resolve(url, getter)
                 if resource_spec is None:
                     raise Exception('unable to resolve {} when load spec from {}'.format(url, jref))
-                cached_apis[name] = ApiDeclaration(resource_spec, utils.jp_compose(name, base=url))
+                cached_apis[name] = ApiDeclaration(resource_spec, utils.jp_compose(name, base=url), {})
 
             obj.cached_apis = cached_apis
 
         elif version == '2.0':
             # swagger 2.0
-            obj = Swagger(src_spec, jref)
+            obj = Swagger(src_spec, jref, {})
 
         elif version == '3.0.0':
             # openapi 3.0.0
-            obj = OpenApi(src_spec, jref)
+            obj = OpenApi(src_spec, jref, {})
 
         elif version == None and parser:
-            obj = parser(src_spec, jref)
+            obj = parser(src_spec, jref, {})
             version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
         else:
             raise NotImplementedError('Unsupported Swagger Version: {0} from {1}'.format(version, jref))
