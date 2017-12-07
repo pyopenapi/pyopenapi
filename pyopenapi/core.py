@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 from .resolve import Resolver
+from .cache import SpecObjCache
 from .primitives import Primitive, MimeCodec
 from .spec.v1_2.objects import ResourceListing, ApiDeclaration
 from .spec.v2_0.objects import Swagger, Operation
 from .spec.v3_0_0.objects import OpenApi
-from .spec.base import BaseObj, Context
-from .spec.base2 import _Base
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
 from .scanner.v2_0 import Aggregate
@@ -58,9 +57,9 @@ class App(object):
         self.__url=url
 
         # a map from json-reference to
-        # - spec.BaseObj
-        # - a map from json-pointer to spec.BaseObj
-        self.__spec_objs = {}
+        # - spec.base2._Base
+        # - a map from json-pointer to spec.base2._Base
+        self.__cache = SpecObjCache()
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
@@ -177,6 +176,14 @@ class App(object):
         """
         return self.__resolver
 
+    @property
+    def spec_obj_cache(self):
+        """ Cache for Spec Objects
+
+        :type: pyopenapi.cache.SpecObjCache
+        """
+        return self.__cache
+
     def load_obj(self, jref, getter=None, parser=None):
         """ load a object(those in spec._version_.objects) from a JSON reference.
         """
@@ -228,31 +235,9 @@ class App(object):
 
         # cache obj before migration, or we may load an object multiple times when resolve
         # $ref in the same spec
-        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=version)
+        self.__cache.set(obj, *utils.jr_split(jref), spec_version=version)
 
         return obj, version
-
-    def _cache_spec_obj(self, obj, url, jp, spec_version):
-        """ cache 'prepared' spec objects (those under pyopenapi.spec)
-        """
-        if not issubclass(type(obj), (BaseObj, _Base)):
-            raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
-
-        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
-
-    def _get_spec_obj_from_cache(self, url, jp, spec_version):
-        """ get spec objects from cache
-        """
-        url_cache = self.__spec_objs.get(url, None)
-        if not url_cache:
-            return None
-
-        # try to find a 'jp' with common prefix with input under 'url'
-        for path, cache in six.iteritems(url_cache):
-            if jp.startswith(path) and spec_version in cache:
-                return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
-
-        return None
 
     def prepare_obj(self, obj, jref, spec_version=None):
         """ basic preparation of an object(those in sepc._version_.objects),
@@ -296,7 +281,7 @@ class App(object):
             obj = migration_module.up(obj, self, jref)
 
         # cache migrated object if we need it later
-        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=spec_version)
+        self.spec_obj_cache.set(obj, *utils.jr_split(jref), spec_version=spec_version)
 
         return obj
 
@@ -480,7 +465,7 @@ class App(object):
         # comparing url first, and find those object prefixed with
         # the JSON pointer.
         url, jp = utils.jr_split(jref)
-        obj = self._get_spec_obj_from_cache(url, jp, spec_version)
+        obj = self.__cache.get(url, jp, spec_version)
 
         # this object is not found in cache
         if obj == None:

@@ -14,12 +14,12 @@ def up(obj, app, jref):
             raise Exception('unable to upgrade from 2.0: {}'.format(jref))
 
     if ret.__swagger_version__ == '3.0.0':
-        app._cache_spec_obj(ret, *jr_split(jref), spec_version='3.0.0')
+        url, jp = jr_split(jref)
+        app.spec_obj_cache.set(ret, url, jp, spec_version='3.0.0')
 
         scanner = Scanner2()
 
         # phase 1: normalized $ref
-        url, jp = jr_split(jref)
         scanner.scan(root=ret, route=[NormalizeRef(url)])
 
         # phase 2: resolve $ref
