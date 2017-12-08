@@ -36,3 +36,24 @@ class SpecObjCache(object):
                 return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
 
         return None
+
+    def get_under(self, url, jp, spec_version, remove=True):
+        """ get all children under 'jp', and remove them
+        from cache if needed
+        """
+        if remove and not jp:
+            raise Exception('attemping to remove everything under {}, {}'.format(url, spec_version))
+
+        url_cache = self.__spec_objs.get(url, None)
+        if not url_cache:
+            return None
+
+        ret = {}
+        for path, cache in six.iteritems(url_cache):
+            if path.startswith(jp) and spec_version in cache:
+                ret[path[len(jp)+1:]] = cache[spec_version]
+                if remove:
+                    del cache[spec_version]
+
+        return ret
+
