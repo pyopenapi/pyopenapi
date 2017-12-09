@@ -42,7 +42,13 @@ def _resolve(o, expected, app, path):
             raise ReferenceError('empty normalized_ref for {} in {}'.format(o.ref, path))
         return
 
-    ro = app.resolve(o.normalized_ref, parser=expected, spec_version='3.0.0', before_return=None)
+    ro = app.resolve(
+        o.normalized_ref,
+        parser=expected,
+        spec_version='3.0.0',
+        before_return=None,
+        remove_dummy=True,
+    )
     if not ro:
         raise ReferenceError('Unable to resolve: {}'.format(o.normalized_ref))
 
