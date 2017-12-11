@@ -1,26 +1,84 @@
 from __future__ import absolute_import
-from ..base import BaseObj, FieldMeta
-from ...utils import final
-from ...io import Request
-from ...io import Response as _Response
-from ...primitives import Array
+from ..base2 import Base2, field, rename, child, list_, map_
 import six
-import copy
 
 
-class BaseObj_v2_0(BaseObj):
+def is_str(spec, path, override):
+    if isinstance(spec, six.string_types):
+        return spec
+    raise Exception('should be a string, not {}, {}'.format(str(type(spec)), path))
+
+def if_not_ref_else(class_builder):
+    def _f(spec, path, override):
+        if '$ref' in spec:
+            return Reference(spec, path=path, override=override)
+        return class_builder(spec, path=path, override=override)
+    _f.__name__ = 'if_not_ref_else_' + class_builder.__name__
+    return _f
+
+def if_not_bool_else(class_builder):
+    def _f(spec, path, override):
+        if isinstance(spec, bool):
+            return spec
+        return class_builder(spec, path=path, override=override)
+    _f.__name__ = 'if_not_bool_else_' + class_builder.__name__
+    return _f
+
+
+class BaseObj_v2_0(Base2):
     __swagger_version__ = '2.0'
 
 
-class XMLObject(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class Reference(BaseObj_v2_0):
+    """ $ref
+    """
+    __fields__ = {
+        '$ref': dict(),
+    }
+
+    __internal__ = {
+        'ref_obj': dict(),
+
+        'ref': dict(key='$ref', builder=rename),
+    }
+
+
+class XMLObject(BaseObj_v2_0):
     """ XML Object
     """
-    __swagger_fields__ = {
-        'name': None,
-        'namespace': None,
-        'prefix': None,
-        'attribute': None,
-        'wrapped': None,
+    __fields__ = {
+        'name': dict(),
+        'namespace': dict(),
+        'prefix': dict(),
+        'attribute': dict(),
+        'wrapped': dict(),
+    }
+
+
+class ExternalDocumentation(BaseObj_v2_0):
+    """ External Documentation Object
+    """
+
+    __fields__ = {
+        'description': dict(),
+        'url': dict(),
+    }
+
+
+class Tag(BaseObj_v2_0):
+    """ Tag Object
+    """
+    __fields__ = {
+        'name': dict(),
+        'description': dict(),
+    }
+
+    __children__ = {
+        'externalDocs': dict(child_builder=ExternalDocumentation),
+    }
+
+    __renamed__ = {
+        'external_docs': dict(key='externalDocs'),
     }
 
 
@@ -28,223 +86,250 @@ class BaseSchema(BaseObj_v2_0):
     """ Base type for Items, Schema, Parameter, Header
     """
 
-    __swagger_fields__ = {
-        'type': None,
-        'format': None,
-        'items': None,
-        'default': None,
-        'maximum': None,
-        'exclusiveMaximum': None,
-        'minimum': None,
-        'exclusiveMinimum': None,
-        'maxLength': None,
-        'minLength': None,
-        'maxItems': None,
-        'minItems': None,
-        'multipleOf': None,
-        'enum': None,
-        'pattern': None,
-        'uniqueItems': None,
+    __fields__ = {
+        'type': dict(),
+        'format': dict(),
+        'default': dict(),
+        'maximum': dict(),
+        'exclusiveMaximum': dict(),
+        'minimum': dict(),
+        'exclusiveMinimum': dict(),
+        'maxLength': dict(),
+        'minLength': dict(),
+        'maxItems': dict(),
+        'minItems': dict(),
+        'multipleOf': dict(),
+        'enum': dict(),
+        'pattern': dict(),
+        'uniqueItems': dict(),
+    }
+
+    __renamed__ = {
+        'type_': dict(key='type'),
+        'format_': dict(key='format'),
+        'exclusive_maximum': dict(key='exclusiveMaximum'),
+        'exclusive_minimum': dict(key='exclusiveMinimim'),
+        'max_length': dict(key='max_length'),
+        'min_length': dict(key='min_length'),
+        'max_items': dict(key='max_items'),
+        'min_items': dict(key='min_items'),
+        'multiple_of': dict(key='multipleOf'),
+        'unique_items': dict(key='uniqueItems'),
     }
 
 
-class Items(six.with_metaclass(FieldMeta, BaseSchema)):
+class Items(BaseSchema):
     """ Items Object
     """
 
-    __swagger_fields__ = {
-        'collectionFormat': 'csv',
+    __fields__ = {
+        'collectionFormat': dict(default='csv'),
+    }
+
+    __renamed__ = {
+        'collection_format': dict(key='collectionFormat'),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
         return prim_factory.produce(self, v, ctx)
 
 
-class Schema(six.with_metaclass(FieldMeta, BaseSchema)):
+Items.attach_field('items', builder=child, child_builder=Items)
+
+
+class Schema(BaseSchema):
     """ Schema Object
     """
-
-    __swagger_fields__ = {
-        '$ref': None,
-        'maxProperties': None,
-        'minProperties': None,
-        'required': [],
-        'allOf': [],
-        'properties': {},
-        'additionalProperties': True,
-        'title': None,
-        'description': None,
-        'discriminator': None,
-        'readOnly': None,
-        'xml': None,
-        'externalDocs': None,
-        'example': None,
+    __fields__ = {
+        '$ref': dict(),
+        'maxProperties': dict(),
+        'minProperties': dict(),
+        'title': dict(),
+        'description': dict(),
+        'discriminator': dict(),
+        'readOnly': dict(),
+        'example': dict(),
+        'required': dict(default=[]),
     }
 
-    __internal_fields__ = {
-        # pyopenapi only
-        'ref_obj': None,
-        'final': None,
-        'name': None,
-        'normalized_ref': None,
+    __children__ = {
+        'xml': dict(child_builder=XMLObject),
+        'externalDocs': dict(child_builder=ExternalDocumentation),
+    }
+
+    __internal__ = {
+        'ref_obj': dict(),
+        'final': dict(),
+        'name': dict(),
+        'normalized_ref': dict(),
+
+        'ref': dict(key='$ref', builder=rename),
+        'max_properties': dict(key='maxProperties', builder=rename),
+        'min_properties': dict(key='minProperties', builder=rename),
+        'read_only': dict(key='readOnly', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
+        'all_of': dict(key='allOf', builder=rename),
+        'additional_properties': dict(key='additionalProperties', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
         return prim_factory.produce(self, v, ctx)
 
+BoolOrSchema = if_not_bool_else(Schema)
 
-class Swagger(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
-    """ Swagger Object
-    """
-
-    __swagger_fields__ = {
-        'swagger': None,
-        'info': None,
-        'host': None,
-        'basePath': None,
-        'schemes': [],
-        'consumes': [],
-        'produces': [],
-        'paths': None,
-        'definitions': None,
-        'parameters': None,
-        'responses': None,
-        'securityDefinitions': None,
-        'security': None,
-        'tags': None,
-        'externalDocs': None,
-    }
+Schema.attach_field('items', builder=child, child_builder=Schema)
+Schema.attach_field('allOf', builder=child, child_builder=list_(Schema))
+Schema.attach_field('properties', builder=child, child_builder=map_(Schema))
+Schema.attach_field('additionalProperties', builder=child, child_builder=BoolOrSchema)
 
 
-class Contact(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class Contact(BaseObj_v2_0):
     """ Contact Object
     """
-
-    __swagger_fields__ = {
-        'name': None,
-        'url': None,
-        'email': None,
+    __fields__ = {
+        'name': dict(),
+        'url': dict(),
+        'email': dict(),
     }
 
 
-class License(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class License(BaseObj_v2_0):
     """ License Object
     """
-
-    __swagger_fields__ = {
-        'name': None,
-        'url': None,
+    __fields__ = {
+        'name': dict(),
+        'url': dict(),
     }
 
 
-class Info(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class Info(BaseObj_v2_0):
     """ Info Object
     """
+    __fields__ = {
+        'version': dict(),
+        'title': dict(),
+        'description': dict(),
+        'termsOfService': dict(),
+    }
 
-    __swagger_fields__ = {
-        'version': None,
-        'title': None,
-        'description': None,
-        'termsOfService': None,
-        'contact': None,
-        'license': None,
+    __children__ = {
+        'contact': dict(child_builder=Contact),
+        'license': dict(child_builder=License),
+    }
+
+    __internal__ = {
+        'terms_of_service': dict(key='termsOfService', builder=rename),
     }
 
 
-class Parameter(six.with_metaclass(FieldMeta, BaseSchema)):
+class Parameter(BaseSchema):
     """ Parameter Object
     """
-
-    __swagger_fields__ = {
-        # Reference Object
-        '$ref': None,
-
-        'name': None,
-        'in': None,
-        'required': None,
-
-        # body parameter
-        'schema': None,
-
-        # other parameter
-        'collectionFormat': 'csv',
-
-        # for converter only
-        'description': None,
-
-        # TODO: not supported yet
-        'allowEmptyValue': False,
+    __fields__ = {
+        'name': dict(),
+        'in':  dict(),
+        'required': dict(),
+        'collectionFormat': dict(default='csv'),
+        'description': dict(),
+        'allowEmptyValue': dict(),
     }
 
-    __internal_fields__ = {
-        'ref_obj': None,
-        'normalized_ref': None,
+    __children__ = {
+        'schema': dict(child_builder=Schema),
+        'items': dict(child_builder=Items),
+    }
+
+    __internal__ = {
+        'ref_obj': dict(),
+        'normalized_ref': dict(),
+
+        'in_': dict(key='in', builder=rename),
+        'collection_format': dict(key='collectionFormat', builder=rename),
+        'allow_empty_value': dict(key='allowEmptyValue', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
         i = getattr(self, 'in')
         return prim_factory.produce(self.schema, v, ctx) if i == 'body' else prim_factory.produce(self, v, ctx)
 
+ParameterOrReference = if_not_ref_else(Parameter)
 
-class Header(six.with_metaclass(FieldMeta, BaseSchema)):
+
+class Header(BaseSchema):
     """ Header Object
     """
+    __fields__ = {
+        'collectionFormat': dict(default='csv'),
+        'description': dict(),
+    }
 
-    __swagger_fields__ = {
-        'collectionFormat': 'csv',
-        'description': None,
+    __children__ = {
+        'items': dict(child_builder=Items),
+    }
+
+    __internal__ = {
+        'collection_format': dict(key='collectionFormat', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
         return prim_factory.produce(self, v, ctx)
 
 
-class Response(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class Response(BaseObj_v2_0):
     """ Response Object
     """
-
-    __swagger_fields__ = {
-        # Reference Object
-        '$ref': None,
-
-        'schema': None,
-        'headers': {},
-
-        'description': None,
-        'examples': None,
+    __fields__ = {
+        'description': dict(),
+        'examples': dict(),
     }
 
-    __internal_fields__ = {
-        'ref_obj': None,
-        'normalized_ref': None,
+    __children__ = {
+        'schema': dict(child_builder=Schema),
+        'headers': dict(child_builder=map_(Header)),
     }
 
+    __internal__ = {
+        'ref_obj': dict(),
+        'normalized_ref': dict(),
+    }
 
-class Operation(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+ResponseOrReference = if_not_ref_else(Response)
+MapOfResponseOrReference = map_(ResponseOrReference)
+
+
+class Operation(BaseObj_v2_0):
     """ Operation Object
     """
-
-    __swagger_fields__ = {
-        'tags': None,
-        'operationId': None,
-        'consumes': [],
-        'produces': [],
-        'schemes': [],
-        'parameters': None,
-        'responses': None,
-        'deprecated': False,
-        'security': None,
-        'description': None,
-        'summary': None,
-        'externalDocs': None,
+    __fields__ = {
+        'operationId': dict(),
+        'deprecated': dict(),
+        'description': dict(),
+        'summary': dict(),
     }
 
-    __internal_fields__ = {
-        'method': None,
-        'url': None,
-        'path': None,
-        'base_path': None,
-        'cached_schemes': [],
+    __children__ = {
+        'tags': dict(child_builder=list_(is_str)),
+        'consumes': dict(child_builder=list_(is_str)),
+        'produces': dict(child_builder=list_(is_str)),
+        'schemes': dict(child_builder=list_(is_str)),
+        'parameters': dict(child_builder=list_(ParameterOrReference)),
+        'responses': dict(child_builder=MapOfResponseOrReference),
+        'security': dict(child_builder=list_(map_(list_(is_str)))),
+        'externalDocs': dict(child_builder=ExternalDocumentation),
+    }
+
+    __internal__ = {
+        'method': dict(),
+        'url': dict(),
+        'path': dict(),
+        'base_path': dict(),
+        'cached_schemes': dict(default=[]),
+        'cached_consumes': dict(default=[]),
+        'cached_produces': dict(default=[]),
+        'cached_security': dict(),
+
+        'operation_id': dict(key='operationId', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
     }
 
     def __call__(self, **k):
@@ -294,62 +379,83 @@ class Operation(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
         Request(op=self, params=params), _Response(self)
 
 
-class PathItem(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class PathItem(BaseObj_v2_0):
     """ Path Item Object
     """
-
-    __swagger_fields__ = {
-        # Reference Object
-        '$ref': None,
-
-        'get': None,
-        'put': None,
-        'post': None,
-        'delete': None,
-        'options': None,
-        'head': None,
-        'patch': None,
-        'parameters': [],
+    __fields__ = {
+        '$ref': dict(),
     }
 
-    __internal_fields__ = {
-        'ref_obj': None,
-        'normalized_ref': None,
+    __children__ = {
+        'get': dict(child_builder=Operation),
+        'put': dict(child_builder=Operation),
+        'post': dict(child_builder=Operation),
+        'delete': dict(child_builder=Operation),
+        'options': dict(child_builder=Operation),
+        'head': dict(child_builder=Operation),
+        'patch': dict(child_builder=Operation),
+        'parameters': dict(child_builder=list_(ParameterOrReference)),
+    }
+
+    __internal__ = {
+        'ref_obj': dict(),
+        'normalized_ref': dict(),
+
+        'ref': dict(key='$ref', builder=rename),
     }
 
 
-class SecurityScheme(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
+class SecurityScheme(BaseObj_v2_0):
     """ Security Scheme Object
     """
+    __fields__ = {
+        'type': dict(),
+        'description': dict(),
+        'name': dict(),
+        'in': dict(),
+        'flow': dict(),
+        'authorizationUrl': dict(),
+        'tokenUrl': dict(),
+    }
 
-    __swagger_fields__ = {
-        'type': None,
-        'name': None,
-        'in': None,
-        'flow': None,
-        'authorizationUrl': None,
-        'tokenUrl': None,
-        'scopes': None,
-        'description': None,
+    __children__ = {
+        'scopes': dict(child_builder=map_(is_str))
+    }
+
+    __internal__ = {
+        'type_': dict(key='type', builder=rename),
+        'in_': dict(key='in', builder=rename),
     }
 
 
-class Tag(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
-    """ Tag Object
+class Swagger(BaseObj_v2_0):
+    """ Swagger Object
     """
 
-    __swagger_fields__ = {
-        'name': None,
-        'description': None,
-        'externalDocs': None,
+    __fields__ = {
+        'swagger': dict(),
+        'host': dict(),
+        'basePath': dict(),
     }
 
-
-class ExternalDocumentation(six.with_metaclass(FieldMeta, BaseObj_v2_0)):
-    """ External Documentation Object
-    """
-
-    __swagger_fields__ = {
-        'description': None,
-        'url': None,
+    __children__ = {
+        'info': dict(child_builder=Info),
+        'schemes': dict(child_builder=list_(is_str)),
+        'consumes': dict(child_builder=list_(is_str)),
+        'produces': dict(child_builder=list_(is_str)),
+        'paths': dict(child_builder=map_(PathItem)),
+        'definitions': dict(child_builder=map_(Schema)),
+        'parameters': dict(child_builder=map_(Parameter)),
+        'responses': dict(child_builder=map_(Response)),
+        'securityDefinitions': dict(child_builder=map_(SecurityScheme)),
+        'security': dict(child_builder=list_(list_(is_str))),
+        'tags': dict(child_builder=list_(Tag)),
+        'externalDocs': dict(child_builder=ExternalDocumentation),
     }
+
+    __internal__ = {
+        'base_path': dict(key='basePath', builder=rename),
+        'security_definitions': dict(key='securityDefinitions', builder=rename),
+        'external_docs': dict(key='externalDocs', builder=rename),
+    }
+

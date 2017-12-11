@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from ...scan import Dispatcher
 from ...spec.v2_0.objects import (
-    Operation
+    Operation,
+    MapOfResponseOrReference,
     )
 import six
 
@@ -15,13 +16,13 @@ class YamlFixer(object):
     def _op(self, _, obj, app):
         """ convert status code in Responses from int to string
         """
-        if obj.responses == None: return 
+        if obj.responses == None: return
 
-        tmp = {}
+        responses = MapOfResponseOrReference({}, obj.responses.path)
         for k, v in six.iteritems(obj.responses):
             if isinstance(k, six.integer_types):
-                tmp[str(k)] = v
+                responses[str(k)] = v
             else:
-                tmp[k] = v
-        obj.update_field('responses', tmp)
+                responses[k] = v
+        obj.attach_child('responses', responses)
 

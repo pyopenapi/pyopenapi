@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 from .resolve import Resolver
+from .cache import SpecObjCache
 from .primitives import Primitive, MimeCodec
-from .spec.v1_2.parser import ResourceListContext
-from .spec.v2_0.parser import SwaggerContext
+from .spec.v1_2.objects import ResourceListing, ApiDeclaration
 from .spec.v2_0.objects import Swagger, Operation
 from .spec.v3_0_0.objects import OpenApi
-from .spec.base import BaseObj, Context
-from .spec.base2 import _Base
 from .scan import Scanner
 from .scanner import TypeReduce, CycleDetector
 from .scanner.v2_0 import Aggregate
@@ -59,9 +57,9 @@ class App(object):
         self.__url=url
 
         # a map from json-reference to
-        # - spec.BaseObj
-        # - a map from json-pointer to spec.BaseObj
-        self.__spec_objs = {}
+        # - spec.base2._Base
+        # - a map from json-pointer to spec.base2._Base
+        self.__cache = SpecObjCache()
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
@@ -178,39 +176,69 @@ class App(object):
         """
         return self.__resolver
 
-    def load_obj(self, jref, getter=None, parser=None):
+    @property
+    def spec_obj_cache(self):
+        """ Cache for Spec Objects
+
+        :type: pyopenapi.cache.SpecObjCache
+        """
+        return self.__cache
+
+    def load_obj(self, jref, getter=None, parser=None, remove_dummy=False):
         """ load a object(those in spec._version_.objects) from a JSON reference.
         """
         src_spec = self.__resolver.resolve(jref, getter)
 
         # get root document to check its swagger version.
-        tmp = {'_tmp_': {}}
         obj = None
         version = utils.get_swagger_version(src_spec)
+        url, jp = utils.jr_split(jref)
+
+        # usually speaking, we would only enter App.load_obj when App.resolve
+        # can't find the object. However, the 'version' in App.load_obj might
+        # be different from the one passed into App.resolve.
+        #
+        # Therefore, we need to check the cache here again.
+        obj = self.spec_obj_cache.get(url, jp, version)
+        if obj:
+            return obj, version
+
+        override = self.spec_obj_cache.get_under(url, jp, version, remove=remove_dummy)
         if version == '1.2':
-            # swagger 1.2
-            with ResourceListContext(tmp, '_tmp_') as ctx:
-                ctx.parse(src_spec, jref, self.__resolver, getter)
-            obj = tmp['_tmp_']
+            obj = ResourceListing(src_spec, jref, {})
+
+            resources = []
+            for r in obj.apis:
+                resources.append(r.path)
+
+            base = utils.url_dirname(jref)
+            urls = zip(
+                map(lambda u: utils.url_join(base,  u[1:]), resources),
+                map(lambda u: u[1:], resources)
+            )
+
+            cached_apis = {}
+            for url, name in urls:
+                resource_spec = self.resolver.resolve(url, getter)
+                if resource_spec is None:
+                    raise Exception('unable to resolve {} when load spec from {}'.format(url, jref))
+                cached_apis[name] = ApiDeclaration(resource_spec, utils.jp_compose(name, base=url), {})
+
+            obj.cached_apis = cached_apis
+
+        # after Swagger 2.0, we need to handle
+        # the loading order of external reference
 
         elif version == '2.0':
             # swagger 2.0
-            with SwaggerContext(tmp, '_tmp_') as ctx:
-                ctx.parse(src_spec)
-            obj = tmp['_tmp_']
+            obj = Swagger(src_spec, jref, override)
+
         elif version == '3.0.0':
             # openapi 3.0.0
-            obj = OpenApi(src_spec, jref)
+            obj = OpenApi(src_spec, jref, override)
 
         elif version == None and parser:
-            if inspect.isclass(parser) and issubclass(parser, Context):
-                with parser(tmp, '_tmp_') as ctx:
-                    ctx.parse(src_spec)
-                obj = tmp['_tmp_']
-
-            else:
-                obj = parser(src_spec, jref)
-
+            obj = parser(src_spec, jref, {})
             version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
         else:
             raise NotImplementedError('Unsupported Swagger Version: {0} from {1}'.format(version, jref))
@@ -222,31 +250,9 @@ class App(object):
 
         # cache obj before migration, or we may load an object multiple times when resolve
         # $ref in the same spec
-        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=version)
+        self.__cache.set(obj, url, jp, spec_version=version)
 
         return obj, version
-
-    def _cache_spec_obj(self, obj, url, jp, spec_version):
-        """ cache 'prepared' spec objects (those under pyopenapi.spec)
-        """
-        if not issubclass(type(obj), (BaseObj, _Base)):
-            raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
-
-        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
-
-    def _get_spec_obj_from_cache(self, url, jp, spec_version):
-        """ get spec objects from cache
-        """
-        url_cache = self.__spec_objs.get(url, None)
-        if not url_cache:
-            return None
-
-        # try to find a 'jp' with common prefix with input under 'url'
-        for path, cache in six.iteritems(url_cache):
-            if jp.startswith(path) and spec_version in cache:
-                return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
-
-        return None
 
     def prepare_obj(self, obj, jref, spec_version=None):
         """ basic preparation of an object(those in sepc._version_.objects),
@@ -290,7 +296,7 @@ class App(object):
             obj = migration_module.up(obj, self, jref)
 
         # cache migrated object if we need it later
-        self._cache_spec_obj(obj, *utils.jr_split(jref), spec_version=spec_version)
+        self.spec_obj_cache.set(obj, *utils.jr_split(jref), spec_version=spec_version)
 
         return obj
 
@@ -443,13 +449,14 @@ class App(object):
     """
     _create_ = create
 
-    def resolve(self, jref, parser=None, spec_version=None, before_return=utils.final):
+    def resolve(self, jref, parser=None, spec_version=None, before_return=utils.final, remove_dummy=False):
         """ JSON reference resolver
 
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
         :param parser: the parser corresponding to target object.
         :param str spec_version: the OpenAPI spec version 'jref' pointing to.
         :param func before_return: a hook to patch object before returning it
+        :param bool remove_dummy: a flag to tell pyopenapi to clean dummy objects in pyopenapi.spec_obj_cache
         :type parser: pyopenapi.base.Context
         :return: the referenced object, wrapped by weakref.ProxyType
         :rtype: weakref.ProxyType
@@ -474,12 +481,12 @@ class App(object):
         # comparing url first, and find those object prefixed with
         # the JSON pointer.
         url, jp = utils.jr_split(jref)
-        obj = self._get_spec_obj_from_cache(url, jp, spec_version)
+        obj = self.__cache.get(url, jp, spec_version)
 
         # this object is not found in cache
         if obj == None:
             if url:
-                obj, _ = self.load_obj(jref, parser=parser)
+                obj, _ = self.load_obj(jref, parser=parser, remove_dummy=remove_dummy)
                 if obj:
                     obj = self.prepare_obj(obj, jref, spec_version=spec_version)
             else:

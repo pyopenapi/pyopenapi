@@ -7,7 +7,7 @@ from ...spec.v1_2.objects import (
     Items,
     Authorization,
     Operation,
-    GrantType,
+    GrantTypes,
     Scope,
     Authorizations,
     LoginEndpoint,
@@ -18,9 +18,9 @@ from ...spec.v1_2.objects import (
     ResponseMessage,
     Api,
     Model,
-    Resource,
+    ApiDeclaration,
     Info,
-    ResourceList
+    ResourceListing
     )
 import six
 
@@ -111,8 +111,8 @@ class Validate(object):
 
         return path, obj.__class__.__name__, errs
 
-    @Disp.register([GrantType])
-    def _validate_granttype(self, path, obj, _):
+    @Disp.register([GrantTypes])
+    def _validate_granttypes(self, path, obj, _):
         """ make sure either implicit or authorization_code is defined """
         errs = []
 
@@ -201,12 +201,12 @@ class Validate(object):
     def model_require(self, path, obj, _):
         return self._check_reqs(path, obj, ['id', 'properties'])
 
-    @Disp.register([Resource])
-    def resource_require(self, path, obj, _):
+    @Disp.register([ApiDeclaration])
+    def api_declaration_require(self, path, obj, _):
         return self._check_reqs(path, obj, ['swaggerVersion', 'basePath', 'apis'])
 
-    @Disp.register([ResourceList])
-    def resource_list_require(self, path, obj, _):
+    @Disp.register([ResourceListing])
+    def resource_listing_require(self, path, obj, _):
         return self._check_reqs(path, obj, ['swaggerVersion', 'apis'])
 
     @Disp.register([Info])

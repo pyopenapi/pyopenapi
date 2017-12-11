@@ -182,8 +182,10 @@ def to_flows(obj, path):
     flow.update(_generate_fields(obj, [
         'authorizationUrl',
         'tokenUrl',
-        'scopes',
     ]))
+
+    if obj.scopes:
+        flow['scopes'] = obj.scopes.dump()
 
     return ret
 
@@ -415,7 +417,7 @@ def to_response(obj, produces, path):
             produces = ['application/json' if type_ == 'object' else 'text/plain']
 
         content = ret.setdefault('content', {})
-        type_ = getattr(obj.schema, 'type', None)
+        type_ = getattr(resolved_obj.schema, 'type', None)
         if type_ == 'file':
             media_type = content.setdefault('application/octet-stream', {})
             media_type['type'] = 'string'
@@ -432,30 +434,30 @@ def to_response(obj, produces, path):
 
     return ret
 
-def to_operation(obj, body, root_url, path):
+def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     ret = {}
     ret.update(_generate_fields(obj, [
-        'tags',
         'summary',
         'description',
         'operationId',
         'deprecated',
     ]))
 
+    if obj.tags:
+        ret['tags'] = obj.tags.dump()
+
+    if obj.security:
+        ret['security'] = obj.security.dump()
+
     # parameters
     if obj.parameters:
         parameters = None
         for index, p in enumerate(obj.parameters):
             new_path = jp_compose(['parameters', str(index)], base=path)
-            new_p, pctx = from_parameter(p, body, obj.consumes, new_path)
+            new_p, pctx = from_parameter(p, body, obj.consumes or consumes, new_path)
             if pctx.is_body:
                 body = new_p
             else:
-                if p._parent_ is not obj:
-                    # for those parameters merged from PathItem and not body / file type,
-                    # leave them in PathItem level
-                    continue
-
                 if not parameters:
                     parameters = ret.setdefault('parameters', [])
                 parameters.append(new_p)
@@ -467,7 +469,7 @@ def to_operation(obj, body, root_url, path):
     if obj.responses:
         responses = ret.setdefault('responses', {})
         for k, v in six.iteritems(obj.responses):
-            responses[k] = to_response(v, obj.produces, jp_compose(['responses', k], base=path))
+            responses[k] = to_response(v, obj.produces or produces, jp_compose(['responses', k], base=path))
 
     # externalDocs
     if obj.externalDocs:
@@ -479,10 +481,6 @@ def to_operation(obj, body, root_url, path):
         for s in obj.schemes:
             parts = six.moves.urllib.parse.urlsplit(root_url)
             servers.append({'url': six.moves.urllib.parse.urlunsplit((s,) + parts[1:])})
-
-    # security
-    if obj.security:
-        ret['security'] = obj.security
 
     return ret
 
@@ -522,7 +520,7 @@ def to_info(obj, path):
 
     return ret
 
-def to_path_item(obj, root_url, path, consumes=None):
+def to_path_item(obj, root_url, path, consumes=None, produces=None):
     ret = {}
     if obj.normalized_ref:
         ret['$ref'] = obj.normalized_ref
@@ -553,13 +551,13 @@ def to_path_item(obj, root_url, path, consumes=None):
     ):
         op = getattr(obj, method, None)
         if op:
-            ret[method] = to_operation(op, body, root_url, jp_compose(method, base=path))
+            ret[method] = to_operation(op, body, root_url, jp_compose(method, base=path), produces=produces, consumes=consumes)
 
     return ret
 
 def from_swagger_to_server(obj, path):
     url = obj.host if not obj.basePath else six.moves.urllib.parse.urlunsplit((
-        obj.schemes[0] if len(obj.schemes) > 0 else 'https',
+        obj.schemes[0] if obj.schemes else 'https',
         obj.host,
         obj.basePath,
         None,
@@ -587,7 +585,7 @@ def to_openapi(obj, path):
             if k.startswith('x-'):
                 raise ScheaError('No more extension field in Paths object: {}'.format(path))
 
-            paths[k] = to_path_item(v, server['url'], jp_compose(k, base=path))
+            paths[k] = to_path_item(v, server['url'], jp_compose(k, base=path), consumes=obj.consumes, produces=obj.produces)
 
     # security
     if obj.security:

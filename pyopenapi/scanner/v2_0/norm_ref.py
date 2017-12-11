@@ -3,9 +3,8 @@ from ...scan import Dispatcher
 from ...utils import normalize_jr
 from ...spec.v2_0.objects import (
     Schema,
-    Parameter,
-    Response,
     PathItem,
+    Reference,
     )
 
 
@@ -17,8 +16,7 @@ class NormalizeRef(object):
     def __init__(self, base_url):
         self.base_url = base_url
 
-    @Disp.register([Schema, Parameter, Response, PathItem])
+    @Disp.register([Schema, Reference, PathItem])
     def _resolve(self, path, obj, _):
-        ref = getattr(obj, '$ref', None)
-        if ref:
-            obj.update_field('normalized_ref', normalize_jr(getattr(obj, '$ref'), self.base_url))
+        if obj.ref:
+            obj.normalized_ref = normalize_jr(getattr(obj, '$ref'), self.base_url)

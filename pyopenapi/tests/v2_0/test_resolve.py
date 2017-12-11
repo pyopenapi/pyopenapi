@@ -1,9 +1,12 @@
 from pyopenapi import App, utils
-from pyopenapi.spec.v3_0_0.objects import PathItem
-from ..utils import get_test_data_folder
+from pyopenapi.spec.v3_0_0 import objects
+from pyopenapi.spec.v2_0.objects import Swagger, License, Schema
+from ..utils import get_test_data_folder, gen_test_folder_hook
 from ...utils import final, deref
 import unittest
 import os
+import weakref
+
 
 
 class ResolvePathItemTestCase(unittest.TestCase):
@@ -20,7 +23,7 @@ class ResolvePathItemTestCase(unittest.TestCase):
         """ make sure PathItem is correctly merged """
         a = self.app.resolve(utils.jp_compose('/a', '#/paths'))
 
-        self.assertTrue(isinstance(a, PathItem))
+        self.assertTrue(isinstance(a, objects.PathItem))
         self.assertTrue(a.get.operationId, 'a.get')
         self.assertTrue(a.put.description, 'c.put')
         self.assertTrue(a.post.description, 'd.post')
@@ -93,4 +96,70 @@ class DerefTestCase(unittest.TestCase):
         od = utils.deref(self.app.resolve('#/components/schemas/s1'))
 
         self.assertEqual(id(od), id(self.app.resolve('#/components/schemas/s4')))
+
+    def test_external_ref_loading_order(self):
+        """ make sure pyopenapi.spec_obj_cache would remove
+        dummy objects when resolving.
+
+        dummy objects: an spec object co-exist with its parent in
+        pyopenapi.spec_obj_cache
+        """
+
+        # prepare a dummy app
+        app = App.load(
+            url='file:///ex/root/swagger.json',
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0'))
+        )
+
+        # fill its cache with several dummy objects
+        license = app.resolve('file:///wordnik/swagger.json#/info/license',
+            parser=License,
+            spec_version='2.0',
+            before_return=None,
+            remove_dummy=True,
+        )
+        order = app.resolve('file:///wordnik/swagger.json#/definitions/Order',
+            parser=Schema,
+            spec_version='2.0',
+            before_return=None,
+            remove_dummy=True,
+        )
+        pet = app.resolve('file:///wordnik/swagger.json#/definitions/Pet',
+            parser=Schema,
+            spec_version='2.0',
+            before_return=None,
+            remove_dummy=True,
+        )
+
+        # resolve their root object with latest version
+        swg = app.resolve('file:///wordnik/swagger.json',
+            parser=Schema,
+            spec_version='2.0',
+            before_return=None,
+            remove_dummy=True,
+        )
+
+        # make sure root objec use those dummy objects during loading
+        self.assertEqual(weakref.proxy(swg.resolve(['info','license'])), license)
+        self.assertEqual(weakref.proxy(swg.resolve(['definitions','Order'])), order)
+        self.assertEqual(weakref.proxy(swg.resolve(['definitions','Pet'])), pet)
+
+        # make sure this relation is maintained after migrating up
+        license = app.resolve('file:///wordnik/swagger.json#/info/license',
+            parser=License,
+            before_return=None,
+            remove_dummy=True,
+        )
+
+        # #/definitios/Order is changed to #/components/schemas/Order
+        # this case is not taken care here.
+
+        # resolve their root object with latest version
+        oai = app.resolve('file:///wordnik/swagger.json',
+            before_return=None,
+            remove_dummy=True,
+        )
+
+        # make sure root objec use those dummy objects during loading
+        self.assertEqual(weakref.proxy(oai.resolve(['info','license'])), license)
 

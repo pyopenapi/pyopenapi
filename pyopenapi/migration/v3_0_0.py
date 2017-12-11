@@ -1,25 +1,40 @@
 from ..utils import jr_split
 from ..scan import Scanner, Scanner2
-from ..scanner.v2_0 import Upgrade
+from ..scanner.v2_0.upgrade import converters
 from ..scanner.v3_0_0 import Merge, Resolve, NormalizeRef, PatchObject
+from ..spec.v2_0.objects import (
+    Swagger,
+    Info,
+    License,
+    Schema,
+    )
+from ..spec.v3_0_0 import objects
 
 def up(obj, app, jref):
     ret = obj
+    url, jp = jr_split(jref)
     if ret.__swagger_version__ == '2.0':
-        scanner = Scanner(app)
-        converter = Upgrade()
-        scanner.scan(root=ret, route=[converter])
-        ret = converter.openapi
-        if not ret:
-            raise Exception('unable to upgrade from 2.0: {}'.format(jref))
+        override = None
+        if isinstance(ret, (Swagger, License, Info, Schema)):
+            override = app.spec_obj_cache.get_under(url, jp, '3.0.0', remove=False)
+
+        if isinstance(ret, Swagger):
+            ret = objects.OpenApi(converters.to_openapi(ret, jp), path=jp, override=override)
+        elif isinstance(ret, License):
+            ret = objects.License(converters.to_license(ret, jp), path=jp, override=override)
+        elif isinstance(ret, Info):
+            ret = objects.Info(converters.to_info(ret, jp), path=jp, override=override)
+        elif isinstance(ret, Schema):
+            ret = objects.Schema(converters.to_schema(ret, jp), path=jp, override=override)
+        else:
+            raise Exception('unable to upgrade from 2.0: {} for type: {}'.format(jref, str(type(ret))))
 
     if ret.__swagger_version__ == '3.0.0':
-        app._cache_spec_obj(ret, *jr_split(jref), spec_version='3.0.0')
+        app.spec_obj_cache.set(ret, url, jp, spec_version='3.0.0')
 
         scanner = Scanner2()
 
         # phase 1: normalized $ref
-        url, jp = jr_split(jref)
         scanner.scan(root=ret, route=[NormalizeRef(url)])
 
         # phase 2: resolve $ref

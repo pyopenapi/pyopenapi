@@ -1,46 +1,43 @@
 from __future__ import absolute_import
-from ...errs import CycleDetectionError
+from ...utils import jp_compose
+from ...errs import SchemaError
 from ...scan import Dispatcher
-from ...spec.v2_0.parser import (
-    SchemaContext,
-    PathItemContext,
-    ParameterContext,
-    ResponseContext,
-    )
 from ...spec.v2_0.objects import (
+    Operation,
     Schema,
     PathItem,
-    Parameter,
-    Response,
+    Operation,
+    Reference,
+    ParameterOrReference,
+    ResponseOrReference,
     )
+import six
 
-def _resolve(obj, parser, app, path):
-    if obj.ref_obj:
+
+def _resolve(o, expected, app, path):
+    if not o or not getattr(o, '$ref', None):
         return
 
-    if not obj.normalized_ref:
+    if o.ref_obj:
         return
+
+    if not isinstance(o, (Reference, PathItem, Schema)):
+        raise SchemaError('attemp to resolve invalid object: {} in {}'.format(str(type(o)), path))
+
+    if not o.normalized_ref:
+        raise ReferenceError('empty normalized_ref for {} in {}'.format(o.ref, path))
 
     ro = app.resolve(
-        obj.normalized_ref,
-        parser=parser,
+        o.normalized_ref,
+        parser=expected,
         spec_version='2.0',
-        before_return=None
+        before_return=None,
+        remove_dummy=True,
     )
     if not ro:
-        raise ReferenceError(
-            'Unable to resolve: {} in {}'.format(
-                obj.normalized_ref, path
-            )
-        )
-    if ro.__class__ != obj.__class__:
-        raise TypeError(
-            'Referenced Type mismatch: {} in {}'.format(
-                obj.normalized_ref, path
-            )
-        )
+        raise ReferenceError('Unable to resolve: {} in {}'.format(o.normalized_ref, path))
 
-    obj.update_field('ref_obj', ro)
+    o.ref_obj = ro
 
 
 class Resolve(object):
@@ -50,17 +47,20 @@ class Resolve(object):
 
     @Disp.register([Schema])
     def _schema(self, path, obj, app):
-        _resolve(obj, SchemaContext, app, path)
+        _resolve(obj, Schema, app, path)
 
     @Disp.register([PathItem])
     def _path_item(self, path, obj, app):
-        _resolve(obj, PathItemContext, app, path)
+        _resolve(obj, PathItem, app, path)
 
-    @Disp.register([Parameter])
+        for idx, s in enumerate(obj.parameters or []):
+            _resolve(s, ParameterOrReference, app, jp_compose([path, 'parameters', str(idx)]))
+
+    @Disp.register([Operation])
     def _parameter(self, path, obj, app):
-        _resolve(obj, ParameterContext, app, path)
+        for idx, s in enumerate(obj.parameters or []):
+            _resolve(s, ParameterOrReference, app, jp_compose([path, 'parameters', str(idx)]))
 
-    @Disp.register([Response])
-    def _response(self, path, obj, app):
-        _resolve(obj, ResponseContext, app, path)
+        for k, v in six.iteritems(obj.responses or {}):
+            _resolve(v, ResponseOrReference, app, jp_compose([path, 'responses', k]))
 

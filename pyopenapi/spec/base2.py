@@ -1,4 +1,4 @@
-from ..utils import jp_compose
+from ..utils import jp_compose, jp_split
 from ..errs import FieldNotExist
 import six
 import types
@@ -51,7 +51,7 @@ def rename(key):
     directly because the resolving would be failed.
 
     This property factory provide a redirection to actual property
-    and should only declared under __renamed__
+    and should only declared under __internal__
     """
     def _getter_(self):
         return getattr(self, key)
@@ -72,6 +72,13 @@ def child(key, child_builder=None, required=False, default=None):
         if key in self.children:
             return self.children[key]
 
+        # check if we have any overriden children
+        ovr = self.override.get(key, {})
+        chd = ovr.get('', None)
+        if chd:
+            self.children[key] = chd
+            return chd
+
         # lazy initialize of children
         val = None
         if key in self.spec:
@@ -84,7 +91,7 @@ def child(key, child_builder=None, required=False, default=None):
             val = copy.copy(default)
 
         if val is not None:
-            chd = child_builder(val, path=jp_compose(key, base=self.path))
+            chd = child_builder(val, path=jp_compose(key, base=self.path), override=ovr)
             self.children[key] = chd
             return chd
         else:
@@ -100,9 +107,23 @@ def child(key, child_builder=None, required=False, default=None):
 
 
 class _Base(object):
-    def __init__(self, spec, path=None):
-        self.__path = path
+    def __init__(self, spec, path=None, override=None):
+        self._path = path
+        self._parent = None
         self.spec = spec
+        self.override = {}
+        # inside 'override':
+        #   (first token of jp_split) => (reminder of jp_split, value)
+
+        # setup override
+        for k, v in six.iteritems(override or {}):
+            tokens = jp_split(k, 1)
+            if len(tokens) > 0:
+                self.override.setdefault(tokens[0], {}).update({
+                    tokens[1] if len(tokens) > 1 else '': v
+                })
+            else:
+                raise Exception('invalid token found for "override": {}, in {}'.format(k, path))
 
     def is_set(self, k):
         """ check if a key is setted from Swagger API document
@@ -110,7 +131,7 @@ class _Base(object):
         :return: True if the key is setted. False otherwise, it means we would get value
         from default from Field.
         """
-        return k in self.__spec
+        return k in self.spec
 
     @property
     def parent(self):
@@ -118,15 +139,19 @@ class _Base(object):
         :return: the parent object.
         :rtype: a subclass of BaseObj.
         """
-        return self.__parent
+        return self._parent
 
     @parent.setter
-    def parent(self, value):
-        self.__parent = value
+    def parent(self, v):
+        self._parent = v
 
     @property
     def path(self):
-        return self.__path
+        return self._path
+
+    @path.setter
+    def path(self, v):
+        self._path = v
 
 
 def list_(builder):
@@ -151,8 +176,8 @@ class _List(_Base):
     object with the same property-set. The constructor would call its __child_class__
     on all those objects.
     """
-    def __init__(self, spec, path=None):
-        super(_List, self).__init__(spec, path)
+    def __init__(self, spec, path=None, override=None):
+        super(_List, self).__init__(spec, path, override)
         self.__elm = []
 
         if not isinstance(spec, list):
@@ -160,10 +185,21 @@ class _List(_Base):
 
         # generate children for all keys in spec
         for idx, e in enumerate(spec):
-            path = jp_compose(str(idx), base=self.path)
-            self.__elm.append(
-                self.__child_builder__.__func__(e, path=path) if self.__child_builder_unbound__ else self.__child_builder__(e, path=path)
-            )
+            idx = str(idx)
+
+            ovr = self.override.get(idx, {})
+            elm = ovr.get('', None)
+            if not elm:
+                path = jp_compose(idx, base=self.path)
+                if self.__child_builder_unbound__:
+                    elm = self.__child_builder__.__func__(e, path=path, override=ovr)
+                else:
+                    elm = self.__child_builder__(e, path=path, override=ovr)
+
+            if hasattr(elm, 'parent'):
+                elm.parent = self
+
+            self.__elm.append(elm)
 
     def resolve(self, ts):
         if isinstance(ts, six.string_types):
@@ -186,7 +222,11 @@ class _List(_Base):
             return False, ''
 
         for idx, (s, o) in enumerate(zip(self, other)):
-            same, name = s.compare(o, base=jp_compose(str(idx), base=base))
+            new_base = jp_compose(str(idx), base=base)
+            if isinstance(s, six.string_types + six.integer_types):
+                return s == o, new_base
+
+            same, name = s.compare(o, base=new_base)
             if not same:
                 return same, name
 
@@ -262,8 +302,8 @@ class _Map(_Base):
     objects with the same property-set. The constructor would call its __child_class__
     on all those objects.
     """
-    def __init__(self, spec, path=None):
-        super(_Map, self).__init__(spec, path)
+    def __init__(self, spec, path=None, override=None):
+        super(_Map, self).__init__(spec, path, override)
         self.__elm = {}
 
         if not isinstance(spec, dict):
@@ -271,8 +311,19 @@ class _Map(_Base):
 
         # generate children for all keys in spec
         for k in spec:
-            path = jp_compose(str(k), base=self.path)
-            self.__elm[k] = self.__child_builder__.__func__(spec[k], path=path) if self.__child_builder_unbound__ else self.__child_builder__(spec[k], path=path)
+            ovr = self.override.get(k, {})
+            elm = ovr.get('', None)
+            if not elm:
+                path = jp_compose(str(k), base=self.path)
+                if self.__child_builder_unbound__:
+                    elm = self.__child_builder__.__func__(spec[k], path=path, override=ovr)
+                else:
+                    elm = self.__child_builder__(spec[k], path=path, override=ovr)
+
+            if hasattr(elm, 'parent'):
+                elm.parent = self
+
+            self.__elm[k] = elm
 
     def resolve(self, ts):
         if isinstance(ts, six.string_types):
@@ -299,7 +350,11 @@ class _Map(_Base):
             return False, jp_compose(diff[0], base=base)
 
         for name in self.__elm:
-            s, n = self.__elm[name].compare(other[name], base=jp_compose(name, base=base))
+            new_base = jp_compose(name, base=base)
+            if isinstance(self.__elm[name], six.string_types + six.integer_types):
+                return self.__elm[name] == other[name], new_base
+
+            s, n = self.__elm[name].compare(other[name], base=new_base)
             if not s:
                 return s, n
 
@@ -357,7 +412,6 @@ class FieldMeta(type):
         fields = spc.setdefault('__fields__', {})
         cn = spc.setdefault('__children__', {})
         intl = spc.setdefault('__internal__', {})
-        renm = spc.setdefault('__renamed__', {})
 
         def _from_parent_(s, name):
             p = getattr(b, name, None)
@@ -369,22 +423,16 @@ class FieldMeta(type):
 
         for b in bases:
             _from_parent_(fields, '__fields__')
-            _from_parent_(renm, '__renamed__')
             _from_parent_(cn, '__children__')
             _from_parent_(intl, '__internal__')
 
-        for n, args in six.iteritems(fields):
-            args = copy.copy(args)
-
-            builder = args.pop('builder')
-            spc[n] = builder(args.pop('key', None) or n, **args)
-
-        def _update_to_spc(builder, fs):
+        def _update_to_spc(default_builder, fs):
             for n, args in six.iteritems(fs):
                 args = copy.copy(args)
+                builder = args.pop('builder', None) or default_builder
                 spc[n] = builder(args.pop('key', None) or n, **args)
 
-        _update_to_spc(rename, renm)
+        _update_to_spc(field, fields)
         _update_to_spc(internal, intl)
         _update_to_spc(child, cn)
 
@@ -395,25 +443,22 @@ class Base2Obj(_Base):
     """ Base implementation of all Open API objects
     """
 
-    def __init__(self, spec, path=None):
+    def __init__(self, spec, path=None, override=None):
         """ constructor
         Args:
             - spec: the open api spec in dict
+            - path:
+            - override:
         """
-        super(Base2Obj, self).__init__(spec, path)
+        super(Base2Obj, self).__init__(spec, path, override)
         self.children = {}
         self.internal = {}
-
-        # for example, we would rename 'requestBodies' to 'request_bodies' for
-        # snake-stye in python, however, to be able to resolve such fields,
-        # we need to add these properties to target to correct fields.
-        self.renamed = {}
 
         # traverse through children
         for name in self.__children__:
             # trigger the getter of children, it will create it if exist
             chd = getattr(self, name)
-            if chd:
+            if chd and hasattr(chd, 'parent'):
                 chd.parent = self
 
     def resolve(self, ts):
@@ -454,10 +499,10 @@ class Base2Obj(_Base):
             return False, ''
 
         def _cmp_(name, s, o):
+            if isinstance(s, six.string_types + six.integer_types):
+                return s == o, name
             if type(s) != type(o):
                 return False, name
-            if isinstance(s, six.string_types + six.integer_types) :
-                return s == o, name
             if isinstance(s, (Base2Obj, _Map, _List)):
                 return s.compare(o, base=name)
             if isinstance(s, list):
@@ -519,6 +564,8 @@ class Base2Obj(_Base):
             raise Exception('attemp to attach a children not in child fields {}:{}, {}'.format(str(type(self)), name, self.path))
 
         setattr(self, name, obj)
+        if hasattr(obj, 'parent'):
+            obj.parent = self
 
     @classmethod
     def attach_field(kls, name, **field_descriptor):
@@ -556,8 +603,6 @@ class Base2Obj(_Base):
                 c = obj._children_
                 for cc in c:
                     ret[jp_compose([name, cc])] = c[cc]
-            else:
-                raise Exception('unknown object encountered when calling _children_: {}, {}'.format(str(type(obj)), self.path))
 
         return ret
 
