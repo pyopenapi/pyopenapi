@@ -18,34 +18,6 @@ def _generate_fields(obj, names):
 
     return ret
 
-def _patch_local_ref(ref, parameter_context=None):
-    if not (ref and isinstance(ref, six.string_types)):
-        return ref
-    if not ref.startswith('#'):
-        return ref
-
-    if ref.startswith('#/definitions'):
-        return ref.replace('#/definitions', '#/components/schemas', 1)
-    elif ref.startswith('#/parameters'):
-        if not parameter_context.is_body:
-            return ref.replace('#/parameters', '#/components/parameters', 1)
-
-        # we need to guess a content type that would 100%
-        # generated under #/components/requestBodies for
-        # the referenced parameter
-        return jp_compose([
-            '#', 'components', 'requestBodies',
-            ref[len('#/parameters/'):], # name part of original reference
-            'content',
-            parameter_context.get_default_mime_type(),
-            'schema', 'properties',
-            parameter_context.name
-        ])
-    elif ref.startswith('#/responses'):
-        return ref.replace('#/responses', '#/components/responses', 1)
-
-    return ref
-
 def to_style_and_explode(collection_format, in_, type_, path):
     style = None
     explode = None
@@ -107,7 +79,7 @@ def from_items(obj, path):
 
     ref = getattr(obj, '$ref', None)
     if ref:
-        return {'$ref': _patch_local_ref(ref)}
+        return {'$ref': ref}
 
     ret = {}
     ret.update(_generate_fields(obj, BASE_SCHEMA_FIELDS))
@@ -119,7 +91,7 @@ def from_items(obj, path):
 def to_schema(obj, path, items_converter=None, parameter_context=None):
     ref = getattr(obj, '$ref', None)
     if ref:
-        return {'$ref': _patch_local_ref(ref, parameter_context=parameter_context)}
+        return {'$ref': ref}
 
     if getattr(obj, 'type', None) == 'file':
         return {
@@ -389,7 +361,7 @@ def from_parameter(obj, existing_body, consumes, path):
         ret = to_request_body(obj, existing_body, ctx, ref_ or path)
     else:
         if ref_:
-            ret = {'$ref': _patch_local_ref(ref_, parameter_context=ctx)}
+            ret = {'$ref': ref_}
         else:
             ret = to_parameter(obj, ctx, path)
 
@@ -399,7 +371,7 @@ def to_response(obj, produces, path):
     ref = getattr(obj, '$ref', None)
     resolved_obj = deref(obj)
     if ref and not resolved_obj.schema:
-        return {'$ref': _patch_local_ref(ref)}
+        return {'$ref': ref}
 
     # if we have to output 'schema' part, we need
     # to inline them here because 'produces' might
@@ -521,7 +493,7 @@ def to_info(obj, path):
     return ret
 
 def to_path_item(obj, root_url, path, consumes=None, produces=None):
-    ret = {}
+    ret, reloc = {}, {}
     if obj.normalized_ref:
         ret['$ref'] = obj.normalized_ref
 
@@ -534,6 +506,7 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
             new_p, pctx = from_parameter(p, body, consumes, jp_compose(['parameters', str(index)], base=path))
             if pctx.is_file or pctx.is_body:
                 body = new_p
+                reloc['parameters/{}'.format(index)] = 'x-pyopenapi_internal_request_body'
             else:
                 if not parameters:
                     parameters = ret.setdefault('parameters', [])
@@ -553,7 +526,12 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
         if op:
             ret[method] = to_operation(op, body, root_url, jp_compose(method, base=path), produces=produces, consumes=consumes)
 
-    return ret
+    if body:
+        # TODO: this part would not be dumpped, so the dumpped
+        #       spec would be corrupted.
+        ret['x-pyopenapi_internal_request_body'] = body
+
+    return ret, reloc
 
 def from_swagger_to_server(obj, path):
     url = obj.host if not obj.basePath else six.moves.urllib.parse.urlunsplit((
@@ -569,6 +547,7 @@ def from_swagger_to_server(obj, path):
 
 def to_openapi(obj, path):
     ret = {'openapi': '3.0.0'}
+    reloc = {}
 
     # info
     if obj.info:
@@ -585,7 +564,9 @@ def to_openapi(obj, path):
             if k.startswith('x-'):
                 raise ScheaError('No more extension field in Paths object: {}'.format(path))
 
-            paths[k] = to_path_item(v, server['url'], jp_compose(k, base=path), consumes=obj.consumes, produces=obj.produces)
+            paths[k], tmp_reloc = to_path_item(v, server['url'], jp_compose(k, base=path), consumes=obj.consumes, produces=obj.produces)
+            if tmp_reloc:
+                reloc.setdefault('paths', {})[k.replace('~', '~0').replace('/', '~1')] = tmp_reloc
 
     # security
     if obj.security:
@@ -610,20 +591,27 @@ def to_openapi(obj, path):
             for k, v in six.iteritems(obj.definitions):
                 schemas[k] = to_schema(v, jp_compose(['definitions', k], base=path))
 
+            reloc['definitions'] = 'components/schemas'
+
         # parameters
         if obj.parameters:
             parameters = None
             request_bodies = None
+            param_reloc = {}
             for k, v in six.iteritems(obj.parameters):
                 param, pctx = from_parameter(v, None, None, jp_compose(['parameters', k], base=path))
                 if pctx.is_body:
                     if request_bodies is None:
                         request_bodies = components.setdefault('requestBodies', {})
                     request_bodies[k] = param
+                    param_reloc[k] = '#/components/requestBodies/{}'.format(k)
                 else:
                     if parameters is None:
                         parameters = components.setdefault('parameters', {})
                     parameters[k] = param
+
+            param_reloc[''] = '#/components/parameters'
+            reloc['parameters'] = param_reloc
 
         # responses
         if obj.responses:
@@ -631,11 +619,15 @@ def to_openapi(obj, path):
             for k, v in six.iteritems(obj.responses):
                 responses[k] = to_response(v, obj.produces, jp_compose(['responses', k], base=path))
 
+            reloc['responses'] = 'components/responses'
+
         # securityDefinitions
         if obj.securityDefinitions:
             security_schemes = components.setdefault('securitySchemes', {})
             for k, v in six.iteritems(obj.securityDefinitions):
                 security_schemes[k] = to_security_scheme(v, jp_compose(['securityDefinitions', k], base=path))
 
-    return ret
+            reloc['securityDefinitions'] = 'components/securitySchemes'
+
+    return ret, reloc
 

@@ -37,7 +37,7 @@ class ItemsConverterTestCase(unittest.TestCase):
         items = app.s('p1').get.responses['200'].schema.items
 
         obj = converters.from_items(items, '')
-        self.assertEqual(obj['$ref'], '#/components/schemas/pet')
+        self.assertEqual(obj['$ref'], '#/definitions/pet')
 
 
 class TagConverterTestCase(unittest.TestCase):
@@ -77,7 +77,7 @@ class SchemaConverterTestCase(unittest.TestCase):
         self.assertEqual(_id['type'], 'integer')
         self.assertEqual(_id['format'], 'int64')
         _category = obj['properties']['category']
-        self.assertEqual(_category['$ref'], '#/components/schemas/category')
+        self.assertEqual(_category['$ref'], '#/definitions/category')
         _photo_urls = obj['properties']['photoUrls']
         self.assertEqual(_photo_urls['type'], 'array')
         self.assertEqual(_photo_urls['items']['type'], 'string')
@@ -166,7 +166,7 @@ class ParameterConverterTestCase(unittest.TestCase):
         self.assertTrue(pctx.is_body)
         self.assertTrue(pctx.is_file)
         _schema = obj['content']['application/x-www-form-urlencoded']['schema']['properties']['body_file_ref']
-        self.assertEqual(_schema['$ref'], '#/components/schemas/some_file')
+        self.assertEqual(_schema['$ref'], '#/definitions/some_file')
 
 class ResponseConverterTestCase(unittest.TestCase):
     """ test case for response """
@@ -212,7 +212,7 @@ class ResponseConverterTestCase(unittest.TestCase):
             op.produces,
             'test_response_default'
         )
-        self.assertEqual(obj['$ref'], '#/components/responses/void')
+        self.assertEqual(obj['$ref'], '#/responses/void')
 
         # with 'schema', should inline it
         obj = converters.to_response(
@@ -223,11 +223,11 @@ class ResponseConverterTestCase(unittest.TestCase):
         self.assertEqual(obj['description'], 'unauthorized')
         self.assertTrue('application/json' in obj['content'])
         o = obj['content']['application/json']
-        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+        self.assertEqual(o['schema']['$ref'], '#/definitions/generic_response')
 
         self.assertTrue('application/xml' in obj['content'])
         o = obj['content']['application/xml']
-        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+        self.assertEqual(o['schema']['$ref'], '#/definitions/generic_response')
 
         # with 'schema', and without content-types as 'produces'
         obj = converters.to_response(
@@ -237,7 +237,7 @@ class ResponseConverterTestCase(unittest.TestCase):
         )
         self.assertTrue('application/json' in obj['content'])
         o = obj['content']['application/json']
-        self.assertEqual(o['schema']['$ref'], '#/components/schemas/generic_response')
+        self.assertEqual(o['schema']['$ref'], '#/definitions/generic_response')
 
 
 class OperationConverterTestCase(unittest.TestCase):
@@ -256,7 +256,7 @@ class OperationConverterTestCase(unittest.TestCase):
             'schema' in _response['content']['application/json']
         )
         _schema = _response['content']['application/json']['schema']
-        self.assertEqual(_schema['items']['$ref'], '#/components/schemas/pet')
+        self.assertEqual(_schema['items']['$ref'], '#/definitions/pet')
         self.assertEqual(_schema['type'], 'array')
         self.assertTrue('parameters' in obj and len(obj['parameters']) > 0)
         _parameter = obj['parameters'][0]
@@ -300,9 +300,9 @@ class OperationConverterTestCase(unittest.TestCase):
         self.assertTrue('application/x-www-form-urlencoded' in _content)
         _properties = _content['application/x-www-form-urlencoded']['schema']['properties']
         self.assertTrue('form_file' in _properties)
-        self.assertEqual(_properties['form_file']['$ref'], '#/components/requestBodies/form_file/content/multipart~1form-data/schema/properties/form_file')
+        self.assertEqual(_properties['form_file']['$ref'], '#/parameters/form_file')
         self.assertTrue('description' in _properties)
-        self.assertEqual(_properties['description']['$ref'], '#/components/requestBodies/form_string/content/application~1x-www-form-urlencoded/schema/properties/description')
+        self.assertEqual(_properties['description']['$ref'], '#/parameters/form_string')
         _encoding = _content['application/x-www-form-urlencoded']['encoding']
         self.assertTrue('form_file' in _encoding)
         self.assertEqual(_encoding['form_file']['contentType'], 'application/octet-stream')
@@ -310,7 +310,7 @@ class OperationConverterTestCase(unittest.TestCase):
         self.assertEqual(_encoding['description']['contentType'], 'text/plain')
 
         _parameter = obj['parameters'][0]
-        self.assertEqual(_parameter['$ref'], '#/components/parameters/query_string')
+        self.assertEqual(_parameter['$ref'], '#/parameters/query_string')
 
 class InfoConverterTestCase(unittest.TestCase):
     """ test case for info """
@@ -336,10 +336,12 @@ class PathItemConverterTestCase(unittest.TestCase):
     def test_basic(self):
         p = app.s('p1')
 
-        obj = converters.to_path_item(p, 'test_root', '')
+        obj, reloc = converters.to_path_item(p, 'test_root', '')
         self.assertTrue('get' in obj)
         self.assertTrue('post' in obj)
         self.assertFalse('options' in obj)
+
+        self.assertEqual(reloc, {})
 
     def test_path_item_parameters(self):
         """ make sure PathItem.parameters are correctly handled:
@@ -350,7 +352,7 @@ class PathItemConverterTestCase(unittest.TestCase):
         """
         p = app.s('p3/{user_name}')
 
-        obj = converters.to_path_item(p, 'test_root', '')
+        obj, reloc = converters.to_path_item(p, 'test_root', '')
         self.assertTrue('post' in obj)
         _post = obj['post']
         self.assertFalse('parameters' in _post)
@@ -360,24 +362,28 @@ class PathItemConverterTestCase(unittest.TestCase):
         self.assertTrue('encoding' in o)
         self.assertEqual(o['encoding']['form_file']['contentType'], 'application/octet-stream')
         self.assertTrue('schema' in o)
-        self.assertEqual(o['schema']['properties']['form_file']['$ref'], '#/components/requestBodies/form_file/content/multipart~1form-data/schema/properties/form_file')
+        self.assertEqual(o['schema']['properties']['form_file']['$ref'], '#/parameters/form_file')
 
         o = _post['requestBody']['content']['application/x-www-form-urlencoded']
         self.assertTrue('encoding' in o)
         self.assertEqual(o['encoding']['description']['contentType'], 'text/plain')
         self.assertTrue('schema' in o)
         self.assertEqual(o['schema']['required'], ['description'])
-        self.assertEqual(o['schema']['properties']['description']['$ref'], '#/components/requestBodies/form_string/content/application~1x-www-form-urlencoded/schema/properties/description')
+        self.assertEqual(o['schema']['properties']['description']['$ref'], '#/parameters/form_string')
 
         self.assertTrue('parameters' in obj)
         _parameters = obj['parameters']
         for p in _parameters:
             if '$ref' in p:
-                self.assertEqual(p['$ref'], '#/components/parameters/query_string')
+                self.assertEqual(p['$ref'], '#/parameters/query_string')
             elif 'name' in p:
                 self.assertEqual(p['name'], 'user_name')
             else:
                 self.assertTrue(False)
+
+        # check object relocation
+        self.assertEqual(reloc['parameters/0'], 'x-pyopenapi_internal_request_body')
+        self.assertEqual(reloc['parameters/1'], 'x-pyopenapi_internal_request_body')
 
 
 class ServerTestCase(unittest.TestCase):
@@ -395,7 +401,7 @@ class OpenAPITestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.from_upgrade = converters.to_openapi(app.root, '')
+        kls.from_upgrade, kls.upgrade_reloc = converters.to_openapi(app.root, '')
 
     def test_basic(self):
         obj = self.from_upgrade
@@ -414,6 +420,25 @@ class OpenAPITestCase(unittest.TestCase):
         self.assertTrue('schemas' in _components)
 
         self.assertTrue('externalDocs' in obj)
+
+    def test_reloc(self):
+        """ make sure the object relocation map is correct
+        """
+        reloc = self.upgrade_reloc
+        self.assertEqual(reloc['paths']['~1p3~1{user_name}']['parameters/0'], 'x-pyopenapi_internal_request_body')
+        self.assertEqual(reloc['paths']['~1p3~1{user_name}']['parameters/1'], 'x-pyopenapi_internal_request_body')
+
+        self.assertEqual(reloc['securityDefinitions'], 'components/securitySchemes')
+        self.assertEqual(reloc['responses'], 'components/responses')
+        self.assertEqual(reloc['definitions'], 'components/schemas')
+
+        self.assertEqual(reloc['parameters'][''], '#/components/parameters')
+        self.assertEqual(reloc['parameters']['body_ref_pet'], '#/components/requestBodies/body_ref_pet')
+        self.assertEqual(reloc['parameters']['form_string'], '#/components/requestBodies/form_string')
+        self.assertEqual(reloc['parameters']['body_file_ref'], '#/components/requestBodies/body_file_ref')
+        self.assertEqual(reloc['parameters']['body_obj_simple'], '#/components/requestBodies/body_obj_simple')
+        self.assertEqual(reloc['parameters']['body_file'], '#/components/requestBodies/body_file')
+        self.assertEqual(reloc['parameters']['form_file'], '#/components/requestBodies/form_file')
 
     def test_request_bodies(self):
         """ make sure we create requestBodies with
@@ -445,5 +470,5 @@ class OpenAPITestCase(unittest.TestCase):
         _body_ref_pet = _request_bodies['body_ref_pet']
         self.assertTrue('application/json' in _body_ref_pet['content'])
         _schema = _body_ref_pet['content']['application/json']['schema']
-        self.assertEqual(_schema['$ref'], '#/components/schemas/pet')
+        self.assertEqual(_schema['$ref'], '#/definitions/pet')
 
