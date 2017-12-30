@@ -312,8 +312,8 @@ class App(object):
             # update route for object relocation
             self.spec_obj_reloc.update(url, v, {jp: reloc})
 
-        # cache migrated object if we need it later
-        self.spec_obj_cache.set(obj, url, jp, spec_version=spec_version)
+            # cache migrated object if we need it later
+            self.spec_obj_cache.set(obj, url, jp, spec_version=v)
 
         return obj
 
