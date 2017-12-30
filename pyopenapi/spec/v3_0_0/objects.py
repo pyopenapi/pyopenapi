@@ -453,6 +453,7 @@ class PathItem(Base2_v3_0_0):
         'final_obj': dict(),
 
         'ref': dict(key='$ref', builder=rename),
+        'x_pyopenapi_internal_request_body': dict(key='x-pyopenapi_internal_request_body', builder=rename),
     }
 
     __children__ = {
@@ -466,6 +467,10 @@ class PathItem(Base2_v3_0_0):
         'trace': dict(child_builder=Operation),
         'servers': dict(child_builder=list_(Server)),
         'parameters': dict(child_builder=list_(ParameterOrReference)),
+
+        # a cached place for body parameter under PathItem object
+        # in Swager 2.0 when migration
+        'x-pyopenapi_internal_request_body': dict(child_builder=RequestBody),
     }
 
 
