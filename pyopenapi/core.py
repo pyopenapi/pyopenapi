@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from .resolve import Resolver
 from .cache import SpecObjCache
+from .reloc import SpecObjReloc
 from .primitives import Primitive, MimeCodec
 from .spec.v1_2.objects import ResourceListing, ApiDeclaration
 from .spec.v2_0.objects import Swagger, Operation
@@ -60,6 +61,10 @@ class App(object):
         # - spec.base2._Base
         # - a map from json-pointer to spec.base2._Base
         self.__cache = SpecObjCache()
+
+        # a map from json-reference in older OpenApi spec
+        # to json-reference in migrated OpenApi spec
+        self.__reloc = SpecObjReloc()
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
@@ -184,6 +189,14 @@ class App(object):
         """
         return self.__cache
 
+    @property
+    def spec_obj_reloc(self):
+        """ map of relocation for Spec Objects
+
+        :type: pyopenapi.reloc.SpecObjReloc
+        """
+        return self.__reloc
+
     def load_obj(self, jref, getter=None, parser=None, remove_dummy=False):
         """ load a object(those in spec._version_.objects) from a JSON reference.
         """
@@ -282,6 +295,7 @@ class App(object):
         supported_versions = [v for v in supported_versions if StrictVersion(obj.__swagger_version__) <= StrictVersion(v)]
 
         # load migration module
+        url, jp = utils.jr_split(jref)
         for v in supported_versions:
             patched_version = 'v{}'.format(v).replace('.', '_')
             migration_module_path = '.'.join(['pyopenapi', 'migration', patched_version])
@@ -293,10 +307,13 @@ class App(object):
             if not migration_module:
                 raise Exception('unable to load {} for migration'.format(migration_module_path))
 
-            obj = migration_module.up(obj, self, jref)
+            obj, reloc = migration_module.up(obj, self, jref)
+
+            # update route for object relocation
+            self.spec_obj_reloc.update(url, v, {jp: reloc})
 
         # cache migrated object if we need it later
-        self.spec_obj_cache.set(obj, *utils.jr_split(jref), spec_version=spec_version)
+        self.spec_obj_cache.set(obj, url, jp, spec_version=spec_version)
 
         return obj
 

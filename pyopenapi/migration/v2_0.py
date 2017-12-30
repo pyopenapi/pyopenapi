@@ -39,4 +39,4 @@ def up(obj, app, jref):
     else:
         raise Exception('unsupported migration: {} to 2.0'.format(ret.__swagger_version__))
 
-    return ret
+    return ret, {}

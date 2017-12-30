@@ -12,6 +12,7 @@ from ..spec.v3_0_0 import objects
 
 def up(obj, app, jref):
     ret = obj
+    reloc = {}
     url, jp = jr_split(jref)
     if ret.__swagger_version__ == '2.0':
         override = None
@@ -19,7 +20,8 @@ def up(obj, app, jref):
             override = app.spec_obj_cache.get_under(url, jp, '3.0.0', remove=False)
 
         if isinstance(ret, Swagger):
-            ret = objects.OpenApi(converters.to_openapi(ret, jp), path=jp, override=override)
+            migrated, reloc = converters.to_openapi(ret, jp)
+            ret = objects.OpenApi(migrated, path=jp, override=override)
         elif isinstance(ret, License):
             ret = objects.License(converters.to_license(ret, jp), path=jp, override=override)
         elif isinstance(ret, Info):
@@ -30,14 +32,17 @@ def up(obj, app, jref):
             raise Exception('unable to upgrade from 2.0: {} for type: {}'.format(jref, str(type(ret))))
 
     if ret.__swagger_version__ == '3.0.0':
-        app.spec_obj_cache.set(ret, url, jp, spec_version='3.0.0')
-
         scanner = Scanner2()
 
         # phase 1: normalized $ref
         scanner.scan(root=ret, route=[NormalizeRef(url)])
 
         # phase 2: resolve $ref
+        # - because the external document might reference back,
+        #   we have to cache ourselves here, just in case.
+        app.spec_obj_cache.set(ret, url, jp, spec_version='3.0.0')
+        app.spec_obj_reloc.update(url, '3.0.0', {jp: reloc})
+
         scanner.scan(root=ret, route=[Resolve(app)])
 
         # phase 3: merge path-item
@@ -48,4 +53,4 @@ def up(obj, app, jref):
     else:
         raise Exception('unsupported migration: {} to 3.0.0'.format(obj.__swagger_version__))
 
-    return ret
+    return ret, reloc
