@@ -1,9 +1,11 @@
 from pyopenapi import App
 from ..utils import get_test_data_folder, gen_test_folder_hook
+from ...utils import jr_split, normalize_url
 from ...spec.v3_0_0.objects import (
     Reference, Schema, Parameter,
     Header, RequestBody, Response,
     Link, Callback, PathItem,
+    Operation, SecurityScheme,
     )
 import unittest
 
@@ -275,3 +277,92 @@ class ResolveTestCase(unittest.TestCase):
         """ make sure 'Operation' is resolved and cached
         """
 
+
+class ResolveWithObjectRelocationTestCase(unittest.TestCase):
+    """ test case for App.resolve with object relocation
+    """
+
+    @classmethod
+    def setUpClass(kls):
+        doc_path = get_test_data_folder(
+            version='2.0',
+            which='upgrade',
+        )
+
+        kls.app = App.load(doc_path)
+        kls.doc_path = normalize_url(doc_path)
+        kls.app.migrate(spec_version='3.0.0')
+
+    def test_operation(self):
+        """ operation should not be changed
+        """
+        jref = '#/paths/~1p1/get'
+        op, new_ref = self.app.resolve_obj(jref, from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(jp, jref)
+        self.assertEqual(url, self.doc_path)
+        self.assertTrue(isinstance(op, Operation))
+
+    def test_swagger_parameter(self):
+        """ parameters -> components/parameters
+        """
+        p, new_ref = self.app.resolve_obj('#/parameters/query_string', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/components/parameters/query_string')
+        self.assertTrue(isinstance(p, Parameter))
+
+    def test_swagger_body_parameter(self):
+        """ parameters -> components/requestBodies
+        """
+        bp, new_ref = self.app.resolve_obj('#/parameters/body_file_ref', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/components/requestBodies/body_file_ref')
+        self.assertTrue(isinstance(bp, RequestBody))
+
+    def test_swagger_form_parameter(self):
+        """ parameters -> components/requestBodies
+        """
+        fp, new_ref = self.app.resolve_obj('#/parameters/form_string', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/components/requestBodies/form_string')
+        self.assertTrue(isinstance(fp, RequestBody))
+
+    def test_swagger_response(self):
+        """ responses -> components/responses
+        """
+        vd, new_ref = self.app.resolve_obj('#/responses/void', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/components/responses/void')
+        self.assertTrue(isinstance(vd, Response))
+
+    def test_swagger_definitions(self):
+        """ definitions -> components/schemas
+        """
+        d, new_ref = self.app.resolve_obj('#/definitions/category', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/components/schemas/category')
+        self.assertTrue(isinstance(d, Schema))
+
+    def test_swagger_security_definitions(self):
+        """ securityDefinitions -> components/securitySchemes
+        """
+        s, new_ref = self.app.resolve_obj('#/securityDefinitions/petstore_auth', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/components/securitySchemes/petstore_auth')
+        self.assertTrue(isinstance(s, SecurityScheme))
+
+    def test_path_item_body_parameters(self):
+        """ body paraemter under 'PathItem' object
+        should support object relocation, too
+        """
+        p, new_ref = self.app.resolve_obj('#/paths/~1p3~1{user_name}/parameters/0', from_spec_version='2.0', to_spec_version='3.0.0')
+        url, jp = jr_split(new_ref)
+        self.assertEqual(url, self.doc_path)
+        self.assertEqual(jp, '#/paths/~1p3~1{user_name}/x-pyopenapi_internal_request_body')
+        self.assertTrue(isinstance(p, RequestBody))

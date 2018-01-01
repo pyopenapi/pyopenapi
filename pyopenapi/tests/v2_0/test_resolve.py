@@ -112,19 +112,19 @@ class DerefTestCase(unittest.TestCase):
         )
 
         # fill its cache with several dummy objects
-        license = app.resolve('file:///wordnik/swagger.json#/info/license',
+        license, _ = app.resolve_obj('file:///wordnik/swagger.json#/info/license',
             parser=License,
             spec_version='2.0',
             before_return=None,
             remove_dummy=True,
         )
-        order = app.resolve('file:///wordnik/swagger.json#/definitions/Order',
+        order, _ = app.resolve_obj('file:///wordnik/swagger.json#/definitions/Order',
             parser=Schema,
             spec_version='2.0',
             before_return=None,
             remove_dummy=True,
         )
-        pet = app.resolve('file:///wordnik/swagger.json#/definitions/Pet',
+        pet, _ = app.resolve_obj('file:///wordnik/swagger.json#/definitions/Pet',
             parser=Schema,
             spec_version='2.0',
             before_return=None,
@@ -132,7 +132,7 @@ class DerefTestCase(unittest.TestCase):
         )
 
         # resolve their root object with latest version
-        swg = app.resolve('file:///wordnik/swagger.json',
+        swg, _ = app.resolve_obj('file:///wordnik/swagger.json',
             parser=Schema,
             spec_version='2.0',
             before_return=None,
@@ -145,7 +145,7 @@ class DerefTestCase(unittest.TestCase):
         self.assertEqual(weakref.proxy(swg.resolve(['definitions','Pet'])), pet)
 
         # make sure this relation is maintained after migrating up
-        license = app.resolve('file:///wordnik/swagger.json#/info/license',
+        license, _ = app.resolve_obj('file:///wordnik/swagger.json#/info/license',
             parser=License,
             before_return=None,
             remove_dummy=True,
@@ -155,11 +155,11 @@ class DerefTestCase(unittest.TestCase):
         # this case is not taken care here.
 
         # resolve their root object with latest version
-        oai = app.resolve('file:///wordnik/swagger.json',
+        oai, _ = app.resolve_obj('file:///wordnik/swagger.json',
             before_return=None,
             remove_dummy=True,
         )
 
         # make sure root objec use those dummy objects during loading
-        self.assertEqual(weakref.proxy(oai.resolve(['info','license'])), license)
+        self.assertEqual(weakref.proxy(oai.resolve(['info', 'license'])), license)
 

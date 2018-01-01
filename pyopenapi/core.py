@@ -280,7 +280,7 @@ class App(object):
         # $ref in the same spec
         self.spec_obj_store.set(obj, url, jp, spec_version=version)
 
-        return obj, version
+        return obj
 
     def prepare_obj(self, obj, jref, spec_version=None):
         """ basic preparation of an object(those in sepc._version_.objects),
@@ -386,7 +386,8 @@ class App(object):
 
         url = utils.normalize_url(url)
         app = kls(url, url_load_hook=url_load_hook, sep=sep, prim=prim, mime_codec=mime_codec, resolver=resolver)
-        app.__raw, app.__original_spec_version = app.load_obj(url, getter=getter, parser=parser)
+        app.__raw = app.load_obj(url, getter=getter, parser=parser)
+        app.__original_spec_version = app.__raw.__swagger_version__
         if app.__original_spec_version not in ['1.2', '2.0', '3.0.0']:
             raise NotImplementedError('Unsupported Version: {0}'.format(app.__version))
 
@@ -484,11 +485,35 @@ class App(object):
     """
     _create_ = create
 
-    def resolve(self, jref, parser=None, spec_version=None, before_return=utils.final, remove_dummy=False):
+    def resolve(self, jref, parser=None, before_return=utils.final):
         """ JSON reference resolver
-
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
         :param parser: the parser corresponding to target object.
+        :param func before_return: a hook to patch object before returning it
+        :type parser: pyswagger.base.Context
+        :return: the referenced object, wrapped by weakref.ProxyType
+        :rtype: weakref.ProxyType
+        :raises ValueError: if path is not valid
+        """
+
+        # the concept of JSON pointer is introduced in OpenApi (Swagger) 2.0
+        from_spec_version = self.original_spec_version if StrictVersion(self.original_spec_version) > StrictVersion('2.0') else '2.0'
+
+        obj, _ = self.resolve_obj(
+            jref,
+            parser=parser,
+            from_spec_version=from_spec_version,
+            before_return=before_return,
+        )
+        return obj
+
+    def resolve_obj(self, jref, from_spec_version, parser=None, to_spec_version=None, before_return=utils.final, remove_dummy=False):
+        """ internal JSON reference resolver
+
+        :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
+        :param str from_spec_version: the spec version of Api document where 'jref' is used
+        :param parser: the parser corresponding to target object.
+        :param to_spec_version: the expected spec version of resolved object
         :param str spec_version: the OpenAPI spec version 'jref' pointing to.
         :param func before_return: a hook to patch object before returning it
         :param bool remove_dummy: a flag to tell pyopenapi to clean dummy objects in pyopenapi.spec_obj_store
@@ -507,39 +532,55 @@ class App(object):
 
         logger.info('resolving: [{0}]'.format(jref))
 
-        if jref == None or len(jref) == 0:
+        if jref is None or len(jref) == 0:
             raise ValueError('Empty Path is not allowed')
 
-        spec_version = spec_version or consts.private.DEFAULT_OPENAPI_SPEC_VERSION
+        to_spec_version = to_spec_version or from_spec_version
+
+        # migrate $ref
+        url, jp = utils.jr_split(jref)
+        if not url:
+            url = self.url # assume it targets the root document
+            jref = url + jp
+
+        relocated_jp = jp
+        if from_spec_version != to_spec_version:
+            relocated_jp = self.spec_obj_store.relocate(
+                url, jp, from_spec_version, to_spec_version
+            )
 
         # check cacahed object against json reference by
         # comparing url first, and find those object prefixed with
         # the JSON pointer.
-        url, jp = utils.jr_split(jref)
-        obj = self.__cache.get(url, jp, spec_version)
+        obj = self.spec_obj_store.get(url, relocated_jp, to_spec_version)
 
         # this object is not found in cache
-        if obj == None:
-            if url:
+        if obj is None:
+            obj, j, _ = self.spec_obj_store.get_until(url, jp, from_spec_version, until=to_spec_version)
+            if obj is None:
+                if from_spec_version != self.original_spec_version:
+                    raise Exception(
+                        'object is not loadable, you need to provide JSON pointer from source spec version:{}, not {}'.format(
+                            self.original_spec_version, from_spec_version
+                    ))
                 obj = self.load_obj(jref, parser=parser, remove_dummy=remove_dummy)
-                if obj:
-                    obj = self.prepare_obj(obj, jref, spec_version=spec_version)
             else:
-                # a local reference, 'jref' is just a json-pointer
-                if not jp.startswith('#'):
-                    raise ValueError('Invalid Path, root element should be \'#\', but [{0}]'.format(jref))
+                jref = url + j
+            obj = obj and self.prepare_obj(obj, jref, spec_version=to_spec_version)
 
-                obj = self.root.resolve(utils.jp_split(jp)[1:]) # heading element is #, mapping to self.root
+            relocated_jp = self.spec_obj_store.relocate(
+                url, jp, from_spec_version, to_spec_version
+            )
 
-        if obj == None:
+        if obj is None:
             raise ValueError('Unable to resolve path, [{0}]'.format(jref))
 
         if isinstance(obj, (six.string_types, six.integer_types, list, dict)):
-            return obj
+            return obj, relocated_jp
 
         if before_return:
             obj = before_return(obj)
-        return weakref.proxy(obj)
+        return weakref.proxy(obj), url + relocated_jp
 
     def s(self, p, b=_shortcut_[sc_path], before_return=utils.final):
         """ shortcut of App.resolve.

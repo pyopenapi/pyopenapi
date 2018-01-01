@@ -27,10 +27,10 @@ def _resolve(o, expected, app, path):
     if not o.normalized_ref:
         raise ReferenceError('empty normalized_ref for {} in {}'.format(o.ref, path))
 
-    ro = app.resolve(
+    ro, _ = app.resolve_obj(
         o.normalized_ref,
+        from_spec_version='2.0',
         parser=expected,
-        spec_version='2.0',
         before_return=None,
         remove_dummy=True,
     )
