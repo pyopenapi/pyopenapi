@@ -50,7 +50,7 @@ class App(object):
 
         self.__root = None
         self.__raw = None
-        self.__version = ''
+        self.__original_spec_version = ''
 
         self.__op = None
         self.__m = None
@@ -139,9 +139,29 @@ class App(object):
     def version(self):
         """ original version of loaded json
 
+        note: you should use 'original_spec_version' instead,
+        this one is deprecated.
+
         :type: str
         """
-        return self.__version
+        return self.__original_spec_version
+
+    @property
+    def original_spec_version(self):
+        """ original spec version of loaded json
+
+        :type: str
+        """
+        return self.__original_spec_version
+
+    @property
+    def current_spec_version(self):
+        """ to which OpenApi spec version
+        the loaded spec migrated to
+
+        :type: str
+        """
+        return self.__current_spec_version
 
     @property
     def schemes(self):
@@ -315,6 +335,9 @@ class App(object):
             # cache migrated object if we need it later
             self.spec_obj_cache.set(obj, url, jp, spec_version=v)
 
+        if isinstance(obj, (OpenApi, Swagger)):
+            self.__current_spec_version = spec_version
+
         return obj
 
     def _validate(self):
@@ -368,8 +391,8 @@ class App(object):
 
         url = utils.normalize_url(url)
         app = kls(url, url_load_hook=url_load_hook, sep=sep, prim=prim, mime_codec=mime_codec, resolver=resolver)
-        app.__raw, app.__version = app.load_obj(url, getter=getter, parser=parser)
-        if app.__version not in ['1.2', '2.0', '3.0.0']:
+        app.__raw, app.__original_spec_version = app.load_obj(url, getter=getter, parser=parser)
+        if app.__original_spec_version not in ['1.2', '2.0', '3.0.0']:
             raise NotImplementedError('Unsupported Version: {0}'.format(app.__version))
 
         # update schem if any
@@ -503,7 +526,7 @@ class App(object):
         # this object is not found in cache
         if obj == None:
             if url:
-                obj, _ = self.load_obj(jref, parser=parser, remove_dummy=remove_dummy)
+                obj = self.load_obj(jref, parser=parser, remove_dummy=remove_dummy)
                 if obj:
                     obj = self.prepare_obj(obj, jref, spec_version=spec_version)
             else:
