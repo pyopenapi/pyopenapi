@@ -6,7 +6,7 @@ import copy
 import os
 
 
-def field(key, required=False, default=None, restricted=False):
+def field(key, required=False, default=None, restricted=False, readonly=True):
     """ property factory for primitives(string, int, ...)
     Args:
      - key: the key to access this field in json
@@ -25,7 +25,10 @@ def field(key, required=False, default=None, restricted=False):
             raise Exception('property not found: {} in {}'.format(key, self.__class__.__name__))
         return default
 
-    return property(_getter_, None)
+    def _writer_(self, v):
+        self.spec[key] = v
+
+    return property(_getter_, None if readonly else _writer_)
 
 
 def internal(key, default=None):
