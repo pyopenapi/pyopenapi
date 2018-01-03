@@ -33,7 +33,7 @@ class Reference(BaseObj_v2_0):
     """ $ref
     """
     __fields__ = {
-        '$ref': dict(),
+        '$ref': dict(readonly=False),
     }
 
     __internal__ = {
@@ -141,7 +141,7 @@ class Schema(BaseSchema):
     """ Schema Object
     """
     __fields__ = {
-        '$ref': dict(),
+        '$ref': dict(readonly=False),
         'maxProperties': dict(),
         'minProperties': dict(),
         'title': dict(),
@@ -383,7 +383,7 @@ class PathItem(BaseObj_v2_0):
     """ Path Item Object
     """
     __fields__ = {
-        '$ref': dict(),
+        '$ref': dict(readonly=False),
     }
 
     __children__ = {

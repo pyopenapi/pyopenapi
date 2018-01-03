@@ -9,7 +9,7 @@ class Base2_v3_0_0(Base2):
 
 class Reference(Base2_v3_0_0):
     __fields__ = {
-        '$ref': dict(required=True),
+        '$ref': dict(required=True, readonly=False),
     }
 
     __internal__ = {
@@ -442,7 +442,7 @@ class Operation(Base2_v3_0_0):
 
 class PathItem(Base2_v3_0_0):
     __fields__ = {
-        '$ref': dict(),
+        '$ref': dict(readonly=False),
         'summary': dict(),
         'description': dict(),
     }

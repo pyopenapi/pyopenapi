@@ -15,12 +15,14 @@ class AObj(Base2):
     __fields__ = {
         'a': dict(builder=field),
         'b': dict(builder=field, required=True),
+        'd': dict(readonly=False),
     }
 
     __internal__ = {
         'ic': dict(),
 
-        'd3_renamed': dict(key='a', builder=rename)
+        'd3_renamed': dict(key='a', builder=rename),
+        'd4_renamed': dict(key='d', builder=rename),
     }
 
     __children__ = {
@@ -116,7 +118,7 @@ class Base2TestCase(unittest.TestCase):
         """ make sure builder:internal works
         """
         a = AObj({'a': 1, 'b': 2, 'ic': 3})
-        self.assertEqual(sorted(a._field_names_), ['a', 'b', 'c']) # internal is not included in '_field_names_'
+        self.assertEqual(sorted(a._field_names_), ['a', 'b', 'c', 'd']) # internal is not included in '_field_names_'
         self.assertEqual(a.ic, None) # internal is separated from input spec (in __fields__)
 
         a.ic = 4
@@ -508,4 +510,22 @@ class Base2TestCase(unittest.TestCase):
         self.assertEqual(id(c.cc['key4'].c), id(b))
         self.assertEqual(id(c.ccc[0]), id(a3))
         self.assertEqual(id(c.ccc[1]), id(a4))
+
+    def test_readonly(self):
+        a = AObj({'d': 101})
+
+        # allow to overwrite
+        a.d = 102
+        self.assertEqual(a.d, 102)
+
+        # allow to overwrite via 'rename'
+        a.d4_renamed = 103
+        self.assertEqual(a.d4_renamed, 103)
+        self.assertEqual(a.d, 103)
+
+        # deny to overwrite via 'rename' when not readonly
+        def _test():
+            a.d3_renamed = 105
+
+        self.assertRaises(Exception, _test)
 

@@ -59,7 +59,10 @@ def rename(key):
     def _getter_(self):
         return getattr(self, key)
 
-    return property(_getter_, None)
+    def _setter_(self, v):
+        return setattr(self, key, v)
+
+    return property(_getter_, _setter_)
 
 
 def child(key, child_builder=None, required=False, default=None):
