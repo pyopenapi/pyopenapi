@@ -273,10 +273,6 @@ class ResolveTestCase(unittest.TestCase):
         p = self.app.resolve('file:///partial_1.yml#/callbacks/cb.1/~1test-cb-1', before_return=None)
         self.assertTrue(isinstance(p, PathItem))
 
-    def test_resolve_operation(self):
-        """ make sure 'Operation' is resolved and cached
-        """
-
 
 class ResolveWithObjectRelocationTestCase(unittest.TestCase):
     """ test case for App.resolve with object relocation
@@ -366,3 +362,31 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/paths/~1p3~1{user_name}/x-pyopenapi_internal_request_body')
         self.assertTrue(isinstance(p, RequestBody))
+
+
+class MutualReferenceTestCase(unittest.TestCase):
+    """ test case for patching $ref against external
+    document
+    """
+
+    @classmethod
+    def setUpClass(kls):
+        kls.app = App.load(
+            url='file:///root/swagger.json',
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
+        )
+        kls.app.prepare()
+
+    def test_from_ex_back_to_root(self):
+        """ make sure a $ref (to an object in root document)
+        in external document can be patched
+        """
+        o, _ = self.app.resolve_obj(
+            '#/definitions/s4',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0'
+        )
+
+        # '#/definitions/s3' -> '#/components/schemas/s3'
+        self.assertEqual(o.items.ref_obj.items.ref, 'file:///root/swagger.json#/components/schemas/s3')
+

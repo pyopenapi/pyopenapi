@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from ...utils import jp_compose
+from ...utils import jp_compose, jr_split
 from ...errs import ReferenceError
 from ...scan import Dispatcher
 from ...spec.v3_0_0.objects import (
@@ -53,6 +53,12 @@ def _resolve(o, expected, app, path):
     if not ro:
         raise ReferenceError('Unable to resolve: {}'.format(o.normalized_ref))
 
+    if o.ref.startswith('#'):
+        _, o.ref = jr_split(new_ref)
+    else:
+        o.ref = new_ref
+
+    o.normalized_ref = new_ref
     o.ref_obj = ro
 
 
