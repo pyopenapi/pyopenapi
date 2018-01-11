@@ -17,7 +17,7 @@ def up(obj, app, jref):
     if ret.__swagger_version__ == '2.0':
         override = None
         if isinstance(ret, (Swagger, License, Info, Schema)):
-            override = app.spec_obj_cache.get_under(url, jp, '3.0.0', remove=False)
+            override = app.spec_obj_store.get_under(url, jp, '3.0.0', remove=False)
 
         if isinstance(ret, Swagger):
             migrated, reloc = converters.to_openapi(ret, jp)
@@ -40,8 +40,8 @@ def up(obj, app, jref):
         # phase 2: resolve $ref
         # - because the external document might reference back,
         #   we have to cache ourselves here, just in case.
-        app.spec_obj_cache.set(ret, url, jp, spec_version='3.0.0')
-        app.spec_obj_reloc.update(url, '3.0.0', {jp: reloc})
+        app.spec_obj_store.set(ret, url, jp, spec_version='3.0.0')
+        app.spec_obj_store.update_routes(url, '3.0.0', {jp: reloc})
 
         scanner.scan(root=ret, route=[Resolve(app)])
 

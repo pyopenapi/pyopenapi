@@ -23,7 +23,7 @@ def up(obj, app, jref):
 
     if ret.__swagger_version__ == '2.0':
         url, jp = jr_split(jref)
-        app.spec_obj_cache.set(ret, url, jp, spec_version='2.0')
+        app.spec_obj_store.set(ret, url, jp, spec_version='2.0')
 
         # normalize $ref
         scanner.scan(root=ret, route=[NormalizeRef(url)])
@@ -31,7 +31,7 @@ def up(obj, app, jref):
         scanner.scan(root=ret, route=[YamlFixer()], leaves=[Operation])
 
         # cache this object before resolving external(possible) object
-        app.spec_obj_cache.set(ret, url, jp, spec_version='2.0')
+        app.spec_obj_store.set(ret, url, jp, spec_version='2.0')
 
         # pre resolve Schema Object
         # note: make sure this object is cached before using 'Resolve' scanner

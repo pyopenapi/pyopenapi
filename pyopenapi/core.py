@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from .resolve import Resolver
-from .cache import SpecObjCache
-from .reloc import SpecObjReloc
+from .store import SpecObjStore
 from .primitives import Primitive, MimeCodec
 from .spec.v1_2.objects import ResourceListing, ApiDeclaration
 from .spec.v2_0.objects import Swagger, Operation
@@ -60,11 +59,10 @@ class App(object):
         # a map from json-reference to
         # - spec.base2._Base
         # - a map from json-pointer to spec.base2._Base
-        self.__cache = SpecObjCache()
-
-        # a map from json-reference in older OpenApi spec
+        #
+        # and a map from json-reference in older OpenApi spec
         # to json-reference in migrated OpenApi spec
-        self.__reloc = SpecObjReloc()
+        self.__store = SpecObjStore()
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
@@ -202,20 +200,12 @@ class App(object):
         return self.__resolver
 
     @property
-    def spec_obj_cache(self):
-        """ Cache for Spec Objects
+    def spec_obj_store(self):
+        """ Storefor Spec Objects
 
-        :type: pyopenapi.cache.SpecObjCache
+        :type: pyopenapi.cache.SpecObjStore
         """
-        return self.__cache
-
-    @property
-    def spec_obj_reloc(self):
-        """ map of relocation for Spec Objects
-
-        :type: pyopenapi.reloc.SpecObjReloc
-        """
-        return self.__reloc
+        return self.__store
 
     def load_obj(self, jref, getter=None, parser=None, remove_dummy=False):
         """ load a object(those in spec._version_.objects) from a JSON reference.
@@ -232,11 +222,11 @@ class App(object):
         # be different from the one passed into App.resolve.
         #
         # Therefore, we need to check the cache here again.
-        obj = self.spec_obj_cache.get(url, jp, version)
+        obj = self.spec_obj_store.get(url, jp, version)
         if obj:
             return obj, version
 
-        override = self.spec_obj_cache.get_under(url, jp, version, remove=remove_dummy)
+        override = self.spec_obj_store.get_under(url, jp, version, remove=remove_dummy)
         if version == '1.2':
             obj = ResourceListing(src_spec, jref, {})
 
@@ -283,7 +273,7 @@ class App(object):
 
         # cache obj before migration, or we may load an object multiple times when resolve
         # $ref in the same spec
-        self.__cache.set(obj, url, jp, spec_version=version)
+        self.spec_obj_store.set(obj, url, jp, spec_version=version)
 
         return obj, version
 
@@ -330,10 +320,10 @@ class App(object):
             obj, reloc = migration_module.up(obj, self, jref)
 
             # update route for object relocation
-            self.spec_obj_reloc.update(url, v, {jp: reloc})
+            self.spec_obj_store.update_routes(url, v, {jp: reloc})
 
             # cache migrated object if we need it later
-            self.spec_obj_cache.set(obj, url, jp, spec_version=v)
+            self.spec_obj_store.set(obj, url, jp, spec_version=v)
 
         if isinstance(obj, (OpenApi, Swagger)):
             self.__current_spec_version = spec_version
@@ -496,7 +486,7 @@ class App(object):
         :param parser: the parser corresponding to target object.
         :param str spec_version: the OpenAPI spec version 'jref' pointing to.
         :param func before_return: a hook to patch object before returning it
-        :param bool remove_dummy: a flag to tell pyopenapi to clean dummy objects in pyopenapi.spec_obj_cache
+        :param bool remove_dummy: a flag to tell pyopenapi to clean dummy objects in pyopenapi.spec_obj_store
         :type parser: pyopenapi.base.Context
         :return: the referenced object, wrapped by weakref.ProxyType
         :rtype: weakref.ProxyType

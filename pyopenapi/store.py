@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-from .consts import private
-from .utils import get_supported_versions
 from collections import OrderedDict
 from distutils.version import StrictVersion
+from . import utils
+from .spec.base2 import _Base
+from .consts import private
 import logging
 import six
 
@@ -10,20 +11,63 @@ import six
 logger = logging.getLogger(__name__)
 
 
-class SpecObjReloc(object):
-    """ map of $ref to guide the patching when migrating specs
+class SpecObjStore(object):
+    """ cache of spec objects
     """
 
     def __init__(self):
+        self.__spec_objs = {}
         self.__routes = {}
 
-    def update(self, url, to_spec, routes):
+    def set(self, obj, url, jp, spec_version):
+        """ cache 'prepared' spec objects (those under pyopenapi.spec)
+        """
+        if not issubclass(type(obj), _Base):
+            raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
+
+        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
+
+    def get(self, url, jp, spec_version):
+        """ get spec object from cache
+        """
+        url_cache = self.__spec_objs.get(url, None)
+        if not url_cache:
+            return None
+
+        # try to find a 'jp' with common prefix with input under 'url'
+        for path, cache in six.iteritems(url_cache):
+            if jp.startswith(path) and spec_version in cache:
+                return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
+
+        return None
+
+    def get_under(self, url, jp, spec_version, remove=True):
+        """ get all children under 'jp', and remove them
+        from cache if needed
+        """
+        if remove and not jp:
+            raise Exception('attemping to remove everything under {}, {}'.format(url, spec_version))
+
+        url_cache = self.__spec_objs.get(url, None)
+        if not url_cache:
+            return None
+
+        ret = {}
+        for path, cache in six.iteritems(url_cache):
+            if path.startswith(jp) and spec_version in cache:
+                ret[path[len(jp)+1:]] = cache[spec_version]
+                if remove:
+                    del cache[spec_version]
+
+        return ret
+
+    def update_routes(self, url, to_spec, routes):
         if url not in self.__routes:
             # init the ordered dict with right version sequence
             self.__routes.setdefault(url, OrderedDict([
                 # there would be no $ref relocation from 1.2 to 2.0,
                 # reason: there is no 'JSON pointer' concept in 1.2
-                (v, {}) for v in get_supported_versions('migration', is_pkg=False)
+                (v, {}) for v in utils.get_supported_versions('migration', is_pkg=False)
             ]))
 
         if to_spec not in self.__routes[url]:
@@ -32,7 +76,7 @@ class SpecObjReloc(object):
         self.__routes[url][to_spec].update(routes)
 
     @staticmethod
-    def patch(jp, routes):
+    def _patch_jp(jp, routes):
         current_routes = routes
         fixed_prefix = ''
         patch_to = None
@@ -113,7 +157,7 @@ class SpecObjReloc(object):
             if version > to_spec:
                 break
 
-            cur = SpecObjReloc.patch(cur, r)
+            cur = SpecObjStore._patch_jp(cur, r)
 
         return cur
 

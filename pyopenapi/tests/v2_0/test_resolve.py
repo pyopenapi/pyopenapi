@@ -98,11 +98,11 @@ class DerefTestCase(unittest.TestCase):
         self.assertEqual(id(od), id(self.app.resolve('#/components/schemas/s4')))
 
     def test_external_ref_loading_order(self):
-        """ make sure pyopenapi.spec_obj_cache would remove
+        """ make sure pyopenapi.spec_obj_store would remove
         dummy objects when resolving.
 
         dummy objects: an spec object co-exist with its parent in
-        pyopenapi.spec_obj_cache
+        pyopenapi.spec_obj_store
         """
 
         # prepare a dummy app
