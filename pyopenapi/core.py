@@ -56,13 +56,18 @@ class App(object):
         self.__schemes = []
         self.__url=url
 
+        # migratable spec version
+        self.__migratable_spec_versions = utils.get_supported_versions('migration', is_pkg=False)
+
         # a map from json-reference to
         # - spec.base2._Base
         # - a map from json-pointer to spec.base2._Base
         #
         # and a map from json-reference in older OpenApi spec
         # to json-reference in migrated OpenApi spec
-        self.__store = SpecObjStore()
+        self.__store = SpecObjStore(
+            migratable_spec_versions=self.migratable_spec_versions
+        )
 
         if url_load_hook and resolver:
             raise ValueError('when use customized Resolver, please pass url_load_hook to that one')

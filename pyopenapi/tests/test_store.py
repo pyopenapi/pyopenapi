@@ -93,6 +93,75 @@ class SpecObjStoreTestCase(unittest.TestCase):
         # get with empty string is not allowed
         self.assertRaises(Exception, cache.get_under, url, '', version)
 
+    def test_cache_get_until(self):
+        """ make sure we could get latest object
+        """
+
+        url = 'http://localhost'
+        cache = SpecObjStore(migratable_spec_versions=['2.0', '3.0', '4.0', '5.0', '6.0'])
+
+        cache.update_routes(url, '3.0', {'#': '#/a'})
+        cache.update_routes(url, '4.0', {'#/a': '#/b'})
+        cache.update_routes(url, '5.0', {'#/b': '#/c'})
+
+        # only '2.0' is available
+        obj_2_0 = Swagger({})
+        cache.set(obj_2_0, url, '#', '2.0')
+        obj, j, v = cache.get_until(url, '#', '2.0')
+        self.assertEqual(id(obj), id(obj_2_0))
+        self.assertEqual(j, '#')
+        self.assertEqual(v, '2.0')
+
+        # '3.0' is available now
+        obj_3_0 = Swagger({})
+        cache.set(obj_3_0, url, '#/a', '3.0')
+        obj, j, v = cache.get_until(url, '#', '2.0')
+        self.assertEqual(id(obj), id(obj_3_0))
+        self.assertEqual(j, '#/a')
+        self.assertEqual(v, '3.0')
+
+        # '4.0' is available now
+        obj_4_0 = Swagger({})
+        cache.set(obj_4_0, url, '#/b', '4.0')
+        obj, j, v = cache.get_until(url, '#', '2.0')
+        self.assertEqual(id(obj), id(obj_4_0))
+        self.assertEqual(j, '#/b')
+        self.assertEqual(v, '4.0')
+
+        # '5.0' is available now
+        obj_5_0 = Swagger({})
+        cache.set(obj_5_0, url, '#/c', '5.0')
+        obj, j, v = cache.get_until(url, '#', '2.0')
+        self.assertEqual(id(obj), id(obj_5_0))
+        self.assertEqual(j, '#/c')
+        self.assertEqual(v, '5.0')
+
+        # until 2.0
+        obj, j, v = cache.get_until(url, '#', '2.0', until='2.0')
+        self.assertEqual(id(obj), id(obj_2_0))
+        self.assertEqual(j, '#')
+        self.assertEqual(v, '2.0')
+        # until 3.0
+        obj, j, v = cache.get_until(url, '#', '2.0', until='3.0')
+        self.assertEqual(id(obj), id(obj_3_0))
+        self.assertEqual(j, '#/a')
+        self.assertEqual(v, '3.0')
+        # until 4.0
+        obj, j, v = cache.get_until(url, '#', '2.0', until='4.0')
+        self.assertEqual(id(obj), id(obj_4_0))
+        self.assertEqual(j, '#/b')
+        self.assertEqual(v, '4.0')
+        # until 5.0
+        obj, j, v = cache.get_until(url, '#', '2.0', until='5.0')
+        self.assertEqual(id(obj), id(obj_5_0))
+        self.assertEqual(j, '#/c')
+        self.assertEqual(v, '5.0')
+        # until 6.0
+        obj, j, v = cache.get_until(url, '#', '2.0', until='6.0')
+        self.assertEqual(id(obj), id(obj_5_0))
+        self.assertEqual(j, '#/c')
+        self.assertEqual(v, '5.0')
+
     def test_route_invalid_version(self):
         """ make sure only supported version could
         be used

@@ -15,9 +15,16 @@ class SpecObjStore(object):
     """ cache of spec objects
     """
 
-    def __init__(self):
+    def __init__(self, migratable_spec_versions=None):
         self.__spec_objs = {}
         self.__routes = {}
+        self.__migratable_spec_versions = False \
+            or migratable_spec_versions \
+            or utils.get_supported_versions('migration', is_pkg=False)
+
+    #
+    # spec object cache
+    #
 
     def set(self, obj, url, jp, spec_version):
         """ cache 'prepared' spec objects (those under pyopenapi.spec)
@@ -61,13 +68,40 @@ class SpecObjStore(object):
 
         return ret
 
+    def get_until(self, url, jp, spec_version, until=None):
+        """ get migrated version of one object until 'some' version
+        """
+        # get relocated 'jp' from older to newer
+        jps = [(spec_version, jp)]
+        from_ = spec_version
+        src = jp
+        for v in self.__migratable_spec_versions[
+            self.__migratable_spec_versions.index(spec_version)+1:
+            self.__migratable_spec_versions.index(until)+1 if until else len(self.__migratable_spec_versions)
+        ]:
+            src = self.relocate(url, src, from_, to_spec=v)
+            from_ = v
+            jps.append((v, src))
+
+        # seeking for cached spec objects from newer to older
+        for v, j in reversed(jps):
+            obj = self.get(url, j, v)
+            if obj:
+                return obj, j, v
+
+        return None, None, None
+
+    #
+    # spec object route
+    #
+
     def update_routes(self, url, to_spec, routes):
         if url not in self.__routes:
             # init the ordered dict with right version sequence
             self.__routes.setdefault(url, OrderedDict([
                 # there would be no $ref relocation from 1.2 to 2.0,
                 # reason: there is no 'JSON pointer' concept in 1.2
-                (v, {}) for v in utils.get_supported_versions('migration', is_pkg=False)
+                (v, {}) for v in self.__migratable_spec_versions
             ]))
 
         if to_spec not in self.__routes[url]:
@@ -164,3 +198,4 @@ class SpecObjStore(object):
     @property
     def routes(self):
         return self.__routes
+
