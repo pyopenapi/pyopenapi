@@ -7,6 +7,7 @@ from ..spec.v2_0.objects import (
     Info,
     License,
     Schema,
+    PathItem,
     )
 from ..spec.v3_0_0 import objects
 
@@ -28,6 +29,9 @@ def up(obj, app, jref):
             ret = objects.Info(converters.to_info(ret, jp), path=jp, override=override)
         elif isinstance(ret, Schema):
             ret = objects.Schema(converters.to_schema(ret, jp), path=jp, override=override)
+        elif isinstance(ret, PathItem):
+            migrated, reloc = converters.to_path_item(ret, url, jp)
+            ret = objects.PathItem(migrated, path=jp, override=override)
         else:
             raise Exception('unable to upgrade from 2.0: {} for type: {}'.format(jref, str(type(ret))))
 
