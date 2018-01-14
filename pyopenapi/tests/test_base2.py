@@ -87,9 +87,17 @@ class JObj(Base2):
         'b': dict(builder=field, restricted=True, default='hi'),
     }
 
+def is_str(spec, path, override):
+    return spec
+
 class KObj(Base2):
     __fields__ = {
         'a': dict(builder=field),
+    }
+
+    __children__ = {
+        'b': dict(child_builder=list_(is_str)),
+        'c': dict(child_builder=map_(is_str))
     }
 KObj.attach_field('k1', builder=child, child_builder=KObj)
 
@@ -147,6 +155,13 @@ class Base2TestCase(unittest.TestCase):
         self.assertTrue(isinstance(c.cc['key2'], AObj))
         self.assertEqual(c.cc['key1'].a, 1)
         self.assertEqual(c.cc['key2'].b, 2)
+
+        for k, v in c.cc.items():
+            if k == 'key1':
+                self.assertEqual({'a':1}, v.dump())
+                break
+        else:
+            self.assertTrue(False)
 
     def test_list(self):
         """ make sure container:List works
@@ -528,4 +543,22 @@ class Base2TestCase(unittest.TestCase):
             a.d3_renamed = 105
 
         self.assertRaises(Exception, _test)
+
+    def test_eq(self):
+        k = KObj({'b': ['a', 'b'], 'c': {'a': 'ca', 'b': 'cb'}})
+
+        self.assertEqual(k.b, ['a', 'b'])
+        self.assertEqual(k.c, {'a': 'ca', 'b': 'cb'})
+        self.assertNotEqual(k.b, ['a', 'b', 'c'])
+        self.assertNotEqual(k.c, {'a': 'ca', 'b': 'cb', 'c': 'cc'})
+
+    def test_map_get(self):
+        k = KObj({'c': {'a': 'ca', 'b': 'cb'}})
+        self.assertEqual(k.c.get('a'), 'ca')
+        self.assertEqual(k.c.get('c'), None)
+        self.assertEqual(k.c.get('c', default='default'), 'default')
+
+    def test_map_len(self):
+        k = KObj({'c': {'a': 'ca', 'b': 'cb'}})
+        self.assertEqual(len(k.c), 2)
 

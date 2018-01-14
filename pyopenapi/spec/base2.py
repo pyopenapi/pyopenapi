@@ -278,6 +278,9 @@ class _List(_Base):
     def __len__(self):
         return len(self.__elm)
 
+    def __eq__(self, other):
+        return self.__elm == other
+
     def append(self, obj):
         return self.__elm.append(obj)
 
@@ -405,8 +408,26 @@ class _Map(_Base):
     def __contains__(self, elm):
         return elm in self.__elm
 
+    def __eq__(self, other):
+        return self.__elm == other
+
     def iteritems(self):
-        return self.__elm.iteritems()
+        return six.iteritems(self.__elm)
+
+    def itervalues(self):
+        return six.itervalues(self.__elm)
+
+    def items(self):
+        return six.viewitems(self.__elm)
+
+    def iterkeys(self):
+        return six.iterkeys(self.__elm)
+
+    def get(self, key, default=None):
+        return self.__elm.get(key, default)
+
+    def __len__(self):
+        return len(self.__elm)
 
 
 class FieldMeta(type):
