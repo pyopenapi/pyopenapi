@@ -18,10 +18,10 @@ def _out(app, parser, path):
 def _schema_out_obj(obj, out=None):
     out = [] if out == None else out
 
-    for o in six.itervalues(obj.properties):
+    for o in six.itervalues(obj.properties or {}):
         out = _schema_out_obj(o, out)
 
-    for o in obj.allOf:
+    for o in obj.allOf or []:
         out = _schema_out_obj(o, out)
 
     if isinstance(obj.additionalProperties, Schema):
@@ -37,7 +37,7 @@ def _schema_out_obj(obj, out=None):
     return out
 
 def _schema_out(app, path):
-    obj = app.resolve(path, parser=SchemaContext)
+    obj = app.resolve(path, parser=Schema)
     return [] if obj == None else _schema_out_obj(obj)
 
 
