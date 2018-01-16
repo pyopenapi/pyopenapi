@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from ..scan import Dispatcher
 from ..errs import SchemaError
-from ..spec.v3_0_0.objects import Operation
+from ..spec.v3_0_0.objects import Operation as Op3
+from ..spec.v2_0.objects import Operation as Op2
 from ..utils import scope_compose
 from ..consts import private
 
@@ -15,7 +16,7 @@ class TypeReduce(object):
         self.op = {}
         self.__sep = sep
 
-    @Disp.register([Operation])
+    @Disp.register([Op3, Op2])
     def _op(self, path, obj, _):
         scope = obj.tags[0] if obj.tags and len(obj.tags) > 0 else None
         name = obj.operationId if obj.operationId else None
