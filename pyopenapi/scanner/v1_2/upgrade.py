@@ -276,11 +276,11 @@ class Upgrade(object):
             ss_spec['tokenUrl'] = get_or_none(obj, 'grantTypes', 'authorization_code', 'tokenEndpoint', 'url')
             if ss_spec['authorizationUrl']:
                 ss_spec['flow'] = 'implicit'
-            elif o.tokenUrl:
+            elif ss_spec['tokenUrl']:
                 ss_spec['flow'] = 'access_code'
         elif ss_spec['type'] == 'apiKey':
             ss_spec['name'] = obj.keyname
-            o.update_field('in', obj.passAs)
+            ss_spec['in'] = obj.passAs
 
         self.__swagger['securityDefinitions'][_get_name(path)] = ss_spec
 

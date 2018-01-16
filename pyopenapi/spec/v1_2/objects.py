@@ -171,7 +171,7 @@ class Authorization(BaseObj_v1_2):
     __internal__ = {
         'type_': dict(key='type', builder=rename),
         'pass_as': dict(key='passAs', builder=rename),
-        'grantTypes': dict(key='grant_types', builder=rename),
+        'grant_types': dict(key='grantTypes', builder=rename),
     }
 
 

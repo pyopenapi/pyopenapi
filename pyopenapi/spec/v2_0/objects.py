@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 from ..base2 import Base2, field, rename, child, list_, map_
+from ...utils import final
+from ...io import (
+    Request as _Request,
+    Response as _Response,
+    )
 import six
 
 
@@ -376,7 +381,7 @@ class Operation(BaseObj_v2_0):
             raise ValueError('Unknown parameters: {0}'.format(unknown))
 
         return \
-        Request(op=self, params=params), _Response(self)
+        _Request(op=self, params=params), _Response(self)
 
 
 class PathItem(BaseObj_v2_0):
