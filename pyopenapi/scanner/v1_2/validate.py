@@ -66,7 +66,7 @@ class Validate(object):
         if obj.type == 'File':
             if obj.paramType != 'form':
                 errs.append('File parameter should be form type: {0}'.format(obj.name))
-            if 'multipart/form-data' not in obj._parent_.consumes:
+            if 'multipart/form-data' not in obj.parent.parent.consumes:
                 errs.append('File parameter should consume multipart/form-data: {0}'.format(obj.name))
 
         if obj.type == 'void':

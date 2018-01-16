@@ -346,7 +346,7 @@ class App(object):
         v_mod = utils.import_string('.'.join([
             'pyopenapi',
             'scanner',
-            'v' + self.version.replace('.', '_'),
+            'v' + self.original_spec_version.replace('.', '_'),
             'validate'
         ]))
 
@@ -358,7 +358,12 @@ class App(object):
         s = Scanner(self)
         v = v_mod.Validate()
 
-        s.scan(route=[v], root=self.__raw)
+        s.scan(route=[v], root=self.raw)
+        if self.original_spec_version == '1.2':
+            # Swagger 1.2 is natively multiple documents
+            for name in self.raw.cached_apis:
+                s.scan(route=[v], root=self.raw.cached_apis[name])
+
         return v.errs
 
     @classmethod
