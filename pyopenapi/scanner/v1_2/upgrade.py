@@ -56,7 +56,8 @@ def convert_schema_from_datatype(obj, scope, sep, app):
 
     spec = {}
     update_type_and_ref(spec, obj, scope, sep, app)
-    spec['format'] = obj.format
+    if obj.is_set('format'):
+        spec['format'] = obj.format
     if obj.is_set('defaultValue'):
         spec['default'] = obj.defaultValue
     convert_min_max(spec, obj)
@@ -77,15 +78,20 @@ def convert_items(o, app):
     if not app.prim_factory.is_primitive(getattr(o, 'type', None)):
         raise SchemaError('Non primitive type is not allowed for Items')
     items_spec['type'] = o.type.lower()
-    items_spec['format'] = o.format
+
+    if o.is_set('format'):
+        items_spec['format'] = o.format
 
     return items_spec
 
 def convert_parameter(param, scope, sep, app):
     p_spec = {}
-    p_spec['name'] = param.name
-    p_spec['required'] = param.required
-    p_spec['description'] = param.description
+    if param.is_set('name'):
+        p_spec['name'] = param.name
+    if param.is_set('required'):
+        p_spec['required'] = param.required
+    if param.is_set('description'):
+        p_spec['description'] = param.description
 
     if param.paramType == 'form':
         p_spec['in'] = 'formData'
@@ -101,14 +107,16 @@ def convert_parameter(param, scope, sep, app):
         if param.allowMultiple == True and param.items == None:
             p_spec['type'] = 'array'
             p_spec['collectionFormat'] = 'csv'
-            p_spec['uniqueItems'] = param.uniqueItems
+            if param.is_set('uniqueItems'):
+                p_spec['uniqueItems'] = param.uniqueItems
             p_spec['items'] = convert_items(param, app)
             if param.is_set("defaultValue"):
                 p_spec['default'] = [param.defaultValue]
             p_spec['items']['enum'] = param.enum
         else:
             p_spec['type'] = param.type.lower()
-            p_spec['format'] = param.format
+            if param.is_set('format'):
+                p_spec['format'] = param.format
             if param.is_set("defaultValue"):
                 p_spec['default'] = param.defaultValue
             convert_min_max(p_spec, param)
@@ -116,7 +124,8 @@ def convert_parameter(param, scope, sep, app):
 
         if param.items:
             p_spec['collectionFormat'] = 'csv'
-            p_spec['uniqueItems'] = param.uniqueItems
+            if param.is_set('uniqueItems'):
+                p_spec['uniqueItems'] = param.uniqueItems
             p_spec['items'] = convert_items(param.items, app)
 
     return p_spec
@@ -125,27 +134,33 @@ def convert_operation(op, api, api_decl, swagger, sep, app):
     op_spec = {}
 
     scope = api_decl.resourcePath[1:]
-    op_spec['tags'] = [scope]
-    op_spec['operationId'] = op.nickname
-    op_spec['summary'] = op.summary
-    op_spec['description'] = op.notes
+    if scope:
+        op_spec['tags'] = [scope]
+    if op.is_set('nickname'):
+        op_spec['operationId'] = op.nickname
+    if op.is_set('summary'):
+        op_spec['summary'] = op.summary
+    if op.is_set('notes'):
+        op_spec['description'] = op.notes
     op_spec['deprecated'] = op.deprecated == 'true'
 
     c = op.consumes if op.consumes else api_decl.consumes
-    op_spec['consumes'] = c if c else []
+    if c:
+        op_spec['consumes'] = c if c else []
 
     p = op.produces if op.produces else api_decl.produces
-    op_spec['produces'] = p if p else []
+    if p:
+        op_spec['produces'] = p if p else []
 
     parameters = op_spec.setdefault('parameters', [])
     for p in op.parameters:
         parameters.append(convert_parameter(p, scope, sep, app))
-    op_spec['security'] = []
 
     # if there is not authorizations in this operation,
     # looking for it in api-declaration object.
     _auth = op.authorizations if op.authorizations else api_decl.authorizations
     if _auth:
+        op_spec['security'] = []
         for name, scopes in six.iteritems(_auth):
             op_spec['security'].append({name: [v.scope for v in scopes]})
 
@@ -179,9 +194,12 @@ def convert_model(model, api_decl, swagger, sep, app):
 
     s_spec.setdefault('properties', {}).update(props)
 
-    s_spec['required'] = model.required
-    s_spec['discriminator'] = model.discriminator
-    s_spec['description'] = model.description
+    if model.is_set('required'):
+        s_spec['required'] = model.required
+    if model.is_set('discriminator'):
+        s_spec['discriminator'] = model.discriminator
+    if model.is_set('description'):
+        s_spec['description'] = model.description
 
     for t in model.subTypes or []:
         # here we assume those child models belongs to
@@ -223,20 +241,32 @@ class Upgrade(object):
         #   Info Object
         info_spec = {}
         info_spec['version'] = obj.apiVersion
-        info_spec['title'] = get_or_none(obj, 'info', 'title')
-        info_spec['description'] = get_or_none(obj, 'info', 'description')
-        info_spec['termsOfService'] = get_or_none(obj, 'info', 'termsOfServiceUrl')
+        title = get_or_none(obj, 'info', 'title')
+        if title:
+            info_spec['title'] = title
+        description = get_or_none(obj, 'info', 'description')
+        if description:
+            info_spec['description'] = description
+        terms_of_service = get_or_none(obj, 'info', 'termsOfServiceUrl')
+        if terms_of_service:
+            info_spec['termsOfService'] = terms_of_service
 
         #       Contact Object
         if obj.info.contact:
             contact_spec = {}
-            contact_spec['email'] = get_or_none(obj, 'info', 'contact')
+            email = get_or_none(obj, 'info', 'contact')
+            if email:
+                contact_spec['email'] = email
             info_spec['contact'] = contact_spec
         #       License Object
         if obj.info.license or obj.info.licenseUrl:
             license_spec = {}
-            license_spec['name'] = get_or_none(obj, 'info', 'license')
-            license_spec['url'] = get_or_none(obj, 'info', 'licenseUrl')
+            name = get_or_none(obj, 'info', 'license')
+            if name:
+                license_spec['name'] = name
+            url = get_or_none(obj, 'info', 'licenseUrl')
+            if url:
+                license_spec['url'] = url
             info_spec['license'] = license_spec
 
         swagger_spec['info'] = info_spec
@@ -272,11 +302,16 @@ class Upgrade(object):
             ss_spec['scopes'][s.scope] = s.description
 
         if ss_spec['type'] == 'oauth2':
-            ss_spec['authorizationUrl'] = get_or_none(obj, 'grantTypes', 'implicit', 'loginEndpoint', 'url')
-            ss_spec['tokenUrl'] = get_or_none(obj, 'grantTypes', 'authorization_code', 'tokenEndpoint', 'url')
-            if ss_spec['authorizationUrl']:
+            authorization_url = get_or_none(obj, 'grantTypes', 'implicit', 'loginEndpoint', 'url')
+            if authorization_url:
+                ss_spec['authorizationUrl'] = authorization_url
+            token_url = get_or_none(obj, 'grantTypes', 'authorization_code', 'tokenEndpoint', 'url')
+            if token_url:
+                ss_spec['tokenUrl'] = token_url
+
+            if authorization_url:
                 ss_spec['flow'] = 'implicit'
-            elif ss_spec['tokenUrl']:
+            elif token_url:
                 ss_spec['flow'] = 'access_code'
         elif ss_spec['type'] == 'apiKey':
             ss_spec['name'] = obj.keyname
