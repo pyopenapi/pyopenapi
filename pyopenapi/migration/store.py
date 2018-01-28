@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from collections import OrderedDict
 from distutils.version import StrictVersion
-from . import utils
-from .spec.base2 import _Base
-from .consts import private
+from .. import utils
+from ..spec.base2 import _Base
+from ..consts import private
 import logging
 import six
 

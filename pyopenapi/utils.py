@@ -557,6 +557,9 @@ def patch_path(base_path, path):
 def get_supported_versions(module_name, is_pkg=False):
     versions = [name for _, name, pkg in pkgutil.iter_modules([os.path.join(os.path.dirname(__file__), module_name)]) if pkg == is_pkg]
 
+    # skip every file name that is not started with 'v'
+    versions = [name for name in versions if name.startswith('v')]
+
     # convert v1_2 to 1.2, and sort
     return sorted([v[1:].replace('_', '.') for v in versions], key=distutils.version.StrictVersion)
 
