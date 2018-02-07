@@ -47,7 +47,6 @@ def _resolve(o, expected, app, path):
         from_spec_version='2.0',
         parser=expected,
         to_spec_version='3.0.0',
-        before_return=None,
         remove_dummy=True,
     )
     if not ro:

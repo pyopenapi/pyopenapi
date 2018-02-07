@@ -17,7 +17,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
     """
     """
 
-    def __init__(self, url=None, url_load_hook=None, resolver=None, sep=None):
+    def __init__(self, url=None, url_load_hook=None, resolver=None, sep=consts.SCOPE_SEPARATOR):
         """ constructor
 
         :param url str: url of swagger.json

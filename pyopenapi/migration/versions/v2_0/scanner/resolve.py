@@ -31,7 +31,6 @@ def _resolve(o, expected, app, path):
         o.normalized_ref,
         from_spec_version='2.0',
         parser=expected,
-        before_return=None,
         remove_dummy=True,
     )
     if not ro:
