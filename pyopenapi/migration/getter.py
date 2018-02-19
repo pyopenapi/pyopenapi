@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from ..consts import private
-from ..utils import patch_path
+from . import consts
+from .utils import patch_path
 import json
 import yaml
 import six
@@ -64,7 +64,7 @@ class LocalGetter(Getter):
     def __init__(self, path):
         super(LocalGetter, self).__init__(path)
 
-        for n in private.SWAGGER_FILE_NAMES:
+        for n in consts.SWAGGER_FILE_NAMES:
             if self.base_path.endswith(n):
                 self.base_path = os.path.dirname(self.base_path)
                 self.urls = [path]
@@ -82,13 +82,13 @@ class LocalGetter(Getter):
             # - when 'path' points to a specific file, and its
             #   extension is either 'json' or 'yaml'.
             _, ext = os.path.splitext(path)
-            for e in [private.FILE_EXT_JSON, private.FILE_EXT_YAML, private.FILE_EXT_YML]:
+            for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML, consts.FILE_EXT_YML]:
                 if ext.endswith(e):
                     self.base_path = os.path.dirname(path)
                     self.urls = [path]
                     break
             else:
-                for e in [private.FILE_EXT_JSON, private.FILE_EXT_YAML]:
+                for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
                     if os.path.isfile(path + '.' + e):
                         self.urls = [path + '.' + e]
                         break

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-from ...scan import Dispatcher
-from ...utils import normalize_jr
-from ...spec.v2_0.objects import (
+from ....scan import Dispatcher
+from ....utils import normalize_jr
+from ..objects import (
     Schema,
     PathItem,
     Reference,

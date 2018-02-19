@@ -1,8 +1,8 @@
-from ..utils import jr_split
-from ..scan import Scanner
-from ..scanner.v1_2 import Upgrade
-from ..scanner.v2_0 import Resolve, YamlFixer, NormalizeRef
-from ..spec.v2_0.objects import Operation
+from ...utils import jr_split
+from ...scan import Scanner, Scanner2
+from ..v1_2.scanner import Upgrade
+from .scanner import Resolve, YamlFixer, NormalizeRef
+from .objects import Operation
 
 
 def up(obj, app, jref):

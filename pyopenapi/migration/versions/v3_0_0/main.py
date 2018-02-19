@@ -1,15 +1,16 @@
-from ..utils import jr_split
-from ..scan import Scanner, Scanner2
-from ..scanner.v2_0.upgrade import converters
-from ..scanner.v3_0_0 import Merge, Resolve, NormalizeRef, PatchObject
-from ..spec.v2_0.objects import (
+from ...utils import jr_split
+from ...scan import Scanner, Scanner2
+from ..v2_0.scanner.upgrade import converters
+# TODO: Merge and PatchObject should be in 'contrib.pyswagger'
+from ..v2_0.objects import (
     Swagger,
     Info,
     License,
     Schema,
     PathItem,
     )
-from ..spec.v3_0_0 import objects
+from .scanner import Resolve, NormalizeRef
+from . import objects
 
 def up(obj, app, jref):
     ret = obj

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-from ....utils import jp_compose, deref
-from ....errs import SchemaError
-from ....spec.v2_0.objects import Operation
+from .....utils import jp_compose, deref
+from .....errs import SchemaError
+from ...objects import Operation
 from .constants import BASE_SCHEMA_FIELDS, SCHEMA_FIELDS, FILE_CONTENT_TYPES
 from .parameter_context import ParameterContext
 from os import path

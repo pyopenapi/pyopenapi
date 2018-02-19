@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from collections import OrderedDict
 from distutils.version import StrictVersion
-from .. import utils
-from ..spec.base2 import _Base
-from ..consts import private
+from . import utils
+from . import consts
+from .spec import _Base
 import logging
 import six
 
@@ -175,7 +175,7 @@ class SpecObjStore(object):
         if url not in self.__routes:
             return jp
 
-        to_spec = to_spec or private.DEFAULT_OPENAPI_SPEC_VERSION
+        to_spec = to_spec or consts.DEFAULT_OPENAPI_SPEC_VERSION
         routes = self.__routes[url]
 
         if to_spec not in routes:

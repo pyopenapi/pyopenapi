@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-from ...scan import Dispatcher
-from ...utils import normalize_jr
-from ...spec.v3_0_0.objects import PathItem, Reference
+from ....scan import Dispatcher
+from ....utils import normalize_jr
+from ..objects import PathItem, Reference
 
 
 class NormalizeRef(object):

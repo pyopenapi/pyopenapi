@@ -1,7 +1,8 @@
-from pyopenapi import App
-from ..utils import get_test_data_folder
-from ...utils import _diff_
-from ...spec.v2_0.parser import SwaggerContext
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.utils import _diff_
+# TODO: this part should be rewritten after removing pyopenapi.spec.base.BaseObj
+# from pyopenapi.migration.versions.v2_0.parser import SwaggerContext
+from ....utils import get_test_data_folder
 import os
 import json
 import unittest

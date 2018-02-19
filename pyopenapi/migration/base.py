@@ -1,7 +1,10 @@
 from __future__ import absolute_import
-from .. import utils, consts
+from . import utils, consts
 from .resolve import Resolver
 from .store import SpecObjStore
+from .versions.v1_2.objects import ResourceListing, ApiDeclaration
+from .versions.v2_0.objects import Swagger
+from .versions.v3_0_0.objects import OpenApi
 from distutils.version import StrictVersion
 import abc
 import six
@@ -30,7 +33,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         self.__url=url
 
         # migratable spec version
-        self.__migratable_spec_versions = get_supported_versions('migration', is_pkg=False)
+        self.__migratable_spec_versions = utils.get_supported_versions('migration', is_pkg=False)
 
         # a map from json-reference to
         # - spec.base2._Base

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from .consts import private
+from . import consts
 from .errs import CycleDetectionError
 import six
 import imp
@@ -13,7 +13,7 @@ import pkgutil
 import distutils
 
 #TODO: accept varg
-def scope_compose(scope, name, sep=private.SCOPE_SEPARATOR):
+def scope_compose(scope, name, sep=consts.SCOPE_SEPARATOR):
     """ compose a new scope
 
     :param str scope: current scope
@@ -31,7 +31,7 @@ def scope_compose(scope, name, sep=private.SCOPE_SEPARATOR):
 
     return new_scope
 
-def scope_split(scope, sep=private.SCOPE_SEPARATOR):
+def scope_split(scope, sep=consts.SCOPE_SEPARATOR):
     """ split a scope into names
 
     :param str scope: scope to be splitted
@@ -45,7 +45,7 @@ class ScopeDict(dict):
     """ ScopeDict
     """
     def __init__(self, *a, **k):
-        self.__sep = private.SCOPE_SEPARATOR
+        self.__sep = consts.SCOPE_SEPARATOR
         super(ScopeDict, self).__init__(*a, **k)
 
     @property
@@ -323,7 +323,7 @@ def url_dirname(url):
     """ Return the folder containing the '.json' file
     """
     p = six.moves.urllib.parse.urlparse(url)
-    for e in [private.FILE_EXT_JSON, private.FILE_EXT_YAML]:
+    for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
         if p.path.endswith(e):
             return six.moves.urllib.parse.urlunparse(
                 p[:2]+
@@ -534,12 +534,12 @@ def get_or_none(obj, *a):
 def patch_path(base_path, path):
     # try to get extension from base_path
     _, ext = os.path.splitext(base_path)
-    if ext not in private.VALID_FILE_EXT:
+    if ext not in consts.VALID_FILE_EXT:
         ext = ''
 
     # try to get extension from path
     _, ext = os.path.splitext(path) if ext == '' else (None, ext)
-    if ext not in private.VALID_FILE_EXT:
+    if ext not in consts.VALID_FILE_EXT:
         ext = ''
 
     # .json is default extension to try

@@ -1,10 +1,9 @@
 from __future__ import absolute_import
-from ...spec.base import NullContext
-from ...scan import Dispatcher
-from ...errs import SchemaError
-from ...utils import scope_compose, get_or_none
-from ...consts import private
-from ...spec.v1_2.objects import (
+from ....scan import Dispatcher
+from ....errs import SchemaError
+from ....utils import scope_compose, get_or_none
+from ....consts import private
+from ..objects import (
     ResourceListing,
     ApiDeclaration,
     Operation,
@@ -12,7 +11,7 @@ from ...spec.v1_2.objects import (
     Parameter,
     Model,
 )
-from ...spec.v2_0.objects import Swagger
+from ..v2_0.objects import Swagger
 import os
 import six
 

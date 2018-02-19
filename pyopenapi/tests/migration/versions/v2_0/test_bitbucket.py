@@ -1,5 +1,5 @@
-from pyopenapi import App
-from ..utils import get_test_data_folder
+from pyopenapi.contrib.pyswagger import App
+from ....utils import get_test_data_folder
 import unittest
 
 

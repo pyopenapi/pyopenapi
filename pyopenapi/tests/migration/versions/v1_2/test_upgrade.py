@@ -1,6 +1,7 @@
-from pyopenapi import App, errs
-from ..utils import get_test_data_folder
-from ...spec.v2_0 import objects
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration import errs
+from pyopenapi.migration.versions.v2_0 import objects
+from ....utils import get_test_data_folder
 import unittest
 import os
 import six

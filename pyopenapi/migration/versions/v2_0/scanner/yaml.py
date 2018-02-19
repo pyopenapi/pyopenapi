@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from ...scan import Dispatcher
-from ...spec.v2_0.objects import (
+from ....scan import Dispatcher
+from ..objects import (
     Operation,
     MapOfResponseOrReference,
     )

@@ -1,8 +1,8 @@
-from pyopenapi import App
-from pyopenapi.getter import UrlGetter, DictGetter, SimpleGetter
-from pyopenapi.resolve import Resolver
-from pyopenapi.utils import _diff_
-from .utils import get_test_data_folder
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.getter import UrlGetter, DictGetter, SimpleGetter
+from pyopenapi.migration.resolve import Resolver
+from pyopenapi.migration.utils import _diff_
+from ..utils import get_test_data_folder
 import unittest
 import os
 import json

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from ..utils import jr_split, jp_split
+from .utils import jr_split, jp_split
 from .getter import UrlGetter, LocalGetter
 import six
 import os

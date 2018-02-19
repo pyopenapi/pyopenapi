@@ -1,4 +1,4 @@
-from pyopenapi import utils, errs
+from pyopenapi.migration import utils, errs
 from datetime import datetime
 import unittest
 import functools

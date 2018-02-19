@@ -1,12 +1,12 @@
-from pyopenapi import App
-from ..utils import get_test_data_folder, gen_test_folder_hook
-from ...utils import jr_split, normalize_url
-from ...spec.v3_0_0.objects import (
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.utils import jr_split, normalize_url
+from pyopenapi.migration.versions.v3_0_0.objects import (
     Reference, Schema, Parameter,
     Header, RequestBody, Response,
     Link, Callback, PathItem,
     Operation, SecurityScheme,
     )
+from ....utils import get_test_data_folder, gen_test_folder_hook
 import unittest
 
 

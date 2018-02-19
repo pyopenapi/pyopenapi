@@ -1,7 +1,8 @@
-from pyopenapi import App
-from ..utils import get_test_data_folder, gen_test_folder_hook
-from ...utils import deref, final
-from ...spec.v2_0.parser import PathItemContext
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.utils import deref, final
+# TODO: this part should be rewritten after removing pyopenapi.spec.base.BaseObj
+# from pyopenapi.migration.versions.v2_0.parser import PathItemContext
+from ....utils import get_test_data_folder, gen_test_folder_hook
 import unittest
 import os
 import six

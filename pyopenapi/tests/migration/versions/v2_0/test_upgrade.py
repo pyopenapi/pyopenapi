@@ -1,6 +1,6 @@
-from ..utils import get_test_data_folder
-from ...core import App
-from ...scanner.v2_0.upgrade import converters
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.versions.v2_0.scanner.upgrade import converters
+from ....utils import get_test_data_folder
 import unittest
 import os
 import six

@@ -1,27 +1,28 @@
-from pyopenapi import App
-from ..utils import get_test_data_folder
-from pyopenapi.spec.v1_2.objects import (
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.versions.v1_2.objects import (
     Info,
     Authorization,
     Scope,
     Items,
-    GrantType,
+    GrantTypes,
     Implicit,
     AuthorizationCode,
     LoginEndpoint,
     TokenRequestEndpoint,
     TokenEndpoint,
-    Resource,
+    # TODO: should be ApiDeclaration or ResourceInListing
+    # Resource,
     Operation,
     Parameter,
     ResponseMessage,
     Authorizations,
     Model)
+from ....utils import get_test_data_folder
 import unittest
 import six
 
 
-app = App._create_(get_test_data_folder(version='1.2', which='wordnik')) 
+app = App._create_(get_test_data_folder(version='1.2', which='wordnik'))
 
 class PropertyTestCase(unittest.TestCase):
     """ make sure properties' existence & type """
@@ -65,7 +66,7 @@ class PropertyTestCase(unittest.TestCase):
         self.assertTrue(isinstance(implicit.loginEndpoint, LoginEndpoint))
         self.assertEqual(implicit.loginEndpoint.url,
             'http://petstore.swagger.wordnik.com/api/oauth/dialog')
-            
+
 
     def test_authorization_code(self):
         """ authorization code """
@@ -165,13 +166,13 @@ class DataTypeTestCase(unittest.TestCase):
     """ make sure data type ready """
 
     def test_operation(self):
-        """ operation """ 
+        """ operation """
         op = app.raw.apis['pet'].apis['findPetsByStatus']
         self.assertEqual(op.type, 'array')
         self.assertEqual(getattr(op.items, '$ref'), 'Pet')
 
     def test_parameter(self):
-        """ parameter """ 
+        """ parameter """
         p = app.raw.apis['pet'].apis['findPetsByStatus'].parameters[0]
         self.assertTrue(isinstance(p, Parameter))
         self.assertEqual(p.required, True)
@@ -181,7 +182,7 @@ class DataTypeTestCase(unittest.TestCase):
         self.assertEqual(sorted(p.enum), sorted(['available', 'pending', 'sold']))
 
     def test_property(self):
-        """ property """ 
+        """ property """
         p = app.raw.apis['pet'].models['Pet'].properties
         # id
         self.assertEqual(p['id'].type, 'integer')

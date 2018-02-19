@@ -1,4 +1,4 @@
-from pyopenapi.spec.base2 import (
+from pyopenapi.migration.spec import (
     Base2, field, child, internal, rename,
     map_, list_,
     _Map, _List,

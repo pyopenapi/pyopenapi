@@ -1,8 +1,8 @@
-from pyopenapi import App, utils
-from pyopenapi.spec.v3_0_0 import objects
-from pyopenapi.spec.v2_0.objects import Swagger, License, Schema
-from ..utils import get_test_data_folder, gen_test_folder_hook
-from ...utils import final, deref
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.utils import final, deref, jp_compose
+from pyopenapi.migration.versions.v3_0_0 import objects
+from pyopenapi.migration.versions.v2_0.objects import Swagger, License, Schema
+from ....utils import get_test_data_folder, gen_test_folder_hook
 import unittest
 import os
 import weakref
@@ -21,19 +21,19 @@ class ResolvePathItemTestCase(unittest.TestCase):
 
     def test_path_item(self):
         """ make sure PathItem is correctly merged """
-        a = self.app.resolve(utils.jp_compose('/a', '#/paths'))
+        a = self.app.resolve(jp_compose('/a', '#/paths'))
 
         self.assertTrue(isinstance(a, objects.PathItem))
         self.assertTrue(a.get.operationId, 'a.get')
         self.assertTrue(a.put.description, 'c.put')
         self.assertTrue(a.post.description, 'd.post')
 
-        b = self.app.resolve(utils.jp_compose('/b', '#/paths'))
+        b = self.app.resolve(jp_compose('/b', '#/paths'))
         self.assertTrue(b.get.operationId, 'b.get')
         self.assertTrue(b.put.description, 'c.put')
         self.assertTrue(b.post.description, 'd.post')
 
-        c = self.app.resolve(utils.jp_compose('/c', '#/paths'))
+        c = self.app.resolve(jp_compose('/c', '#/paths'))
         self.assertTrue(b.put.description, 'c.put')
         self.assertTrue(b.post.description, 'd.post')
 
@@ -93,7 +93,7 @@ class DerefTestCase(unittest.TestCase):
         ))
 
     def test_deref(self):
-        od = utils.deref(self.app.resolve('#/components/schemas/s1'))
+        od = deref(self.app.resolve('#/components/schemas/s1'))
 
         self.assertEqual(id(od), id(self.app.resolve('#/components/schemas/s4')))
 

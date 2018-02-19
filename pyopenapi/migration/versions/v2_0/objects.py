@@ -1,10 +1,7 @@
 from __future__ import absolute_import
-from ..base2 import Base2, field, rename, child, list_, map_
+from ...spec import Base2, field, rename, child, list_, map_
 from ...utils import final
-from ...io import (
-    Request as _Request,
-    Response as _Response,
-    )
+# TODO: move 'io' and 'Operation.__call__' to 'contrib.pyswagger'
 import six
 
 
@@ -336,52 +333,6 @@ class Operation(BaseObj_v2_0):
         'operation_id': dict(key='operationId', builder=rename),
         'external_docs': dict(key='externalDocs', builder=rename),
     }
-
-    def __call__(self, **k):
-        # prepare parameter set
-        params = dict(header={}, query=[], path={}, body={}, formData=[], file={})
-        names = []
-        def _convert_parameter(p):
-            if p.name not in k and not p.is_set("default") and p.required:
-                raise ValueError('requires parameter: ' + p.name)
-
-            if p.is_set("default"):
-                v = k.get(p.name, p.default)
-            else:
-                if p.name in k:
-                    v = k[p.name]
-                else:
-                    # do not provide value for parameters that use didn't specify.
-                    return
-
-            c = p._prim_(v, self._prim_factory, ctx=dict(read=False))
-            i = getattr(p, 'in')
-
-            if p.type == 'file':
-                params['file'][p.name] = c
-            elif i in ('query', 'formData'):
-                if isinstance(c, Array):
-                    if p.items.type == 'file':
-                        params['file'][p.name] = c
-                    else:
-                        params[i].extend([tuple([p.name, v]) for v in c.to_url()])
-                else:
-                    params[i].append((p.name, str(c),))
-            else:
-                params[i][p.name] = str(c) if i != 'body' else c
-
-            names.append(p.name)
-
-        for p in self.parameters:
-            _convert_parameter(final(p))
-
-        # check for unknown parameter
-        unknown = set(six.iterkeys(k)) - set(names)
-        if len(unknown) > 0:
-            raise ValueError('Unknown parameters: {0}'.format(unknown))
-
-        return \
-        _Request(op=self, params=params), _Response(self)
 
 
 class PathItem(BaseObj_v2_0):

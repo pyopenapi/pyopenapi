@@ -1,13 +1,13 @@
-from ...core import App
-from ...scan import Scanner, Scanner2, Dispatcher
-from ...spec.v1_2.objects import (
+from pyopenapi.contrib.pyswagger.core import App
+from pyopenapi.migration.scan import Scanner, Scanner2, Dispatcher
+from pyopenapi.migration.versions.v1_2.objects import (
     ApiDeclaration,
     Authorization,
     Operation,
     ResponseMessage,
     Parameter
 )
-from ...spec.v3_0_0.objects import (
+from pyopenapi.migration.versions.v3_0_0.objects import (
     Header as Header3,
     Parameter as Parameter3,
 )

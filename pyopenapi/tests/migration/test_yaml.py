@@ -1,8 +1,8 @@
-from pyopenapi import App
-from pyopenapi.scan import Scanner
-from pyopenapi.scanner.v2_0 import YamlFixer
-from pyopenapi.spec.v2_0.objects import Operation
-from .utils import get_test_data_folder
+from pyopenapi.contrib.pyswagger import App
+from pyopenapi.migration.scan import Scanner
+from pyopenapi.migration.versions.v2_0.scanner import YamlFixer
+from pyopenapi.migration.versions.v2_0.objects import Operation
+from ..utils import get_test_data_folder
 import unittest
 
 

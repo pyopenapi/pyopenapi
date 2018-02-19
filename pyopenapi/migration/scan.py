@@ -1,6 +1,5 @@
 from __future__ import absolute_import
-from .spec.base import BaseObj
-from .spec.base2 import Base2Obj
+from .spec import Base2Obj
 import six
 
 
@@ -43,8 +42,8 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
     def __add_route(cls, t, f):
         """
         """
-        if not issubclass(t, (BaseObj, Base2Obj)):
-            raise ValueError('target_cls should be a subclass of BaseObj, but got:' + str(t))
+        if not issubclass(t, Base2Obj):
+            raise ValueError('target_cls should be a subclass of Base2Obj, but got:' + str(t))
 
         # allow register multiple handler function
         # against one object
@@ -126,7 +125,7 @@ class Scanner(object):
         for path, obj in nexter(root, leaves):
             for r in merged_r:
                 for cls in obj.__class__.__mro__[:-1]:
-                    if cls is BaseObj:
+                    if cls is Base2Obj:
                         break
                     _handle_cls(cls, self.app, path, obj, *r)
 

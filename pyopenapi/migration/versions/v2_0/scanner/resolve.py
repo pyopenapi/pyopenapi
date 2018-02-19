@@ -1,8 +1,8 @@
 from __future__ import absolute_import
-from ...utils import jp_compose
-from ...errs import SchemaError
-from ...scan import Dispatcher
-from ...spec.v2_0.objects import (
+from ....utils import jp_compose
+from ....errs import SchemaError
+from ....scan import Dispatcher
+from ..objects import (
     Operation,
     Schema,
     PathItem,
