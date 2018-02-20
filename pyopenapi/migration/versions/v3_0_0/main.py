@@ -49,12 +49,6 @@ def up(obj, app, jref):
         app.spec_obj_store.update_routes(url, '3.0.0', {jp: reloc})
 
         scanner.scan(root=ret, route=[Resolve(app)])
-
-        # phase 3: merge path-item
-        scanner.scan(root=ret, route=[Merge(app)])
-
-        # phase 4: patch objects
-        scanner.scan(root=ret, route=[PatchObject(ret, app)])
     else:
         raise Exception('unsupported migration: {} to 3.0.0'.format(obj.__swagger_version__))
 
