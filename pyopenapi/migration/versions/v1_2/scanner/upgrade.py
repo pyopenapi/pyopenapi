@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from ....scan import Dispatcher
 from ....errs import SchemaError
 from ....utils import scope_compose, get_or_none
-from ....consts import private
+from .... import consts
 from ..objects import (
     ResourceListing,
     ApiDeclaration,
@@ -11,7 +11,7 @@ from ..objects import (
     Parameter,
     Model,
 )
-from ..v2_0.objects import Swagger
+from ...v2_0.objects import Swagger
 import os
 import six
 
@@ -216,7 +216,7 @@ class Upgrade(object):
     """
     class Disp(Dispatcher): pass
 
-    def __init__(self, sep=private.SCOPE_SEPARATOR):
+    def __init__(self, sep=consts.SCOPE_SEPARATOR):
         self.__swagger = None
         self.__sep = sep
 

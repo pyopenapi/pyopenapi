@@ -20,7 +20,7 @@ class SpecObjStore(object):
         self.__routes = {}
         self.__migratable_spec_versions = False \
             or migratable_spec_versions \
-            or utils.get_supported_versions('migration', is_pkg=False)
+            or utils.get_supported_versions('versions', is_pkg=True)
 
     #
     # spec object cache

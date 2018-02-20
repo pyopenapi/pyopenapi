@@ -33,7 +33,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         self.__url=url
 
         # migratable spec version
-        self.__migratable_spec_versions = utils.get_supported_versions('migration', is_pkg=False)
+        self.__migratable_spec_versions = utils.get_supported_versions('versions', is_pkg=True)
 
         # a map from json-reference to
         # - spec.base2._Base
@@ -199,7 +199,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         from_spec_version = obj.__swagger_version__
         for v in supported_versions:
             patched_version = 'v{}'.format(v).replace('.', '_')
-            migration_module_path = '.'.join(['pyopenapi', 'migration', patched_version])
+            migration_module_path = '.'.join(['pyopenapi', 'migration', 'versions', patched_version, 'main'])
             loader = pkgutil.find_loader(migration_module_path)
             if not loader:
                 raise Exception('unable to find module loader for {}'.format(migration_module_path))
