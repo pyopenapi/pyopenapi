@@ -91,13 +91,13 @@ def child(key, child_builder=None, required=False, default=None):
             val = self.spec[key]
         else:
             if required:
-                raise FieldNotExist('child not found: {} in {}, {}'.format(key, self.__class__.__name__, self.path))
+                raise FieldNotExist('child not found: {} in {}, {}'.format(key, self.__class__.__name__, self._path_))
 
         if val is None and default is not None:
             val = copy.copy(default)
 
         if val is not None:
-            chd = child_builder(val, path=jp_compose(key, base=self.path), override=ovr)
+            chd = child_builder(val, path=jp_compose(key, base=self._path_), override=ovr)
             self.children[key] = chd
             return chd
         else:
@@ -107,7 +107,7 @@ def child(key, child_builder=None, required=False, default=None):
         if issubclass(v.__class__, (Base2Obj, _Map, _List)):
             self.children[key] = v
         else:
-            raise Exception('assignment of this type of object is prohibited: {}, {}'.format(str(type(v)), self.path))
+            raise Exception('assignment of this type of object is prohibited: {}, {}'.format(str(type(v)), self._path_))
 
     return property(_getter_, _setter_)
 
@@ -140,23 +140,23 @@ class _Base(object):
         return k in self.spec
 
     @property
-    def parent(self):
+    def _parent_(self):
         """ get parent object
         :return: the parent object.
         :rtype: a subclass of BaseObj.
         """
         return self._parent
 
-    @parent.setter
-    def parent(self, v):
+    @_parent_.setter
+    def _parent_(self, v):
         self._parent = v
 
     @property
-    def path(self):
+    def _path_(self):
         return self._path
 
-    @path.setter
-    def path(self, v):
+    @_path_.setter
+    def _path_(self, v):
         self._path = v
 
 
@@ -196,14 +196,14 @@ class _List(_Base):
             ovr = self.override.get(idx, {})
             elm = ovr.get('', None)
             if not elm:
-                path = jp_compose(idx, base=self.path)
+                path = jp_compose(idx, base=self._path_)
                 if self.__child_builder_unbound__:
                     elm = self.__child_builder__.__func__(e, path=path, override=ovr)
                 else:
                     elm = self.__child_builder__(e, path=path, override=ovr)
 
-            if hasattr(elm, 'parent'):
-                elm.parent = self
+            if hasattr(elm, '_parent_'):
+                elm._parent_ = self
 
             self.__elm.append(elm)
 
@@ -316,21 +316,21 @@ class _Map(_Base):
         self.__elm = {}
 
         if not isinstance(spec, dict):
-            raise Exception('should be an instance of dict when reaching _Map constructor, not {}, {}'.format(str(type(spec)), self.path))
+            raise Exception('should be an instance of dict when reaching _Map constructor, not {}, {}'.format(str(type(spec)), self._path_))
 
         # generate children for all keys in spec
         for k in spec:
             ovr = self.override.get(k, {})
             elm = ovr.get('', None)
             if not elm:
-                path = jp_compose(str(k), base=self.path)
+                path = jp_compose(str(k), base=self._path_)
                 if self.__child_builder_unbound__:
                     elm = self.__child_builder__.__func__(spec[k], path=path, override=ovr)
                 else:
                     elm = self.__child_builder__(spec[k], path=path, override=ovr)
 
-            if hasattr(elm, 'parent'):
-                elm.parent = self
+            if hasattr(elm, '_parent_'):
+                elm._parent_ = self
 
             self.__elm[k] = elm
 
@@ -486,8 +486,8 @@ class Base2Obj(_Base):
         for name in self.__children__:
             # trigger the getter of children, it will create it if exist
             chd = getattr(self, name)
-            if chd and hasattr(chd, 'parent'):
-                chd.parent = self
+            if chd and hasattr(chd, '_parent_'):
+                chd._parent_ = self
 
     def resolve(self, ts):
         """ resolve a list of tokens to an child object
@@ -589,11 +589,11 @@ class Base2Obj(_Base):
 
     def attach_child(self, name, obj):
         if name not in self.__children__:
-            raise Exception('attemp to attach a children not in child fields {}:{}, {}'.format(str(type(self)), name, self.path))
+            raise Exception('attemp to attach a children not in child fields {}:{}, {}'.format(str(type(self)), name, self._path_))
 
         setattr(self, name, obj)
-        if hasattr(obj, 'parent'):
-            obj.parent = self
+        if hasattr(obj, '_parent_'):
+            obj._parent_ = self
 
     @classmethod
     def attach_field(kls, name, **field_descriptor):

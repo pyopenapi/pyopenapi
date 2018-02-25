@@ -18,7 +18,7 @@ class YamlFixer(object):
         """
         if obj.responses == None: return
 
-        responses = MapOfResponseOrReference({}, obj.responses.path)
+        responses = MapOfResponseOrReference({}, obj.responses._path_)
         for k, v in six.iteritems(obj.responses):
             if isinstance(k, six.integer_types):
                 responses[str(k)] = v

@@ -453,32 +453,32 @@ class Base2TestCase(unittest.TestCase):
         self.assertEqual(k.k1.k1.k1.a, 2)
 
     def test_path(self):
-        """ validate path property
+        """ validate _path_ property
         """
         # child field, missing, or different
         a = AObj({'c':{'bb':1}})
-        self.assertEqual(a.path, None)
-        self.assertEqual(a.c.path, 'c')
+        self.assertEqual(a._path_, None)
+        self.assertEqual(a.c._path_, 'c')
 
         # _Map
         c = CObj({'cc':{'key1':{'a':1}, 'key2':{'b':2}}})
-        self.assertEqual(c.cc['key1'].path, 'cc/key1')
+        self.assertEqual(c.cc['key1']._path_, 'cc/key1')
 
         # _List
         c = CObj({'ccc':[{'a':1, 'b':2}, {'a':2, 'b':3}]})
-        self.assertEqual(c.ccc[0].path, 'ccc/0')
+        self.assertEqual(c.ccc[0]._path_, 'ccc/0')
 
         # _Map of _List
         d = DObj({'d1':{'key1':[{'b':1},{'b':2}], 'key2':[{'b':3},{'b':4}]}})
-        self.assertEqual(d.d1['key1'][0].path, 'd1/key1/0')
+        self.assertEqual(d.d1['key1'][0]._path_, 'd1/key1/0')
 
         # _List of _Map
         d = DObj({'d2': [{'key1':{'b':1}, 'key2':{'b':2}}, {'key3':{'b':3}, 'key4':{'b':4}}]})
-        self.assertEqual(d.d2[0]['key1'].path, 'd2/0/key1')
+        self.assertEqual(d.d2[0]['key1']._path_, 'd2/0/key1')
 
         # _Map of _Map
         d = DObj({'d3': {'key1':{'key11':{'b':1}, 'key12':{'b':2}}, 'key2':{'key21':{'b':3}, 'key22':{'b':4}}}})
-        self.assertEqual(d.d3['key1']['key11'].path, 'd3/key1/key11')
+        self.assertEqual(d.d3['key1']['key11']._path_, 'd3/key1/key11')
 
     def test_renamed(self):
         """ make sure renamed works
@@ -494,21 +494,21 @@ class Base2TestCase(unittest.TestCase):
 
     def test_parent(self):
         c = CObj({'cc':{'key1':{'a':1}, 'key2':{'b':2}}, 'ccc':[{'a':1}, {'a':2}]})
-        self.assertEqual(id(c.cc.parent), id(c))
-        self.assertEqual(id(c.ccc.parent), id(c))
+        self.assertEqual(id(c.cc._parent_), id(c))
+        self.assertEqual(id(c.ccc._parent_), id(c))
 
         map_c = c.cc
-        self.assertEqual(id(map_c['key1'].parent), id(map_c))
-        self.assertEqual(id(map_c['key2'].parent), id(map_c))
+        self.assertEqual(id(map_c['key1']._parent_), id(map_c))
+        self.assertEqual(id(map_c['key2']._parent_), id(map_c))
 
         list_c = c.ccc
-        self.assertEqual(id(list_c[0].parent), id(list_c))
-        self.assertEqual(id(list_c[1].parent), id(list_c))
+        self.assertEqual(id(list_c[0]._parent_), id(list_c))
+        self.assertEqual(id(list_c[1]._parent_), id(list_c))
 
         a = c.cc['key1']
         b = BObj({'bb': 1})
         a.attach_child('c', b)
-        self.assertEqual(id(b.parent), id(a))
+        self.assertEqual(id(b._parent_), id(a))
 
     def test_override_children(self):
         spec = {'cc':{'key1':{'a':1,'b':3}, 'key2':{'b':2}, 'key3':{'b':3}, 'key4':{'c':{'bb':5}}}, 'ccc':[{'a':1}, {'a':2}]}
