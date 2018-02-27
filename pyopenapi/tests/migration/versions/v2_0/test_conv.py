@@ -1,8 +1,6 @@
-from pyopenapi.contrib.pyswagger import App
 from pyopenapi.migration.utils import _diff_
-# TODO: this part should be rewritten after removing pyopenapi.spec.base.BaseObj
-# from pyopenapi.migration.versions.v2_0.parser import SwaggerContext
-from ....utils import get_test_data_folder
+from pyopenapi.migration.versions.v2_0.objects import Swagger
+from ....utils import get_test_data_folder, SampleApp
 import os
 import json
 import unittest
@@ -14,7 +12,7 @@ class ConverterTestCase(unittest.TestCase):
     def test_v2_0(self):
         """ convert from 2.0 to 2.0 """
         path = get_test_data_folder(version='2.0', which='wordnik')
-        app = App.create(path)
+        app = SampleApp.create(path, to_spec_version='2.0')
 
         # load swagger.json into dict
         origin = None
@@ -22,18 +20,14 @@ class ConverterTestCase(unittest.TestCase):
             origin = json.loads(r.read())
 
         # diff for empty list or dict is allowed
-        d = app.dump()
-        self.assertEqual(sorted(_diff_(origin, d, exclude=['$ref', 'normalized_ref'])), sorted([
-            ('paths/~1pet~1{petId}/get/security/0/api_key', "list", "NoneType"),
+        d = app.root.dump()
+        self.assertEqual(sorted(_diff_(origin, d)), sorted([
             ('paths/~1store~1inventory/get/parameters', None, None),
-            ('paths/~1store~1inventory/get/security/0/api_key', "list", "NoneType"),
             ('paths/~1user~1logout/get/parameters', None, None)
         ]))
 
         # try to load the dumped dict back, to see if anything wrong
-        tmp = {'_tmp_': {}}
-        with SwaggerContext(tmp, '_tmp_') as ctx:
-            ctx.parse(d)
+        Swagger(d)
 
 
 class Converter_v1_2_TestCase(unittest.TestCase):
@@ -48,45 +42,47 @@ class Converter_v1_2_TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App.load(get_test_data_folder(
-            version='1.2', which='wordnik'), sep=':'
+        kls.app = SampleApp.create(
+            get_test_data_folder(
+                version='1.2', which='wordnik'
+            ),
+            sep=':',
+            to_spec_version='2.0',
         )
-        kls.app.prepare()
-
-        with open('./test.json', 'w') as r:
-            r.write(json.dumps(kls.app.dump(), indent=3))
 
     def test_items(self):
         """
         """
         # $ref
         expect = {
-            '$ref':'#/components/schemas/pet:Pet'
+            '$ref':'#/definitions/pet:Pet'
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/pet/{petId}').patch.responses['default'].schema.items.dump(),
-            exclude=['$ref'],
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1{petId}/patch/responses/default/schema/items',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
         # enum
         expect = {
             'enum':['available', 'pending', 'sold'],
-            'type':'string'
+            'type':'string',
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/pet/findByStatus').get.parameters[0].items.dump()
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1findByStatus/get/parameters/0/items',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
         # type
         expect = {
             'type':'string'
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.resolve('#/components/schemas/pet:Pet').properties['photoUrls'].items.dump()
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/definitions/pet:Pet/properties/photoUrls/items',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
     def test_scope(self):
         """
@@ -96,18 +92,18 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'write:pets':'Modify pets in your account',
             'read:pets':'Read your pets',
         }
-
         self.assertEqual(_diff_(
             expect,
-            self.app.root.securityDefinitions['oauth2'].scopes
+            self.app.root.securityDefinitions['oauth2'].scopes.dump()
         ), [])
 
         # test scope in Operation Object
         expect = [dict(oauth2=['write:pets'])]
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/store/order/{orderId}').delete.security
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1store~1order~1{orderId}/delete/security',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
     def test_login_endpoint(self):
         """
@@ -139,10 +135,11 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         """
         expect = [dict(oauth2=['write:pets'])]
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/store/order').post.security
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1store~1order/post/security',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
     def test_authorization(self):
         """
@@ -173,10 +170,11 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'maximum':100000.0,
             'in':'path',
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/pet/{petId}').get.parameters[0].dump()
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1{petId}/get/parameters/0',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
         # allowMultiple, defaultValue, enum
         expect = {
@@ -184,11 +182,16 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'items':{
                 'type':'string',
                 'enum':['available', 'pending', 'sold']
-            }
+            },
+            'collectionFormat':'csv',
         }
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1findByStatus/get/parameters/0',
+            from_spec_version='2.0',
+        )
         self.assertEqual(_diff_(
             expect,
-            self.app.s('/api/pet/findByStatus').get.parameters[0].dump(),
+            target.dump(),
             include=['collectionFormat', 'default', 'enum']
         ), [])
 
@@ -196,12 +199,16 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         expect = {
             'in':'body',
             'schema':{
-                '$ref':'#/components/schemas/pet:Pet'
+                '$ref':'#/definitions/pet:Pet'
             }
         }
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet/post/parameters/0',
+            from_spec_version='2.0',
+        )
         self.assertEqual(_diff_(
             expect,
-            self.app.s('/api/pet').post.parameters[0].dump(),
+            target.dump(),
             include=['schema', 'in']
         ), [])
 
@@ -213,9 +220,13 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'summary':'Find pet by ID',
             'description':'Returns a pet based on ID',
         }
+        target, _  = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1{petId}/get',
+            from_spec_version='2.0',
+        )
         self.assertEqual(_diff_(
             expect,
-            self.app.s('/api/pet/{petId}').get.dump(),
+            target.dump(),
             include=['operationId', 'summary', 'description']
         ), [])
 
@@ -224,34 +235,39 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'produces':['application/json', 'application/xml'],
             'consumes':['application/json', 'application/xml']
         }
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1{petId}/patch',
+            from_spec_version='2.0',
+        )
         self.assertEqual(_diff_(
             expect,
-            self.app.s('/api/pet/{petId}').patch.dump(),
+            target.dump(),
             include=['produces', 'consumes']
         ), [])
 
         # deprecated
         expect = dict(deprecated=True)
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/pet/findByTags').get.dump(),
-            include=['deprecated']
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1findByTags/get',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump(), include=['deprecated']), [])
 
         # responses, in 1.2, the type of Operation is default response
         expect = {
             'schema':{
                 'type':'array',
                 'items': {
-                    '$ref':'#/components/schemas/pet:Pet',
+                    '$ref':'#/definitions/pet:Pet',
                 }
-            }
+            },
+            'description':'',
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.s('/api/pet/findByTags').get.responses['default'].dump(),
-            exclude=['$ref'],
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/paths/~1api~1pet~1findByTags/get/responses/default',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump(), exclude=['$ref']), [])
 
     def test_property(self):
         """
@@ -266,10 +282,11 @@ class Converter_v1_2_TestCase(unittest.TestCase):
                 "3-closed"
             ]
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.resolve('#/components/schemas/user:User').properties['userStatus'].dump()
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/definitions/user:User/properties/userStatus',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
     def test_model(self):
         """
@@ -316,12 +333,11 @@ class Converter_v1_2_TestCase(unittest.TestCase):
                 }
             }
         }
-        d = self.app.resolve('#/components/schemas/pet:Pet').dump()
-        self.assertEqual(_diff_(
-            expect,
-            self.app.resolve('#/components/schemas/pet:Pet').dump(),
-            exclude=['$ref'],
-        ), [])
+        target, _ = self.app.resolve_obj(
+            '#/definitions/pet:Pet',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump(), exclude=['$ref']), [])
 
     def test_info(self):
         """
@@ -360,8 +376,11 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
     def test_token_endpoint(self):
         """
         """
-        app = App.create(get_test_data_folder(
-            version='1.2', which='simple_auth')
+        app = SampleApp.create(
+            get_test_data_folder(
+                version='1.2', which='simple_auth'
+            ),
+            to_spec_version='2.0',
         )
 
         expect={
@@ -372,17 +391,20 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
                 'test:anything':'for testing purpose'
             }
         }
-
-        self.assertEqual(_diff_(
-            expect,
-            app.resolve('#/securityDefinitions/oauth2').dump()
-        ), [])
+        target, _ = app.resolve_obj(
+            '#/securityDefinitions/oauth2',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
     def test_authorization(self):
         """
         """
-        app = App.create(get_test_data_folder(
-            version='1.2', which='simple_auth')
+        app = SampleApp.create(
+            get_test_data_folder(
+                version='1.2', which='simple_auth'
+            ),
+            to_spec_version='2.0',
         )
 
         expect = {
@@ -390,44 +412,46 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
             'in':'query',
             'name':'simpleQK'
         }
-        self.assertEqual(_diff_(
-            expect,
-            app.resolve('#/securityDefinitions/simple_key').dump()
-        ), [])
+        target, _ = app.resolve_obj(
+            '#/securityDefinitions/simple_key',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
         expect = {
             'type':'apiKey',
             'in':'header',
             'name':'simpleHK'
         }
-        self.assertEqual(_diff_(
-            expect,
-            app.resolve('#/securityDefinitions/simple_key2').dump()
-        ), [])
+        target, _ = app.resolve_obj(
+            '#/securityDefinitions/simple_key2',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
-
-        expect = {
-            'type':'basic',
-        }
-        self.assertEqual(_diff_(
-            expect,
-            app.resolve('#/securityDefinitions/simple_basic').dump()
-        ), [])
+        expect = {'type':'basic',}
+        target, _ = app.resolve_obj(
+            '#/securityDefinitions/simple_basic',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump()), [])
 
     def test_model_inheritance(self):
         """
         """
-        app = App.load(get_test_data_folder(
-            version='1.2', which='model_subtypes'
-            ), sep=':')
-        app.prepare()
+        app = SampleApp.create(
+            get_test_data_folder(
+                version='1.2', which='model_subtypes'
+            ),
+            to_spec_version='2.0',
+            sep=':'
+        )
 
         expect = {
             'allOf': [{'$ref': u'#/definitions/user:User'}]
         }
-
-        self.assertEqual(_diff_(
-            expect,
-            app.resolve('#/components/schemas/user:UserWithInfo').dump(),
-            include=['allOf']
-        ), [])
+        target, _ = app.resolve_obj(
+            '#/definitions/user:UserWithInfo',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(_diff_(expect, target.dump(), include=['allOf']), [])

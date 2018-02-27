@@ -1,5 +1,4 @@
-from pyopenapi.contrib.pyswagger import App
-from ....utils import get_test_data_folder
+from ....utils import get_test_data_folder, SampleApp
 import unittest
 
 
@@ -8,13 +7,13 @@ class BitBucketTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App.load(get_test_data_folder(
-            version='2.0',
-            which='bitbucket'
-        ))
-
-        # bypass cyclic testing
-        kls.app.prepare(strict=False)
+        kls.app = SampleApp.create(
+            get_test_data_folder(
+                version='2.0',
+                which='bitbucket'
+            ),
+            to_spec_version='2.0'
+        )
 
     def test_load(self):
         # make sure loading is fine,

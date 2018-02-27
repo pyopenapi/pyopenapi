@@ -1,4 +1,3 @@
-from pyopenapi.contrib.pyswagger.core import App
 from pyopenapi.migration.scan import Scanner, Scanner2, Dispatcher
 from pyopenapi.migration.versions.v1_2.objects import (
     ApiDeclaration,
@@ -11,7 +10,7 @@ from pyopenapi.migration.versions.v3_0_0.objects import (
     Header as Header3,
     Parameter as Parameter3,
 )
-from ..utils import get_test_data_folder
+from ..utils import get_test_data_folder, SampleApp
 import unittest
 import weakref
 
@@ -71,7 +70,7 @@ class PathRecord(object):
         self.parameter.append(path)
 
 
-app = App.load(get_test_data_folder(version='1.2', which='wordnik'))
+app = SampleApp.load(get_test_data_folder(version='1.2', which='wordnik'))
 
 
 class ScannerTestCase(unittest.TestCase):
@@ -136,13 +135,25 @@ class ResolveTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes'))
+        kls.app = SampleApp.create(
+            get_test_data_folder(version='1.2', which='model_subtypes'),
+            to_spec_version='2.0'
+        )
 
     def test_ref_resolve(self):
         """ make sure pre resolve works """
-        ref = getattr(self.app.resolve('#/components/schemas/user!##!UserWithInfo').allOf[0], 'ref_obj')
+        o, _ = self.app.resolve_obj(
+            '#/definitions/user!##!UserWithInfo/allOf/0',
+            from_spec_version='2.0'
+        )
+        ref = o.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(ref, weakref.ProxyTypes))
-        self.assertEqual(ref, self.app.resolve('#/components/schemas/user!##!User'))
+
+        o, _ = self.app.resolve_obj(
+            '#/definitions/user!##!User',
+            from_spec_version='2.0',
+        )
+        self.assertEqual(ref, o)
 
 
 class CountParemeter3(object):

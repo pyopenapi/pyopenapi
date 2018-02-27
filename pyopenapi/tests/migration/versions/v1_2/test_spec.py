@@ -1,4 +1,3 @@
-from pyopenapi.contrib.pyswagger import App
 from pyopenapi.migration.versions.v1_2.objects import (
     Info,
     Authorization,
@@ -10,19 +9,22 @@ from pyopenapi.migration.versions.v1_2.objects import (
     LoginEndpoint,
     TokenRequestEndpoint,
     TokenEndpoint,
-    # TODO: should be ApiDeclaration or ResourceInListing
-    # Resource,
+    ApiDeclaration,
+    ResourceInListing,
     Operation,
     Parameter,
     ResponseMessage,
     Authorizations,
     Model)
-from ....utils import get_test_data_folder
+from ....utils import get_test_data_folder, SampleApp
 import unittest
 import six
 
 
-app = App._create_(get_test_data_folder(version='1.2', which='wordnik'))
+app = SampleApp.create(
+    get_test_data_folder(version='1.2', which='wordnik'),
+    to_spec_version='2.0'
+)
 
 class PropertyTestCase(unittest.TestCase):
     """ make sure properties' existence & type """
@@ -49,10 +51,10 @@ class PropertyTestCase(unittest.TestCase):
         self.assertEqual(auth.scopes[1].scope, 'read:pets')
         self.assertEqual(auth.scopes[1].description, 'Read your pets')
 
-    def test_grant_type(self):
-        """ grant type """
+    def test_grant_types(self):
+        """ grant types """
         auth = app.raw.authorizations['oauth2']
-        self.assertTrue(isinstance(auth.grantTypes, GrantType))
+        self.assertTrue(isinstance(auth.grantTypes, GrantTypes))
 
     def test_implicit(self):
         """ implicit """
@@ -92,8 +94,8 @@ class PropertyTestCase(unittest.TestCase):
 
     def test_resource_pet(self):
         """ resource """
-        pet = app.raw.apis['pet']
-        self.assertTrue(isinstance(pet, Resource))
+        pet = app.raw.cached_apis['pet']
+        self.assertTrue(isinstance(pet, ApiDeclaration))
         self.assertEqual(pet.swaggerVersion, '1.2')
         self.assertEqual(pet.apiVersion, '1.0.0')
         self.assertEqual(pet.basePath, 'http://petstore.swagger.wordnik.com/api')
@@ -105,8 +107,14 @@ class PropertyTestCase(unittest.TestCase):
 
     def test_operation(self):
         """ operation """
-        pet = app.raw.apis['pet']
-        self.assertEqual(sorted(pet.apis.keys()), sorted([
+        pet = app.raw.cached_apis['pet']
+
+        # find each operation's nickname
+        nick_names = []
+        for api in pet.apis:
+            nick_names.extend([op.nickname for op in api.operations])
+
+        self.assertEqual(sorted(nick_names), sorted([
             'updatePet',
             'addPet',
             'findPetsByStatus',
@@ -118,16 +126,22 @@ class PropertyTestCase(unittest.TestCase):
             'uploadFile']
         ))
 
-        updatePet = pet.apis['updatePet']
+        updatePet = pet.apis[1].operations[1]
+        # make sure we locate the right operation to test
+        self.assertEqual(updatePet.nickname, 'updatePet')
+
         self.assertTrue(isinstance(updatePet, Operation))
-        self.assertEqual(updatePet.path, '/pet')
         self.assertEqual(updatePet.method, 'PUT')
         self.assertEqual(updatePet.summary, 'Update an existing pet')
         self.assertEqual(updatePet.notes, '')
 
     def test_parameter(self):
         """ parameter """
-        p = app.raw.apis['pet'].apis['updatePet'].parameters[0]
+        updatePet = app.raw.cached_apis['pet'].apis[1].operations[1]
+        # make sure we locate the right operation to test
+        self.assertEqual(updatePet.nickname, 'updatePet')
+
+        p = updatePet.parameters[0]
         self.assertTrue(isinstance(p, Parameter))
         self.assertEqual(p.paramType, 'body')
         self.assertEqual(p.name, 'body')
@@ -137,28 +151,37 @@ class PropertyTestCase(unittest.TestCase):
 
     def test_response_message(self):
         """ response message """
-        msg = app.raw.apis['pet'].apis['updatePet'].responseMessages[0]
+        updatePet = app.raw.cached_apis['pet'].apis[1].operations[1]
+        msg = updatePet.responseMessages[0]
         self.assertTrue(isinstance(msg, ResponseMessage))
         self.assertEqual(msg.code, 400)
         self.assertEqual(msg.message, 'Invalid ID supplied')
 
     def test_model(self):
         """ model """
-        m = app.raw.apis['pet'].models['Pet']
+        m = app.raw.cached_apis['pet'].models['Pet']
         self.assertTrue(isinstance(m, Model))
         self.assertEqual(m.id, 'Pet');
         self.assertEqual(sorted(m.required), sorted(['id', 'name']))
 
     def test_authorization(self):
         """ authorization """
-        auth = app.raw.apis['pet'].apis['partialUpdate'].authorizations['oauth2'][0]
+        # make sure we locate the expected operation
+        op = app.raw.cached_apis['pet'].apis[0].operations[2]
+        self.assertEqual(op.nickname, 'partialUpdate')
+
+        auth = op.authorizations['oauth2'][0]
         self.assertTrue(isinstance(auth, Authorizations))
         self.assertEqual(auth.scope, 'write:pets')
 
     def test_parent(self):
         """ make sure parent is assigned """
-        self.assertTrue(app.raw.apis['pet'].models['Pet']._parent_ is app.raw.apis['pet'])
-        self.assertTrue(app.raw.apis['user'].apis['getUserByName']._parent_ is app.raw.apis['user'])
+        self.assertTrue(app.raw.cached_apis['pet'].models['Pet']._parent_._parent_ is app.raw.cached_apis['pet'])
+
+        getUserByName = app.raw.cached_apis['user'].apis[0].operations[2]
+        self.assertEqual(getUserByName.nickname, 'getUserByName')
+        self.assertTrue(getUserByName._parent_._parent_._parent_._parent_ is app.raw.cached_apis['user'])
+
         self.assertTrue(app.raw.info._parent_ is app.raw)
 
 
@@ -167,13 +190,17 @@ class DataTypeTestCase(unittest.TestCase):
 
     def test_operation(self):
         """ operation """
-        op = app.raw.apis['pet'].apis['findPetsByStatus']
+        op = app.raw.cached_apis['pet'].apis[2].operations[0]
+        self.assertEqual(op.nickname, 'findPetsByStatus')
         self.assertEqual(op.type, 'array')
         self.assertEqual(getattr(op.items, '$ref'), 'Pet')
 
     def test_parameter(self):
         """ parameter """
-        p = app.raw.apis['pet'].apis['findPetsByStatus'].parameters[0]
+        op = app.raw.cached_apis['pet'].apis[2].operations[0]
+        self.assertEqual(op.nickname, 'findPetsByStatus')
+
+        p = op.parameters[0]
         self.assertTrue(isinstance(p, Parameter))
         self.assertEqual(p.required, True)
         self.assertEqual(p.defaultValue, 'available')
@@ -183,7 +210,7 @@ class DataTypeTestCase(unittest.TestCase):
 
     def test_property(self):
         """ property """
-        p = app.raw.apis['pet'].models['Pet'].properties
+        p = app.raw.cached_apis['pet'].models['Pet'].properties
         # id
         self.assertEqual(p['id'].type, 'integer')
         self.assertEqual(p['id'].format, 'int64')
@@ -215,5 +242,5 @@ class DataTypeTestCase(unittest.TestCase):
         """ children """
         chd = app.raw._children_
         self.assertEqual(len(chd), 5)
-        self.assertEqual(set(['apis/user', 'apis/pet', 'apis/store']), set([k for k, v in six.iteritems(chd) if isinstance(v, Resource)]))
+        self.assertEqual(set(['/user', '/pet', '/store']), set([v.path for v in six.itervalues(chd) if isinstance(v, ResourceInListing)]))
 

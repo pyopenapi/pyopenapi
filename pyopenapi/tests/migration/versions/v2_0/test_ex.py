@@ -1,8 +1,6 @@
-from pyopenapi.contrib.pyswagger import App
 from pyopenapi.migration.utils import deref, final
-# TODO: this part should be rewritten after removing pyopenapi.spec.base.BaseObj
-# from pyopenapi.migration.versions.v2_0.parser import PathItemContext
-from ....utils import get_test_data_folder, gen_test_folder_hook
+from pyopenapi.migration.versions.v2_0.objects import PathItem
+from ....utils import get_test_data_folder, gen_test_folder_hook, SampleApp
 import unittest
 
 
@@ -11,32 +9,38 @@ class ExternalDocumentTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App.load(
+        kls.app = SampleApp.create(
             url='file:///root/swagger.json',
-            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex')),
+            to_spec_version='2.0',
         )
-        kls.app.prepare()
 
     def test_resolve(self):
         """ make sure resolve with full JSON reference
         is the same as resolve with JSON pointer.
         """
-        p = self.app.resolve('#/paths/~1full')
-        p_ = self.app.resolve('file:///root/swagger.json#/paths/~1full')
+        p1, _ = self.app.resolve_obj('#/paths/~1full', from_spec_version='2.0')
+        p2, _ = self.app.resolve_obj('file:///root/swagger.json#/paths/~1full', from_spec_version='2.0')
         # refer to
         #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy
         # for how to dereferencing weakref
-        self.assertEqual(p.__repr__(), p_.__repr__())
+        self.assertEqual(p1.__repr__(), p2.__repr__())
 
     def test_full_path_item(self):
         """ make sure PathItem is correctly merged
         """
-        p = self.app.resolve('#/paths/~1full')
-        self.assertNotEqual(p.get, None)
-        self.assertTrue('default' in p.get.responses)
-        self.assertTrue('404' in p.get.responses)
+        p, _ = self.app.resolve_obj('#/paths/~1full', from_spec_version='2.0')
+        p_final = final(p)
 
-        another_p = self.app.resolve('file:///full/swagger.json#/paths/~1user', PathItemContext)
+        self.assertNotEqual(p_final.get, None)
+        self.assertTrue('default' in p_final.get.responses)
+        self.assertTrue('404' in p_final.get.responses)
+
+        another_p, _ = self.app.resolve_obj(
+            'file:///full/swagger.json#/paths/~1user',
+            parser=PathItem,
+            from_spec_version='2.0'
+        )
         self.assertNotEqual(id(p), id(another_p))
         self.assertTrue('default' in another_p.get.responses)
         self.assertTrue('404' in another_p.get.responses)
@@ -45,16 +49,19 @@ class ExternalDocumentTestCase(unittest.TestCase):
         """  make sure partial swagger.json with Schema
         loaded correctly.
         """
-        p = self.app.resolve('#/components/schemas/s4')
-        original_p = self.app.resolve('file:///partial/schema/swagger.json')
+        p, _ = self.app.resolve_obj('#/definitions/s4', from_spec_version='2.0')
+        original_p, _ = self.app.resolve_obj(
+            'file:///partial/schema/swagger.json',
+            from_spec_version='2.0',
+        )
 
         # refer to
         #      http://stackoverflow.com/questions/10246116/python-dereferencing-weakproxy
         # for how to dereferencing weakref
-        self.assertEqual(p.items.ref_obj.__repr__(), original_p.__repr__())
+        self.assertEqual(p.items.get_attrs('migration').ref_obj.__repr__(), original_p.__repr__())
 
-        p_ = self.app.resolve('#/components/schemas/s3')
-        self.assertEqual(p_.__repr__(), original_p.items.ref_obj.__repr__())
+        p_, _ = self.app.resolve_obj('#/definitions/s3', from_spec_version='2.0')
+        self.assertEqual(p_.__repr__(), original_p.items.get_attrs('migration').ref_obj.__repr__())
 
     def test_relative_path_item(self):
         """ make sure that relative file schema works
@@ -64,18 +71,21 @@ class ExternalDocumentTestCase(unittest.TestCase):
             self.assertEqual(obj.get.responses['default'].description, 'relative, path_item, get, response')
             self.assertEqual(obj.put.responses['default'].description, 'relative, path_item, put, response')
 
-        chk(self.app.s('relative'))
-        chk(self.app.resolve('file:///root/path_item.json'))
+        o, _ = self.app.resolve_obj('#/paths/~1relative', from_spec_version='2.0')
+        chk(final(o))
+
+        o, _ = self.app.resolve_obj('file:///root/path_item.json', from_spec_version='2.0')
+        chk(final(o))
 
     def test_relative_schema(self):
         """ test case for issue#53,
         relative file, which root is a Schema Object
         """
-        app = App.load(
+        app = SampleApp.create(
             url='file:///relative/internal.yaml',
-            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex')),
+            to_spec_version='2.0',
         )
-        app.prepare()
 
 
 class ReuseTestCase(unittest.TestCase):
@@ -84,40 +94,18 @@ class ReuseTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(kls):
-        kls.app = App.load(
+        kls.app = SampleApp.create(
             url='file:///reuse/swagger.json',
-            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex'))
+            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex')),
+            to_spec_version='2.0',
         )
-        kls.app.prepare()
 
     def test_relative_folder(self):
         """ make sure the url prepend on $ref should be
         derived from the path of current document
         """
-        o = deref(self.app.resolve('#/components/schemas/QQ'))
+        o, _ = self.app.resolve_obj('#/definitions/QQ', from_spec_version='2.0')
+        o = deref(o)
+
         self.assertEqual(o.description, 'Another simple model')
-
-    def test_relative_parameter(self):
-        """ make sure parameter from relative $ref
-        is correctly injected(merged) in 'final' field.
-        """
-        o = final(self.app.s('pets').get.parameters[0])
-        self.assertEqual(o.description, 'Results to skip when paginating through a result set')
-
-    def test_relative_response(self):
-        """ make sure response from relative $ref
-        is correctly injected(merged) in 'final' field.
-        """
-        o = final(self.app.s('pets').get.responses['400'])
-        self.assertEqual(o.description, 'Entity not found')
-
-    def test_relative_path_item(self):
-        """ make sure path-item from relative $ref
-        is correctly injected(merged).
-        """
-        o1 = self.app.s('health').get
-        self.assertEqual(o1.summary, 'Returns server health information')
-        # make sure these objects are not referenced, but copied.
-        o2 = self.app.resolve('file:///reuse/operations.json#/health')
-        self.assertNotEqual(id(o1), id(o2), PathItemContext)
 

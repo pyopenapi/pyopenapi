@@ -1,8 +1,7 @@
-from pyopenapi.contrib.pyswagger import App
 from pyopenapi.migration.getter import UrlGetter, DictGetter, SimpleGetter
 from pyopenapi.migration.resolve import Resolver
 from pyopenapi.migration.utils import _diff_
-from ..utils import get_test_data_folder
+from ..utils import get_test_data_folder, SampleApp
 import unittest
 import os
 import json
@@ -30,7 +29,7 @@ class GetterTestCase(unittest.TestCase):
         )
         path = os.path.join(path, 'test_random.json')
         # should not raise ValueError
-        app = App.create(path)
+        app = SampleApp.create(path, to_spec_version='2.0')
 
     def test_random_name_v1_2(self):
         """
@@ -41,7 +40,7 @@ class GetterTestCase(unittest.TestCase):
         )
         path = os.path.join(path, 'test_random.json')
         # should not raise ValueError
-        app = App.create(path)
+        app = SampleApp.create(path, to_spec_version='2.0')
 
     def test_local_path_with_custome_getter(self):
         """ make sure path would be assigned when
@@ -55,7 +54,7 @@ class GetterTestCase(unittest.TestCase):
         path = os.path.join(path, 'test_random.json')
 
         # should not raise errors
-        app = App.load(path, getter=cls)
+        app = SampleApp.load(path, getter=cls)
 
     def test_dict_getter_v1_2(self):
         """ make sure 'DictGetter' works the same as 'LocalGetter'
@@ -94,11 +93,15 @@ class GetterTestCase(unittest.TestCase):
             path_store: store,
             path_user: user,
         })
-        app = App.load(path, resolver=Resolver(default_getter=getter))
-        app.prepare()
+        app = SampleApp.create(
+            path,
+            resolver=Resolver(default_getter=getter),
+            to_spec_version='2.0'
+        )
+        app_default = SampleApp.create(path, to_spec_version='2.0')
 
         # make sure it produce the same App in default way
-        self.assertEqual(sorted(_diff_(app.dump(), App.create(path).dump())), [])
+        self.assertEqual(sorted(_diff_(app.root.dump(), app_default.root.dump())), [])
 
         #
         # different path, mocking an url
@@ -114,11 +117,14 @@ class GetterTestCase(unittest.TestCase):
             'http://petstore.com/store.json': store,
             'http://petstore.com/user.json': user
         })
-        app = App.load('http://petstore.com', resolver=Resolver(default_getter=getter))
-        app.prepare()
+        app = SampleApp.create(
+            'http://petstore.com',
+            resolver=Resolver(default_getter=getter),
+            to_spec_version='2.0'
+        )
 
         # make sure it produce the same App in default way
-        self.assertEqual(sorted(_diff_(app.dump(), App.create(path).dump(), exclude=['$ref'])), [])
+        self.assertEqual(sorted(_diff_(app.root.dump(), app_default.root.dump(), exclude=['$ref'])), [])
 
         #
         # provide empty path
@@ -134,11 +140,14 @@ class GetterTestCase(unittest.TestCase):
             'store.json': store,
             'user.json': user
         })
-        app = App.load('http://petstore.com', resolver=Resolver(default_getter=getter))
-        app.prepare()
+        app = SampleApp.create(
+            'http://petstore.com',
+            resolver=Resolver(default_getter=getter),
+            to_spec_version='2.0'
+        )
 
         # make sure it produce the same App in default way
-        self.assertEqual(sorted(_diff_(app.dump(), App.create(path).dump(), exclude=['$ref'])), [])
+        self.assertEqual(sorted(_diff_(app.root.dump(), app_default.root.dump(), exclude=['$ref'])), [])
 
 
     def test_dict_getter_v2_0(self):
@@ -154,7 +163,7 @@ class GetterTestCase(unittest.TestCase):
             which='wordnik'
         )
 
-        origin_app = App.create(path)
+        origin_app = SampleApp.create(path, to_spec_version='2.0')
 
         with open(os.path.join(path, 'swagger.json'), 'r') as f:
             spec = json.loads(f.read())
@@ -162,11 +171,14 @@ class GetterTestCase(unittest.TestCase):
         getter = DictGetter([path], {
             os.path.join(path, 'swagger.json'): spec
         })
-        app = App.load(path, resolver=Resolver(default_getter=getter))
-        app.prepare()
+        app = SampleApp.create(
+            path,
+            resolver=Resolver(default_getter=getter),
+            to_spec_version='2.0'
+        )
 
         # make sure it produce the same App in default way
-        self.assertEqual(sorted(_diff_(app.dump(), origin_app.dump())), [])
+        self.assertEqual(sorted(_diff_(app.root.dump(), origin_app.root.dump())), [])
 
         #
         # loading via wrong path, should be ok when all internal $ref are not absoluted
@@ -174,11 +186,14 @@ class GetterTestCase(unittest.TestCase):
         getter = DictGetter([''], {
             '': spec
         })
-        app = App.load('', resolver=Resolver(default_getter=getter))
-        app.prepare()
+        app = SampleApp.create(
+            '',
+            resolver=Resolver(default_getter=getter),
+            to_spec_version='2.0',
+        )
 
         # make sure it produce the same App in default way
-        self.assertEqual(sorted(_diff_(app.dump(), origin_app.dump(), exclude=['$ref'])), [])
+        self.assertEqual(sorted(_diff_(app.root.dump(), origin_app.root.dump(), exclude=['$ref'])), [])
 
         #
         # faking http path
@@ -186,11 +201,14 @@ class GetterTestCase(unittest.TestCase):
         getter = DictGetter(['https://petstore.com'], {
             'https://petstore.com': spec
         })
-        app = App.load('https://petstore.com', resolver=Resolver(default_getter=getter))
-        app.prepare()
+        app = SampleApp.create(
+            'https://petstore.com',
+            resolver=Resolver(default_getter=getter),
+            to_spec_version='2.0'
+        )
 
         # make sure it produce the same App in default way
-        self.assertEqual(sorted(_diff_(app.dump(), origin_app.dump(), exclude=['$ref'])), [])
+        self.assertEqual(sorted(_diff_(app.root.dump(), origin_app.root.dump(), exclude=['$ref'])), [])
 
     def test_simple_getter_callback(self):
         """ make sure __simple_getter_callback__ is called """
@@ -202,5 +220,5 @@ class GetterTestCase(unittest.TestCase):
         path = os.path.join(path, 'test_random.json')
 
         # should raise some specific error
-        self.assertRaises(_MyCustomException, App.load, path, getter=_MyCustomGetter)
+        self.assertRaises(_MyCustomException, SampleApp.load, path, getter=_MyCustomGetter)
 

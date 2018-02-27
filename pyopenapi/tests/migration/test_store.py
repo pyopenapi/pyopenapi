@@ -170,9 +170,6 @@ class SpecObjStoreTestCase(unittest.TestCase):
         rm = SpecObjStore()
         self.assertRaises(Exception, rm.update_routes, url, '1.1', {})
 
-        # 1.2 should not be included
-        self.assertRaises(Exception, rm.update_routes, url, '1.2', {})
-
         # 'to' version not in route
         self.assertRaises(Exception, rm.relocate, url, '#/some/jp', '2.0', '2.1')
 

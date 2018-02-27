@@ -1,8 +1,7 @@
-from pyopenapi.contrib.pyswagger import App
 from pyopenapi.migration import errs
 from pyopenapi.migration.utils import normalize_url
 from pyopenapi.migration.versions.v2_0 import objects
-from ....utils import get_test_data_folder, is_windows
+from ....utils import get_test_data_folder, is_windows, SampleApp
 import unittest
 import os
 import six
@@ -21,7 +20,10 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App._create_(folder)
+        kls.app = SampleApp.create(
+            folder,
+            to_spec_version='2.0',
+        )
 
     def test_resource_list(self):
         """ ResourceList -> Swagger
@@ -71,7 +73,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         self.assertEqual(o.tags, ['pet'])
         self.assertEqual(o.operationId, 'getPetById')
         self.assertEqual(o.produces, ['application/json', 'application/xml', 'text/plain', 'text/html'])
-        self.assertEqual(o.consumes, [])
+        self.assertEqual(o.consumes, None)
         self.assertEqual(o.summary, 'Find pet by ID')
         self.assertEqual(o.description, 'Returns a pet based on ID')
         self.assertEqual(o.deprecated, False)
@@ -84,9 +86,9 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         self.assertTrue('default' in o.responses)
 
         r = o.responses['default']
-        self.assertEqual(r.headers, {})
+        self.assertEqual(r.headers, None)
         self.assertEqual(r.schema.type, 'array')
-        self.assertEqual(r.schema.items.normalized_ref, _pf('/components/schemas/pet!##!Pet'))
+        self.assertEqual(r.schema.items.get_attrs('migration').normalized_ref, _pf('/definitions/pet!##!Pet'))
 
         # createUser
         o = self.app.root.paths['/api/user'].post
@@ -116,7 +118,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         p = [p for p in o.parameters if getattr(p, 'in') == 'body'][0]
         self.assertEqual(getattr(p, 'in'), 'body')
         self.assertEqual(p.required, True)
-        self.assertEqual(p.schema.normalized_ref, _pf('/components/schemas/pet!##!Pet'))
+        self.assertEqual(p.schema.get_attrs('migration').normalized_ref, _pf('/definitions/pet!##!Pet'))
 
         # form
         o = self.app.root.paths['/api/pet/uploadImage'].post
@@ -132,10 +134,10 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
 
         # non-body can't have $ref
         try:
-            App._create_(get_test_data_folder(
+            SampleApp.create(get_test_data_folder(
                 version='1.2',
                 which='upgrade_parameter'
-            ))
+            ), to_spec_version='2.0')
         except errs.SchemaError as e:
             self.failUnlessEqual(e.args, ("Can't have $ref in non-body Parameters",))
         else:
@@ -158,7 +160,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         self.assertEqual(p.maximum, 100)
 
         p = d.properties['category']
-        self.assertEqual(p.normalized_ref, _pf('/components/schemas/pet!##!Category'))
+        self.assertEqual(p.get_attrs('migration').normalized_ref, _pf('/definitions/pet!##!Category'))
 
         p = d.properties['photoUrls']
         self.assertEqual(p.type, 'array')
@@ -166,7 +168,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
 
         p = d.properties['tags']
         self.assertEqual(p.type, 'array')
-        self.assertEqual(p.items.normalized_ref, _pf('/components/schemas/pet!##!Tag'))
+        self.assertEqual(p.items.get_attrs('migration').normalized_ref, _pf('/definitions/pet!##!Tag'))
 
         p = d.properties['status']
         self.assertEqual(p.type, 'string')
@@ -176,20 +178,20 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         """ make sure to raise exception for invalid item
         """
         try:
-            App._create_(get_test_data_folder(
+            SampleApp.create(get_test_data_folder(
                 version='1.2',
                 which=os.path.join('upgrade_items', 'with_ref')
-            ))
+            ), to_spec_version='2.0')
         except errs.SchemaError as e:
             self.failUnlessEqual(e.args, ('Can\'t have $ref for Items',))
         else:
             self.fail('SchemaError not raised')
 
         try:
-            App._create_(get_test_data_folder(
+            SampleApp.create(get_test_data_folder(
                 version='1.2',
                 which=os.path.join('upgrade_items', 'invalid_primitive')
-            ))
+            ), to_spec_version='2.0')
         except errs.SchemaError as e:
             self.failUnlessEqual(e.args, ('Non primitive type is not allowed for Items',))
         else:
@@ -218,9 +220,12 @@ class ModelSubtypesTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(kls):
-        kls.app = App._create_(get_test_data_folder(version='1.2', which='model_subtypes'))
+        kls.app = SampleApp.create(
+            get_test_data_folder(version='1.2', which='model_subtypes'),
+            to_spec_version='2.0'
+        )
 
     def test_path_item(self):
-        paths = self.app.resolve('#/paths')
+        paths, _ = self.app.resolve_obj('#/paths', '1.2', to_spec_version='2.0')
         self.assertEqual(sorted(list(paths.keys())), sorted(['/api/user', '/api/user/{username}']))
 
