@@ -1,7 +1,6 @@
 from ...utils import jr_split
 from ...scan import Scanner, Scanner2
 from ..v2_0.scanner.upgrade import converters
-# TODO: Merge and PatchObject should be in 'contrib.pyswagger'
 from ..v2_0.objects import (
     Swagger,
     Info,
@@ -9,7 +8,7 @@ from ..v2_0.objects import (
     Schema,
     PathItem,
     )
-from .scanner import Resolve, NormalizeRef
+from .scanner import Resolve, NormalizeRef, Merge
 from . import objects
 
 def up(obj, app, jref):
@@ -42,13 +41,17 @@ def up(obj, app, jref):
         # phase 1: normalized $ref
         scanner.scan(root=ret, route=[NormalizeRef(url)])
 
-        # phase 2: resolve $ref
+        # phase 2: update cache for resolving $ref to current object
         # - because the external document might reference back,
         #   we have to cache ourselves here, just in case.
         app.spec_obj_store.set(ret, url, jp, spec_version='3.0.0')
         app.spec_obj_store.update_routes(url, '3.0.0', {jp: reloc})
 
+        # phase 3: resolve $ref
         scanner.scan(root=ret, route=[Resolve(app)])
+
+        # phase 4: merge path item from $ref
+        scanner.scan(root=ret, route=[Merge(app)])
     else:
         raise Exception('unsupported migration: {} to 3.0.0'.format(obj.__swagger_version__))
 

@@ -1,7 +1,7 @@
 from ...utils import jr_split
 from ...scan import Scanner, Scanner2
 from ..v1_2.scanner import Upgrade
-from .scanner import Resolve, YamlFixer, NormalizeRef
+from .scanner import Resolve, YamlFixer, NormalizeRef, Merge
 from .objects import Operation
 
 
@@ -36,6 +36,9 @@ def up(obj, app, jref):
         # pre resolve Schema Object
         # note: make sure this object is cached before using 'Resolve' scanner
         scanner.scan(root=ret, route=[Resolve(app)])
+
+        # merge path-item
+        scanner.scan(root=ret, route=[Merge(app)])
     else:
         raise Exception('unsupported migration: {} to 2.0'.format(ret.__swagger_version__))
 

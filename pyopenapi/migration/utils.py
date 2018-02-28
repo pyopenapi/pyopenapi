@@ -281,7 +281,9 @@ def deref(obj, guard=None):
     return cur
 
 def final(obj):
-    return getattr(obj, 'final_obj', None) or obj
+    if obj.ref:
+        return obj.get_attrs('migration').final_obj or obj
+    return obj
 
 def get_dict_as_tuple(d):
     """ get the first item in dict,

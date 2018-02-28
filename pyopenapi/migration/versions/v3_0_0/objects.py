@@ -429,8 +429,6 @@ class Operation(Base2_v3_0_0):
     }
 
     __internal__ = {
-        'final_obj': dict(),
-
         'external_docs': dict(key='externalDocs', builder=rename),
         'operation_id': dict(key='operationId', builder=rename),
         'request_body': dict(key='requestBody', builder=rename),
