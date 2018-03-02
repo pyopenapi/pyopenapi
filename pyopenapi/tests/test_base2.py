@@ -3,6 +3,7 @@ from pyopenapi.spec.base2 import (
     map_, list_,
     _Map, _List,
     )
+from pyopenapi.migration.spec.attr import AttributeGroup
 import unittest
 
 
@@ -100,6 +101,12 @@ class KObj(Base2):
         'c': dict(child_builder=map_(is_str))
     }
 KObj.attach_field('k1', builder=child, child_builder=KObj)
+
+
+class BGroup(AttributeGroup):
+    __attributes__ = {
+        'a': dict(),
+    }
 
 
 class Base2TestCase(unittest.TestCase):
@@ -561,4 +568,19 @@ class Base2TestCase(unittest.TestCase):
     def test_map_len(self):
         k = KObj({'c': {'a': 'ca', 'b': 'cb'}})
         self.assertEqual(len(k.c), 2)
+
+    def test_get_attrs(self):
+        """ make sure Base2Obj's get_attrs works
+        """
+        b = BObj({})
+
+        self.assertEqual(None, b.get_attrs('test'))
+
+        attr1 = b.get_attrs('test', BGroup)
+        self.assertTrue(isinstance(attr1, BGroup))
+
+        attr2 = b.get_attrs('test', BGroup)
+        self.assertEqual(id(attr1), id(attr2))
+
+        self.assertNotEqual(None, b.get_attrs('test'))
 

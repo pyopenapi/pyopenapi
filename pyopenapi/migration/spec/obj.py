@@ -480,6 +480,7 @@ class Base2Obj(_Base):
         super(Base2Obj, self).__init__(spec, path, override)
         self.children = {}
         self.internal = {}
+        self.attrs = {}
 
         # traverse through children
         for name in self.__children__:
@@ -632,6 +633,24 @@ class Base2Obj(_Base):
                     ret[jp_compose([name, cc])] = c[cc]
 
         return ret
+
+    def get_attrs(self, namespace, group_cls=None):
+        """ attach an pyopenapi.migration.spec.AttributeGroup
+
+        Args:
+         - namespace: different attribute goups are separated/accessed by namespace
+         - group_cls: the AttributeGroup to init when None is found
+        """
+
+        if namespace in self.attrs:
+            return self.attrs[namespace]
+
+        if group_cls is None:
+            return None
+
+        group = group_cls({})
+        self.attrs[namespace] = group
+        return group
 
 
 Base2 = six.with_metaclass(FieldMeta, Base2Obj)

@@ -9,4 +9,5 @@ from .obj import (
     list_,
     _Map,
     _List,
+    _Base,
     )
