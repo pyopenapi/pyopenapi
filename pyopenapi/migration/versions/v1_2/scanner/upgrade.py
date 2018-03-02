@@ -216,12 +216,13 @@ class Upgrade(object):
     """
     class Disp(Dispatcher): pass
 
-    def __init__(self, sep=consts.SCOPE_SEPARATOR):
+    def __init__(self, app, sep=consts.SCOPE_SEPARATOR):
+        self.app = app
         self.__swagger = None
         self.__sep = sep
 
     @Disp.register([ResourceListing])
-    def _resource_listing(self, path, obj, app):
+    def _resource_listing(self, path, obj):
         swagger_spec = {}
         swagger_spec['swagger'] = '2.0'
         swagger_spec['schemes'] = ['http', 'https']
@@ -273,7 +274,7 @@ class Upgrade(object):
         self.__swagger = swagger_spec
 
     @Disp.register([ApiDeclaration])
-    def _api_declaration(self, path, obj, app):
+    def _api_declaration(self, path, obj):
         name = obj.resource_path[1:]
         for t in self.__swagger['tags']:
             if t['name'] == name:
@@ -285,12 +286,12 @@ class Upgrade(object):
 
         for api in obj.apis:
             for op in api.operations:
-                convert_operation(op, api, obj, self.__swagger, self.__sep, app)
+                convert_operation(op, api, obj, self.__swagger, self.__sep, self.app)
         for _, model in obj.models.iteritems():
-            convert_model(model, obj, self.__swagger, self.__sep, app)
+            convert_model(model, obj, self.__swagger, self.__sep, self.app)
 
     @Disp.register([Authorization])
-    def _authorization(self, path, obj, app):
+    def _authorization(self, path, obj):
         ss_spec = {}
         if obj.type == 'basicAuth':
             ss_spec['type'] = 'basic'

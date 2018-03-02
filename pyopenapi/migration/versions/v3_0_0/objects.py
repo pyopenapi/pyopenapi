@@ -13,9 +13,6 @@ class Reference(Base2_v3_0_0):
     }
 
     __internal__ = {
-        'normalized_ref': dict(),
-        'ref_obj': dict(),
-
         'ref': dict(key='$ref', builder=rename)
     }
 
@@ -448,10 +445,6 @@ class PathItem(Base2_v3_0_0):
     }
 
     __internal__ = {
-        'normalized_ref': dict(),
-        'ref_obj': dict(),
-        'final_obj': dict(),
-
         'ref': dict(key='$ref', builder=rename),
         'x_pyopenapi_internal_request_body': dict(key='x-pyopenapi_internal_request_body', builder=rename),
     }

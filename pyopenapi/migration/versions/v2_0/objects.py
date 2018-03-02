@@ -39,8 +39,6 @@ class Reference(BaseObj_v2_0):
     }
 
     __internal__ = {
-        'ref_obj': dict(),
-
         'ref': dict(key='$ref', builder=rename),
     }
 
@@ -160,11 +158,6 @@ class Schema(BaseSchema):
     }
 
     __internal__ = {
-        'ref_obj': dict(),
-        'final': dict(),
-        'name': dict(),
-        'normalized_ref': dict(),
-
         'ref': dict(key='$ref', builder=rename),
         'max_properties': dict(key='maxProperties', builder=rename),
         'min_properties': dict(key='minProperties', builder=rename),
@@ -242,9 +235,6 @@ class Parameter(BaseSchema):
     }
 
     __internal__ = {
-        'ref_obj': dict(),
-        'normalized_ref': dict(),
-
         'in_': dict(key='in', builder=rename),
         'collection_format': dict(key='collectionFormat', builder=rename),
         'allow_empty_value': dict(key='allowEmptyValue', builder=rename),
@@ -290,10 +280,6 @@ class Response(BaseObj_v2_0):
         'headers': dict(child_builder=map_(Header)),
     }
 
-    __internal__ = {
-        'ref_obj': dict(),
-        'normalized_ref': dict(),
-    }
 
 ResponseOrReference = if_not_ref_else(Response)
 MapOfResponseOrReference = map_(ResponseOrReference)
@@ -354,9 +340,6 @@ class PathItem(BaseObj_v2_0):
     }
 
     __internal__ = {
-        'ref_obj': dict(),
-        'normalized_ref': dict(),
-
         'ref': dict(key='$ref', builder=rename),
     }
 

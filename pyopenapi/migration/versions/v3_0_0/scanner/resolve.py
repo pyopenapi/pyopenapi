@@ -28,6 +28,10 @@ from ..objects import (
     SecuritySchemeOrReference,
     CallbackOrReference,
     )
+from ..attrs import (
+    ReferenceAttributeGroup,
+    PathItemAttributeGroup,
+    )
 import six
 
 def _resolve(o, expected, app, path):
@@ -37,13 +41,18 @@ def _resolve(o, expected, app, path):
     if not isinstance(o, (Reference, PathItem)):
         return
 
-    if not o.normalized_ref:
+    attrs = o.get_attrs(
+        'migration',
+        ReferenceAttributeGroup if isinstance(o, Reference) else PathItemAttributeGroup
+    )
+
+    if not attrs.normalized_ref:
         if isinstance(o, Reference):
             raise ReferenceError('empty normalized_ref for {} in {}'.format(o.ref, path))
         return
 
     ro, new_ref = app.resolve_obj(
-        o.normalized_ref,
+        attrs.normalized_ref,
         from_spec_version='2.0',
         parser=expected,
         to_spec_version='3.0.0',
@@ -57,8 +66,8 @@ def _resolve(o, expected, app, path):
     else:
         o.ref = new_ref
 
-    o.normalized_ref = new_ref
-    o.ref_obj = ro
+    attrs.normalized_ref = new_ref
+    attrs.ref_obj = ro
 
 
 class Resolve(object):

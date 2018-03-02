@@ -7,10 +7,10 @@ from .objects import Operation
 
 def up(obj, app, jref):
     ret = obj
-    scanner = Scanner(app)
+    scanner = Scanner2()
 
     if ret.__swagger_version__ == '1.2':
-        converter = Upgrade(app.sep)
+        converter = Upgrade(app, sep=app.sep)
 
         scanner.scan(root=ret, route=[converter])
         # scan through each resource
@@ -35,7 +35,7 @@ def up(obj, app, jref):
 
         # pre resolve Schema Object
         # note: make sure this object is cached before using 'Resolve' scanner
-        scanner.scan(root=ret, route=[Resolve()])
+        scanner.scan(root=ret, route=[Resolve(app)])
     else:
         raise Exception('unsupported migration: {} to 2.0'.format(ret.__swagger_version__))
 

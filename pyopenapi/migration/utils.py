@@ -268,9 +268,16 @@ def deref(obj, guard=None):
     """
     cur, guard = obj, guard or CycleGuard()
     guard.update(cur)
-    while cur and getattr(cur, 'ref_obj', None) != None:
-        cur = cur.ref_obj
+    while cur and getattr(cur, 'ref', None) != None:
+        attrs = cur.get_attrs('migration')
+        if not attrs:
+            break
+        if attrs.ref_obj is None:
+            break
+
+        cur = attrs.ref_obj
         guard.update(cur)
+
     return cur
 
 def final(obj):

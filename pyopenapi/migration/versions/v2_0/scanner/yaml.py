@@ -13,7 +13,7 @@ class YamlFixer(object):
     class Disp(Dispatcher): pass
 
     @Disp.register([Operation])
-    def _op(self, _, obj, app):
+    def _op(self, _, obj):
         """ convert status code in Responses from int to string
         """
         if obj.responses == None: return

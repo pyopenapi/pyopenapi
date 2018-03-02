@@ -494,8 +494,8 @@ def to_info(obj, path):
 
 def to_path_item(obj, root_url, path, consumes=None, produces=None):
     ret, reloc = {}, {}
-    if obj.normalized_ref:
-        ret['$ref'] = obj.normalized_ref
+    if obj.ref:
+        ret['$ref'] = obj.get_attrs('migration').normalized_ref
 
     # parameters
     body = None
