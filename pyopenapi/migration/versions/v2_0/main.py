@@ -10,7 +10,7 @@ def up(obj, app, jref):
     scanner = Scanner2()
 
     if ret.__swagger_version__ == '1.2':
-        converter = Upgrade(app, sep=app.sep)
+        converter = Upgrade(sep=app.sep)
 
         scanner.scan(root=ret, route=[converter])
         # scan through each resource

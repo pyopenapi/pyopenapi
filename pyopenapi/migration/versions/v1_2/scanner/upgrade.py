@@ -19,13 +19,24 @@ import six
 def _get_name(path):
     return path.split('/', 3)[2]
 
+_primitives = (
+    'integer',
+    'number',
+    'string',
+    'boolean',
+    'array',
+    'void'
+    )
+def _is_primitive(t):
+    return t in _primitives
 
-def update_type_and_ref(dst, src, scope, sep, app):
+
+def update_type_and_ref(dst, src, scope, sep):
     ref = getattr(src, '$ref')
     if ref:
         dst['$ref'] = '#/definitions/' + scope_compose(scope, ref, sep=sep)
 
-    if app.prim_factory.is_primitive(getattr(src, 'type', None)):
+    if _is_primitive(getattr(src, 'type', None)):
         dst['type'] = src.type.lower()
     elif src.type:
         dst['$ref'] = '#/definitions/' + scope_compose(scope, src.type, sep=sep)
@@ -49,12 +60,12 @@ def convert_min_max(dst, src):
     _from_str('maximum')
 
 
-def convert_schema_from_datatype(obj, scope, sep, app):
+def convert_schema_from_datatype(obj, scope, sep):
     if obj == None:
         return None
 
     spec = {}
-    update_type_and_ref(spec, obj, scope, sep, app)
+    update_type_and_ref(spec, obj, scope, sep)
     if obj.is_set('format'):
         spec['format'] = obj.format
     if obj.is_set('defaultValue'):
@@ -64,17 +75,17 @@ def convert_schema_from_datatype(obj, scope, sep, app):
     spec['enum'] = obj.enum
     if obj.items:
         item_spec = {}
-        update_type_and_ref(item_spec, obj.items, scope, sep, app)
+        update_type_and_ref(item_spec, obj.items, scope, sep)
         item_spec['format'] = obj.items.format
         spec['items'] = item_spec
 
     return spec
 
-def convert_items(o, app):
+def convert_items(o):
     items_spec = {}
     if getattr(o, '$ref'):
         raise SchemaError('Can\'t have $ref for Items')
-    if not app.prim_factory.is_primitive(getattr(o, 'type', None)):
+    if not _is_primitive(getattr(o, 'type', None)):
         raise SchemaError('Non primitive type is not allowed for Items')
     items_spec['type'] = o.type.lower()
 
@@ -83,7 +94,7 @@ def convert_items(o, app):
 
     return items_spec
 
-def convert_parameter(param, scope, sep, app):
+def convert_parameter(param, scope, sep):
     p_spec = {}
     if param.is_set('name'):
         p_spec['name'] = param.name
@@ -98,7 +109,7 @@ def convert_parameter(param, scope, sep, app):
         p_spec['in'] = param.paramType
 
     if 'body' == p_spec['in']:
-        p_spec['schema'] = convert_schema_from_datatype(param, scope, sep, app)
+        p_spec['schema'] = convert_schema_from_datatype(param, scope, sep)
     else:
         if getattr(param, '$ref'):
             raise SchemaError('Can\'t have $ref in non-body Parameters')
@@ -108,7 +119,7 @@ def convert_parameter(param, scope, sep, app):
             p_spec['collectionFormat'] = 'csv'
             if param.is_set('uniqueItems'):
                 p_spec['uniqueItems'] = param.uniqueItems
-            p_spec['items'] = convert_items(param, app)
+            p_spec['items'] = convert_items(param)
             if param.is_set("defaultValue"):
                 p_spec['default'] = [param.defaultValue]
             p_spec['items']['enum'] = param.enum
@@ -125,11 +136,11 @@ def convert_parameter(param, scope, sep, app):
             p_spec['collectionFormat'] = 'csv'
             if param.is_set('uniqueItems'):
                 p_spec['uniqueItems'] = param.uniqueItems
-            p_spec['items'] = convert_items(param.items, app)
+            p_spec['items'] = convert_items(param.items)
 
     return p_spec
 
-def convert_operation(op, api, api_decl, swagger, sep, app):
+def convert_operation(op, api, api_decl, swagger, sep):
     op_spec = {}
 
     scope = api_decl.resourcePath[1:]
@@ -153,7 +164,7 @@ def convert_operation(op, api, api_decl, swagger, sep, app):
 
     parameters = op_spec.setdefault('parameters', [])
     for p in op.parameters:
-        parameters.append(convert_parameter(p, scope, sep, app))
+        parameters.append(convert_parameter(p, scope, sep))
 
     # if there is not authorizations in this operation,
     # looking for it in api-declaration object.
@@ -167,7 +178,7 @@ def convert_operation(op, api, api_decl, swagger, sep, app):
     op_spec['responses'] = {}
     resp_spec = {}
     if op.type != 'void':
-        resp_spec['schema'] = convert_schema_from_datatype(op, scope, sep, app)
+        resp_spec['schema'] = convert_schema_from_datatype(op, scope, sep)
     resp_spec['description'] = '' # description is a required field in 2.0 Response object
     op_spec['responses']['default'] = resp_spec
 
@@ -178,7 +189,7 @@ def convert_operation(op, api, api_decl, swagger, sep, app):
     method = op.method.lower()
     swagger['paths'][path][method] = op_spec
 
-def convert_model(model, api_decl, swagger, sep, app):
+def convert_model(model, api_decl, swagger, sep):
     scope = api_decl.resourcePath[1:]
 
     # Ex. a 'Status' model under 'Pet' resource
@@ -188,7 +199,7 @@ def convert_model(model, api_decl, swagger, sep, app):
 
     props = {}
     for name, prop in six.iteritems(model.properties):
-        props[name] = convert_schema_from_datatype(prop, scope, sep, app)
+        props[name] = convert_schema_from_datatype(prop, scope, sep)
         props[name]['description'] = prop.description
 
     s_spec.setdefault('properties', {}).update(props)
@@ -216,8 +227,7 @@ class Upgrade(object):
     """
     class Disp(Dispatcher): pass
 
-    def __init__(self, app, sep=consts.SCOPE_SEPARATOR):
-        self.app = app
+    def __init__(self, sep=consts.SCOPE_SEPARATOR):
         self.__swagger = None
         self.__sep = sep
 
@@ -286,9 +296,9 @@ class Upgrade(object):
 
         for api in obj.apis:
             for op in api.operations:
-                convert_operation(op, api, obj, self.__swagger, self.__sep, self.app)
+                convert_operation(op, api, obj, self.__swagger, self.__sep)
         for _, model in obj.models.iteritems():
-            convert_model(model, obj, self.__swagger, self.__sep, self.app)
+            convert_model(model, obj, self.__swagger, self.__sep)
 
     @Disp.register([Authorization])
     def _authorization(self, path, obj):
