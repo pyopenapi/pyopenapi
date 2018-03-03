@@ -581,9 +581,14 @@ class Base2Obj(_Base):
 
         # dump each field
         for name in fs:
+            if not self.is_set(name):
+                continue
+
             o = getattr(self, name)
-            if o:
-                ret[name] = o
+            if o is None:
+                continue
+
+            ret[name] = o
 
         return ret
 

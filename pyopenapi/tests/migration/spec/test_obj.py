@@ -584,3 +584,10 @@ class Base2TestCase(unittest.TestCase):
 
         self.assertNotEqual(None, b.get_attrs('test'))
 
+    def test_dump_empty(self):
+        a = AObj({'a': 0, 'b': ''})
+
+        self.assertTrue('a' in a.dump())
+        self.assertTrue('b' in a.dump())
+        self.assertFalse('c' in a.dump())
+
