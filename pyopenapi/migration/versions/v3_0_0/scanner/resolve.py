@@ -53,7 +53,7 @@ def _resolve(o, expected, app, path):
 
     ro, new_ref = app.resolve_obj(
         attrs.normalized_ref,
-        from_spec_version='2.0',
+        from_spec_version=app.original_spec_version if app.original_spec_version == '3.0.0' else '2.0',
         parser=expected,
         to_spec_version='3.0.0',
         remove_dummy=True,
