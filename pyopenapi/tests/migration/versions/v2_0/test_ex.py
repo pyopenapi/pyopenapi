@@ -4,8 +4,6 @@ from pyopenapi.migration.utils import deref, final
 # from pyopenapi.migration.versions.v2_0.parser import PathItemContext
 from ....utils import get_test_data_folder, gen_test_folder_hook
 import unittest
-import os
-import six
 
 
 class ExternalDocumentTestCase(unittest.TestCase):
@@ -42,26 +40,6 @@ class ExternalDocumentTestCase(unittest.TestCase):
         self.assertNotEqual(id(p), id(another_p))
         self.assertTrue('default' in another_p.get.responses)
         self.assertTrue('404' in another_p.get.responses)
-
-    def test_full_path_item_url(self):
-        """ make sure url is correctly patched
-        """
-        p = self.app.resolve('#/paths/~1full')
-        self.assertEqual(p.get.url, '//test.com/v1/full')
-
-        # only root document would be patched, others are only loaded for reference
-        original_p = self.app.resolve('file:///full/swagger.json#/paths/~1user', PathItemContext)
-        self.assertEqual(original_p.get.url, None)
-
-    def test_partial_path_item(self):
-        """ make sure partial swagger.json with PathItem
-        loaded correctly.
-        """
-        p = self.app.resolve('#/paths/~1partial')
-        self.assertEqual(p.get.url, '//test.com/v1/partial')
-
-        original_p = self.app.resolve('file:///partial/path_item/swagger.json')
-        self.assertEqual(original_p.get.url, None)
 
     def test_partial_schema(self):
         """  make sure partial swagger.json with Schema

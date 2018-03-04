@@ -57,19 +57,6 @@ class ResolveTestCase(unittest.TestCase):
             id(self.app.resolve('#/components/schemas/d1'))
         )
 
-    def test_parameter(self):
-        """ make sure $ref to Parameter works """
-        p = final(self.app.s('/a').get)
-
-        self.assertEqual(len(p.parameters), 4)
-        self.assertEqual(deref(p.parameters[0]).name, 'p1_d')
-        self.assertEqual(deref(p.parameters[1]).name, 'p2_d')
-        self.assertEqual(deref(p.parameters[2]).name, 'p3_d')
-        self.assertEqual(deref(p.parameters[3]).name, 'p4_d')
-
-        body = deref(p.request_body)
-        self.assertEqual(deref(body.content['application/json'].schema).type_, 'string')
-
     def test_response(self):
         """ make sure $ref to Response works """
         p = final(self.app.s('/a').get)
