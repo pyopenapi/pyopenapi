@@ -83,7 +83,7 @@ class ScannerTestCase(unittest.TestCase):
         for name in app.raw.cached_apis:
             s.scan(route=[co], root=app.raw.cached_apis[name])
 
-        self.assertEqual(co.long_name, '#/apis/3/operations/0/responseMessages/0')
+        self.assertEqual(len(co.long_name), len('#/apis/3/operations/0/responseMessages/0'))
         self.assertEqual(co.total, {
             Authorization: 1,
             ApiDeclaration: 3,
