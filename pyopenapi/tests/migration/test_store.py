@@ -83,11 +83,11 @@ class SpecObjStoreTestCase(unittest.TestCase):
         self.assertEqual({}, cache.get_under(url, '#/definitions/Order', version))
 
         under = cache.get_under(url, '#/definitions', version)
-        self.assertEqual(under.keys(), ['Pet'])
+        self.assertEqual(list(under.keys()), ['Pet'])
         self.assertEqual({}, cache.get_under(url, '#/definitions', version))
 
         under = cache.get_under(url, '#', version)
-        self.assertEqual(under.keys(), [''])
+        self.assertEqual(list(under.keys()), [''])
         self.assertEqual({}, cache.get_under(url, '#', version))
 
         # get with empty string is not allowed

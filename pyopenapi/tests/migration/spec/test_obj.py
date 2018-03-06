@@ -116,7 +116,7 @@ class Base2TestCase(unittest.TestCase):
         """ check FieldMeta
         """
         # should fill __child__ with fields created by builder:child
-        self.assertEqual(AObj.__children__.keys(), ['c'])
+        self.assertEqual(list(AObj.__children__.keys()), ['c'])
 
     def test_field(self):
         """ make sure builder:field works

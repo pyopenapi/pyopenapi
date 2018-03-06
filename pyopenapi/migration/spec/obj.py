@@ -4,6 +4,7 @@ import six
 import types
 import copy
 import os
+import itertools
 
 
 def field(key, required=False, default=None, restricted=False, readonly=True):
@@ -556,7 +557,7 @@ class Base2Obj(_Base):
                 return s == o, name
             return True, ''
 
-        for name in self.__fields__.keys() + self.__children__.keys():
+        for name in itertools.chain(six.iterkeys(self.__fields__), six.iterkeys(self.__children__)):
             same, n = _cmp_(jp_compose(name, base), getattr(self, name), getattr(other, name))
             if not same:
                 return same, n
