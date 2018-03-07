@@ -3,6 +3,7 @@ from pyopenapi.migration.base import ApiBase
 from pyopenapi.migration import utils, consts
 import os
 import six
+import sys
 
 def get_test_data_folder(version='1.2', which=''):
     """
@@ -73,6 +74,12 @@ def gen_test_folder_hook(folder):
         return six.moves.urllib.parse.urlunparse(p[:2]+(path,)+p[3:])
 
     return _hook
+
+def is_windows():
+    return os.name == 'nt'
+
+def is_py2():
+    return sys.version_info.major < 3
 
 class SampleApp(ApiBase):
     """ app for test

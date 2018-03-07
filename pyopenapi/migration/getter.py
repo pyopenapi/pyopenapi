@@ -6,6 +6,7 @@ import yaml
 import six
 import os
 import logging
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,12 @@ class LocalGetter(Getter):
     """
     def __init__(self, path):
         super(LocalGetter, self).__init__(path)
+
+        if path.startswith('file://'):
+            parsed = six.moves.urllib.parse.urlparse(path)
+            path = parsed.path
+        if re.match('^/[A-Z]+:', path) is not None:
+            path = os.path.abspath(path[1:])
 
         for n in consts.SWAGGER_FILE_NAMES:
             if self.base_path.endswith(n):

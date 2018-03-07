@@ -1,26 +1,20 @@
 from pyopenapi.contrib.pyswagger import App
 from pyopenapi.migration import errs
+from pyopenapi.migration.utils import normalize_url
 from pyopenapi.migration.versions.v2_0 import objects
-from ....utils import get_test_data_folder
+from ....utils import get_test_data_folder, is_windows
 import unittest
 import os
 import six
 
 
-folder = get_test_data_folder(
+folder = normalize_url(get_test_data_folder(
     version='1.2',
     which='wordnik'
-)
+))
 
 def _pf(s):
-    return six.moves.urllib.parse.urlunparse((
-        'file',
-        '',
-        folder,
-        '',
-        '',
-        s))
-
+    return folder + '#' + s
 
 class Swagger_Upgrade_TestCase(unittest.TestCase):
     """ test for upgrade from converting 1.2 to 2.0 """
