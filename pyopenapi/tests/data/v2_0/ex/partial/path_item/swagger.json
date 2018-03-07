@@ -12,5 +12,14 @@
             "description":"path_item, put, response"
          }
       }
-   }
+   },
+   "parameters":[
+      {
+         "name":"body",
+         "in":"body",
+         "schema":{
+            "$ref":"file:///root/swagger.json#/definitions/s3"
+         }
+      }
+   ]
 }
