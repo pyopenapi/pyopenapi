@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from . import consts
-from .utils import patch_path
+from .. import consts
+from ..utils import patch_path
 import json
 import yaml
 import six

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from . import utils, consts
+from .. import utils, consts
 from .resolve import Resolver
 from .store import SpecObjStore
 from .versions.v1_2.objects import ResourceListing, ApiDeclaration
@@ -11,6 +11,7 @@ import six
 import logging
 import pkgutil
 import weakref
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,10 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         self.__url=url
 
         # migratable spec version
-        self.__migratable_spec_versions = utils.get_supported_versions('versions', is_pkg=True)
+        self.__migratable_spec_versions = utils.get_supported_versions(
+            os.path.join('migration', 'versions'),
+            is_pkg=True
+        )
 
         # a map from json-reference to
         # - spec.base2._Base

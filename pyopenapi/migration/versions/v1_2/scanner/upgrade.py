@@ -1,8 +1,8 @@
 from __future__ import absolute_import
+from .....errs import SchemaError
+from .....utils import scope_compose, get_or_none
+from ..... import consts
 from ....scan import Dispatcher
-from ....errs import SchemaError
-from ....utils import scope_compose, get_or_none
-from .... import consts
 from ..objects import (
     ResourceListing,
     ApiDeclaration,

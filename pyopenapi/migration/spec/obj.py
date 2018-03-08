@@ -1,5 +1,5 @@
-from ..utils import jp_compose, jp_split
-from ..errs import FieldNotExist
+from ...utils import jp_compose, jp_split
+from ...errs import FieldNotExist
 import six
 import types
 import copy

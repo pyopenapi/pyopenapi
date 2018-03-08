@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from pyopenapi.migration.base import ApiBase
-from pyopenapi.migration import utils, consts
+from pyopenapi import utils, consts
 import os
 import six
 import sys

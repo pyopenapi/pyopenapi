@@ -1,4 +1,4 @@
-from pyopenapi.migration.utils import _diff_
+from pyopenapi.utils import _diff_
 from pyopenapi.migration.versions.v2_0.objects import Swagger
 from ....utils import get_test_data_folder, SampleApp
 import os

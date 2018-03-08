@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from ....utils import jp_compose, jr_split
-from ....errs import ReferenceError
+from .....utils import jp_compose, jr_split
+from .....errs import ReferenceError
 from ....scan import Dispatcher
 from ..objects import (
     PathItem,

@@ -1,4 +1,4 @@
-from ...utils import jr_split
+from ....utils import jr_split
 from ...scan import Scanner, Scanner2
 from ..v2_0.scanner.upgrade import converters
 from ..v2_0.objects import (

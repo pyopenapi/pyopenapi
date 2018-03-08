@@ -1,5 +1,5 @@
-from pyopenapi.migration import errs
-from pyopenapi.migration.utils import normalize_url
+from pyopenapi import errs
+from pyopenapi.utils import normalize_url
 from pyopenapi.migration.versions.v2_0 import objects
 from ....utils import get_test_data_folder, is_windows, SampleApp
 import unittest

@@ -1,4 +1,4 @@
-from pyopenapi.migration.utils import deref, final
+from pyopenapi.utils import deref, final
 from pyopenapi.migration.versions.v2_0.objects import PathItem
 from ....utils import get_test_data_folder, gen_test_folder_hook, SampleApp
 import unittest

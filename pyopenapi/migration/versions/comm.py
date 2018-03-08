@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from ..errs import CycleDetectionError
-from ..utils import CycleGuard
+from ...errs import CycleDetectionError
+from ...utils import CycleGuard
 
 def _merge_path_item(obj, path, from_spec_version, to_spec_version, app, parser, attr_group_cls):
     """ resolve 'normalized_ref, and inject/merge referenced object to self.
