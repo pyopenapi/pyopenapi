@@ -1,6 +1,6 @@
-from pyopenapi.migration import utils, errs
+from pyopenapi import utils, errs
 from datetime import datetime
-from ..utils import is_windows, is_py2
+from .utils import is_windows, is_py2
 import unittest
 import functools
 import six

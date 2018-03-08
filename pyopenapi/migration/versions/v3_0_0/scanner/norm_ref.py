@@ -1,6 +1,6 @@
 from __future__ import absolute_import
+from .....utils import normalize_jr
 from ....scan import Dispatcher
-from ....utils import normalize_jr
 from ..objects import PathItem, Reference
 from ..attrs import (
     PathItemAttributeGroup,

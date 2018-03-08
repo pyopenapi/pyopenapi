@@ -1,7 +1,6 @@
 from __future__ import absolute_import
+from ....utils import final
 from ...spec import Base2, field, rename, child, list_, map_
-from ...utils import final
-# TODO: move 'io' and 'Operation.__call__' to 'contrib.pyswagger'
 import six
 
 

@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 from collections import OrderedDict
 from distutils.version import StrictVersion
-from . import utils
-from . import consts
+from .. import utils, consts
 from .spec import _Base
 import logging
 import six
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class SpecObjStore(object):
         self.__routes = {}
         self.__migratable_spec_versions = False \
             or migratable_spec_versions \
-            or utils.get_supported_versions('versions', is_pkg=True)
+            or utils.get_supported_versions(os.path.join('migration', 'versions'), is_pkg=True)
 
     #
     # spec object cache

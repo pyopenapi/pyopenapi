@@ -1,4 +1,4 @@
-from pyopenapi.migration.utils import jr_split, normalize_url
+from pyopenapi.utils import jr_split, normalize_url
 from pyopenapi.migration.versions.v3_0_0.objects import (
     Reference, Schema, Parameter,
     Header, RequestBody, Response,
