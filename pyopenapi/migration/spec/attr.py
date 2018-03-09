@@ -17,11 +17,12 @@ def attr(key, required=False, default=None):
         if key in self.attrs:
             return self.attrs[key]
         if required:
-            raise Exception('attribute not found: {} in {}'.format(key, self.__class__.__name__))
+            raise Exception('attribute not found: {} in {}'.format(
+                key, self.__class__.__name__))
         return default
 
     def _setter_(self, v):
-        self.attrs[key]= v
+        self.attrs[key] = v
 
     return property(_getter_, _setter_)
 
@@ -29,6 +30,7 @@ def attr(key, required=False, default=None):
 class AttributeMeta(type):
     """ metaclass to init attributes
     """
+
     def __new__(metacls, name, bases, spec):
         attrs = spec.setdefault('__attributes__', {})
 
@@ -49,5 +51,5 @@ class _Attrs(object):
     def __init__(self, attrs={}):
         self.attrs = attrs
 
-AttributeGroup = six.with_metaclass(AttributeMeta, _Attrs)
 
+AttributeGroup = six.with_metaclass(AttributeMeta, _Attrs)

@@ -3,12 +3,12 @@ import unittest
 
 
 class GroupA(AttributeGroup):
-        __attributes__ = {
-            'a': dict(),
-            'b': dict(default='bb'),
-            'c': dict(key='cc'),
-            'd': dict(builder=attr)
-        }
+    __attributes__ = {
+        'a': dict(),
+        'b': dict(default='bb'),
+        'c': dict(key='cc'),
+        'd': dict(builder=attr)
+    }
 
 
 class AttributeGroupTestCase(unittest.TestCase):

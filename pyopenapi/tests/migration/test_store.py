@@ -18,9 +18,9 @@ class SpecObjStoreTestCase(unittest.TestCase):
         url = 'http://localhost'
         jp = '#'
         version = '2.0'
-        obj = Swagger(json.loads(get_test_file(
-            version, 'wordnik', 'swagger.json'
-        )), '#', {})
+        obj = Swagger(
+            json.loads(get_test_file(version, 'wordnik', 'swagger.json')), '#',
+            {})
 
         cache.set(obj, url, jp, version)
         self.assertEqual(id(obj), id(cache.get(url, jp, version)))
@@ -46,32 +46,39 @@ class SpecObjStoreTestCase(unittest.TestCase):
         url = 'http://localhost'
         jp = '#'
         version = '2.0'
-        obj = Swagger(json.loads(get_test_file(
-            version, 'wordnik', 'swagger.json'
-        )), '#', {})
+        obj = Swagger(
+            json.loads(get_test_file(version, 'wordnik', 'swagger.json')), '#',
+            {})
 
         cache.set(obj, url, jp, version)
         cache.set(obj.info, url, '#/info', version)
         cache.set(obj.info.license, url, '#/info/license', version)
         cache.set(obj.definitions['Order'], url, '#/definitions/Order', version)
-        cache.set(obj.definitions['Order'].properties['id'], url, '#/definitions/Order/properties/id', version)
+        cache.set(obj.definitions['Order'].properties['id'], url,
+                  '#/definitions/Order/properties/id', version)
         cache.set(obj.definitions['Pet'], url, '#/definitions/Pet', version)
 
         under = cache.get_under(url, '#', version, remove=False)
-        self.assertEqual(sorted(under.keys()), sorted([
-            '',
-            'definitions/Order',
-            'definitions/Order/properties/id',
-            'definitions/Pet',
-            'info',
-            'info/license',
-        ]))
+        self.assertEqual(
+            sorted(under.keys()),
+            sorted([
+                '',
+                'definitions/Order',
+                'definitions/Order/properties/id',
+                'definitions/Pet',
+                'info',
+                'info/license',
+            ]))
         self.assertEqual(id(obj), id(under['']))
         self.assertEqual(id(obj.info), id(under['info']))
         self.assertEqual(id(obj.info.license), id(under['info/license']))
-        self.assertEqual(id(obj.definitions['Order']), id(under['definitions/Order']))
-        self.assertEqual(id(obj.definitions['Order'].properties['id']), id(under['definitions/Order/properties/id']))
-        self.assertEqual(id(obj.definitions['Pet']), id(under['definitions/Pet']))
+        self.assertEqual(
+            id(obj.definitions['Order']), id(under['definitions/Order']))
+        self.assertEqual(
+            id(obj.definitions['Order'].properties['id']),
+            id(under['definitions/Order/properties/id']))
+        self.assertEqual(
+            id(obj.definitions['Pet']), id(under['definitions/Pet']))
 
         under = cache.get_under(url, '#/info', version)
         self.assertEqual(sorted(under.keys()), sorted(['', 'license']))
@@ -80,7 +87,8 @@ class SpecObjStoreTestCase(unittest.TestCase):
         # test remove
         under = cache.get_under(url, '#/definitions/Order', version)
         self.assertEqual(sorted(under.keys()), sorted(['', 'properties/id']))
-        self.assertEqual({}, cache.get_under(url, '#/definitions/Order', version))
+        self.assertEqual({}, cache.get_under(url, '#/definitions/Order',
+                                             version))
 
         under = cache.get_under(url, '#/definitions', version)
         self.assertEqual(list(under.keys()), ['Pet'])
@@ -98,7 +106,8 @@ class SpecObjStoreTestCase(unittest.TestCase):
         """
 
         url = 'http://localhost'
-        cache = SpecObjStore(migratable_spec_versions=['2.0', '3.0', '4.0', '5.0', '6.0'])
+        cache = SpecObjStore(
+            migratable_spec_versions=['2.0', '3.0', '4.0', '5.0', '6.0'])
 
         cache.update_routes(url, '3.0', {'#': '#/a'})
         cache.update_routes(url, '4.0', {'#/a': '#/b'})
@@ -171,7 +180,8 @@ class SpecObjStoreTestCase(unittest.TestCase):
         self.assertRaises(Exception, rm.update_routes, url, '1.1', {})
 
         # 'to' version not in route
-        self.assertRaises(Exception, rm.relocate, url, '#/some/jp', '2.0', '2.1')
+        self.assertRaises(Exception, rm.relocate, url, '#/some/jp', '2.0',
+                          '2.1')
 
     def test_route_empty_route(self):
         """ empty route should return original JSON pointer
@@ -180,7 +190,8 @@ class SpecObjStoreTestCase(unittest.TestCase):
         rm = SpecObjStore()
 
         rm.update_routes(url, '3.0.0', {})
-        self.assertEqual(rm.relocate(url, '#/some/jp', '1.2', '3.0.0'), '#/some/jp')
+        self.assertEqual(
+            rm.relocate(url, '#/some/jp', '1.2', '3.0.0'), '#/some/jp')
 
     def test_route_fake_route(self):
         """ make sure patching with route from
@@ -192,22 +203,19 @@ class SpecObjStoreTestCase(unittest.TestCase):
         rm.update_routes(url, '3.0.0', {})
         self.assertEqual(
             rm.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
-            '#/some/json/pointer'
-        )
+            '#/some/json/pointer')
 
         # the result of multiple calls to 'update' could be accumulated
         rm.update_routes(url, '3.0.0', {'#/some': '#/some3'})
         self.assertEqual(
             rm.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
-            '#/some3/json/pointer'
-        )
+            '#/some3/json/pointer')
 
         # longer JSON pointer would be picked
         rm.update_routes(url, '3.0.0', {'#/some/json': '#/some3/json3'})
         self.assertEqual(
             rm.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
-            '#/some3/json3/pointer'
-        )
+            '#/some3/json3/pointer')
 
     def test_route_nested_route(self):
         """ make sure nested route works
@@ -215,40 +223,38 @@ class SpecObjStoreTestCase(unittest.TestCase):
         url = 'http://localhost/some/path'
         rm = SpecObjStore()
 
-        rm.update_routes(url, '3.0.0', {
-            '#': {
-                'some/path': {
-                    # relative, just replace the last part
-                    'to/another/one': 'another2/two'
-                },
+        rm.update_routes(
+            url,
+            '3.0.0',
+            {
+                '#': {
+                    'some/path': {
+        # relative, just replace the last part
+                        'to/another/one': 'another2/two'
+                    },
 
-                # real example from 3.0.0
-                'parameters': {
-                    '': '#/components/parameters',
-                    'body_1': '#/components/requestBodies/body_1'
-                },
-
-                'paths': {
-                    '~1p3': {
-                        'parameters/3': 'x-pyopenapi_internal_request_body'
+        # real example from 3.0.0
+                    'parameters': {
+                        '': '#/components/parameters',
+                        'body_1': '#/components/requestBodies/body_1'
+                    },
+                    'paths': {
+                        '~1p3': {
+                            'parameters/3': 'x-pyopenapi_internal_request_body'
+                        }
                     }
                 }
-            }
-        })
+            })
 
         self.assertEqual(
             rm.relocate(url, '#/some/path/to/another/one/test', '2.0', '3.0.0'),
-            '#/some/path/another2/two/test'
-        )
+            '#/some/path/another2/two/test')
         self.assertEqual(
             rm.relocate(url, '#/parameters', '2.0', '3.0.0'),
-            '#/components/parameters'
-        )
+            '#/components/parameters')
         self.assertEqual(
             rm.relocate(url, '#/parameters/body_1', '2.0', '3.0.0'),
-            '#/components/requestBodies/body_1'
-        )
+            '#/components/requestBodies/body_1')
         self.assertEqual(
             rm.relocate(url, '#/paths/~1p3/parameters/3', '2.0', '3.0.0'),
-            '#/paths/~1p3/x-pyopenapi_internal_request_body'
-        )
+            '#/paths/~1p3/x-pyopenapi_internal_request_body')

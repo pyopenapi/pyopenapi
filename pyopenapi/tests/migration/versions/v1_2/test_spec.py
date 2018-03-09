@@ -1,30 +1,15 @@
 from pyopenapi.migration.versions.v1_2.objects import (
-    Info,
-    Authorization,
-    Scope,
-    Items,
-    GrantTypes,
-    Implicit,
-    AuthorizationCode,
-    LoginEndpoint,
-    TokenRequestEndpoint,
-    TokenEndpoint,
-    ApiDeclaration,
-    ResourceInListing,
-    Operation,
-    Parameter,
-    ResponseMessage,
-    Authorizations,
+    Info, Authorization, Scope, Items, GrantTypes, Implicit, AuthorizationCode,
+    LoginEndpoint, TokenRequestEndpoint, TokenEndpoint, ApiDeclaration,
+    ResourceInListing, Operation, Parameter, ResponseMessage, Authorizations,
     Model)
 from ....utils import get_test_data_folder, SampleApp
 import unittest
 import six
 
-
 app = SampleApp.create(
-    get_test_data_folder(version='1.2', which='wordnik'),
-    to_spec_version='2.0'
-)
+    get_test_data_folder(version='1.2', which='wordnik'), to_spec_version='2.0')
+
 
 class PropertyTestCase(unittest.TestCase):
     """ make sure properties' existence & type """
@@ -38,7 +23,8 @@ class PropertyTestCase(unittest.TestCase):
     def test_authorizations(self):
         """ authorizations """
         self.assertTrue('oauth2' in app.raw.authorizations)
-        self.assertTrue(isinstance(app.raw.authorizations['oauth2'], Authorization))
+        self.assertTrue(
+            isinstance(app.raw.authorizations['oauth2'], Authorization))
         self.assertEqual(app.raw.authorizations['oauth2'].type, 'oauth2')
 
     def test_scope(self):
@@ -67,8 +53,7 @@ class PropertyTestCase(unittest.TestCase):
         implicit = app.raw.authorizations['oauth2'].grantTypes.implicit
         self.assertTrue(isinstance(implicit.loginEndpoint, LoginEndpoint))
         self.assertEqual(implicit.loginEndpoint.url,
-            'http://petstore.swagger.wordnik.com/api/oauth/dialog')
-
+                         'http://petstore.swagger.wordnik.com/api/oauth/dialog')
 
     def test_authorization_code(self):
         """ authorization code """
@@ -78,18 +63,21 @@ class PropertyTestCase(unittest.TestCase):
     def test_token_request_endpoint(self):
         """ token request endpoint """
         auth = app.raw.authorizations['oauth2'].grantTypes.authorization_code
-        self.assertTrue(isinstance(auth.tokenRequestEndpoint,TokenRequestEndpoint))
-        self.assertEqual(auth.tokenRequestEndpoint.url,
+        self.assertTrue(
+            isinstance(auth.tokenRequestEndpoint, TokenRequestEndpoint))
+        self.assertEqual(
+            auth.tokenRequestEndpoint.url,
             'http://petstore.swagger.wordnik.com/api/oauth/requestToken')
         self.assertEqual(auth.tokenRequestEndpoint.clientIdName, 'client_id')
-        self.assertEqual(auth.tokenRequestEndpoint.clientSecretName, 'client_secret')
+        self.assertEqual(auth.tokenRequestEndpoint.clientSecretName,
+                         'client_secret')
 
     def test_token_endpoint(self):
         """ token endpoint """
         auth = app.raw.authorizations['oauth2'].grantTypes.authorization_code
         self.assertTrue(isinstance(auth.tokenEndpoint, TokenEndpoint))
         self.assertEqual(auth.tokenEndpoint.url,
-            'http://petstore.swagger.wordnik.com/api/oauth/token')
+                         'http://petstore.swagger.wordnik.com/api/oauth/token')
         self.assertEqual(auth.tokenEndpoint.tokenName, 'auth_code')
 
     def test_resource_pet(self):
@@ -98,7 +86,8 @@ class PropertyTestCase(unittest.TestCase):
         self.assertTrue(isinstance(pet, ApiDeclaration))
         self.assertEqual(pet.swaggerVersion, '1.2')
         self.assertEqual(pet.apiVersion, '1.0.0')
-        self.assertEqual(pet.basePath, 'http://petstore.swagger.wordnik.com/api')
+        self.assertEqual(pet.basePath,
+                         'http://petstore.swagger.wordnik.com/api')
         self.assertEqual(pet.resourcePath, '/pet')
         self.assertTrue('application/json' in pet.produces)
         self.assertTrue('application/xml' in pet.produces)
@@ -114,17 +103,13 @@ class PropertyTestCase(unittest.TestCase):
         for api in pet.apis:
             nick_names.extend([op.nickname for op in api.operations])
 
-        self.assertEqual(sorted(nick_names), sorted([
-            'updatePet',
-            'addPet',
-            'findPetsByStatus',
-            'findPetsByTags',
-            'partialUpdate',
-            'updatePetWithForm',
-            'deletePet',
-            'getPetById',
-            'uploadFile']
-        ))
+        self.assertEqual(
+            sorted(nick_names),
+            sorted([
+                'updatePet', 'addPet', 'findPetsByStatus', 'findPetsByTags',
+                'partialUpdate', 'updatePetWithForm', 'deletePet', 'getPetById',
+                'uploadFile'
+            ]))
 
         updatePet = pet.apis[1].operations[1]
         # make sure we locate the right operation to test
@@ -147,7 +132,8 @@ class PropertyTestCase(unittest.TestCase):
         self.assertEqual(p.name, 'body')
         self.assertEqual(p.required, True)
         self.assertEqual(p.allowMultiple, False)
-        self.assertEqual(p.description, 'Pet object that needs to be updated in the store')
+        self.assertEqual(p.description,
+                         'Pet object that needs to be updated in the store')
 
     def test_response_message(self):
         """ response message """
@@ -161,7 +147,7 @@ class PropertyTestCase(unittest.TestCase):
         """ model """
         m = app.raw.cached_apis['pet'].models['Pet']
         self.assertTrue(isinstance(m, Model))
-        self.assertEqual(m.id, 'Pet');
+        self.assertEqual(m.id, 'Pet')
         self.assertEqual(sorted(m.required), sorted(['id', 'name']))
 
     def test_authorization(self):
@@ -176,11 +162,13 @@ class PropertyTestCase(unittest.TestCase):
 
     def test_parent(self):
         """ make sure parent is assigned """
-        self.assertTrue(app.raw.cached_apis['pet'].models['Pet']._parent_._parent_ is app.raw.cached_apis['pet'])
+        self.assertTrue(app.raw.cached_apis['pet'].models['Pet']
+                        ._parent_._parent_ is app.raw.cached_apis['pet'])
 
         getUserByName = app.raw.cached_apis['user'].apis[0].operations[2]
         self.assertEqual(getUserByName.nickname, 'getUserByName')
-        self.assertTrue(getUserByName._parent_._parent_._parent_._parent_ is app.raw.cached_apis['user'])
+        self.assertTrue(getUserByName._parent_._parent_._parent_._parent_ is
+                        app.raw.cached_apis['user'])
 
         self.assertTrue(app.raw.info._parent_ is app.raw)
 
@@ -206,7 +194,8 @@ class DataTypeTestCase(unittest.TestCase):
         self.assertEqual(p.defaultValue, 'available')
         self.assertEqual(p.type, 'string')
         self.assertTrue(isinstance(p.enum, list))
-        self.assertEqual(sorted(p.enum), sorted(['available', 'pending', 'sold']))
+        self.assertEqual(
+            sorted(p.enum), sorted(['available', 'pending', 'sold']))
 
     def test_property(self):
         """ property """
@@ -232,15 +221,24 @@ class DataTypeTestCase(unittest.TestCase):
         self.assertEqual(getattr(p['tags'].items, '$ref'), 'Tag')
         # status
         self.assertEqual(p['status'].type, 'string')
-        self.assertEqual(sorted(p['status'].enum), sorted(['available', 'pending', 'sold']))
+        self.assertEqual(
+            sorted(p['status'].enum), sorted(['available', 'pending', 'sold']))
 
     def test_field_name(self):
         """ field_name """
-        self.assertEqual(sorted(app.raw._field_names_), sorted(['info', 'authorizations', 'apiVersion', 'swaggerVersion', 'apis']))
+        self.assertEqual(
+            sorted(app.raw._field_names_),
+            sorted([
+                'info', 'authorizations', 'apiVersion', 'swaggerVersion', 'apis'
+            ]))
 
     def test_children(self):
         """ children """
         chd = app.raw._children_
         self.assertEqual(len(chd), 5)
-        self.assertEqual(set(['/user', '/pet', '/store']), set([v.path for v in six.itervalues(chd) if isinstance(v, ResourceInListing)]))
-
+        self.assertEqual(
+            set(['/user', '/pet', '/store']),
+            set([
+                v.path for v in six.itervalues(chd)
+                if isinstance(v, ResourceInListing)
+            ]))

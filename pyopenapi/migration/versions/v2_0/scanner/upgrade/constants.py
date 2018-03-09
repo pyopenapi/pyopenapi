@@ -49,5 +49,3 @@ FILE_CONTENT_TYPES = [
     'video/webm',
     'video/ogg',
 ]
-
-

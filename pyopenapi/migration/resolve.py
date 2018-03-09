@@ -6,7 +6,6 @@ import os
 import inspect
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -71,7 +70,9 @@ class Resolver(object):
                 elif isinstance(obj, dict):
                     obj = obj[t]
                 else:
-                    raise Exception('Invalid type to resolve json-pointer: {0}'.format(str(type(obj))))
+                    raise Exception(
+                        'Invalid type to resolve json-pointer: {0}'.format(
+                            str(type(obj))))
         else:
             raise Exception('Unable to resolve: {0}'.format(jref))
 

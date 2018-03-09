@@ -44,12 +44,13 @@ class ParameterContext(object):
             return [self.get_default_mime_type()]
 
         if self.is_file:
-            return list(set(self.__valid_mime_types) & set(FILE_CONTENT_TYPES)) or [self.get_default_mime_type()]
+            return list(set(self.__valid_mime_types) & set(FILE_CONTENT_TYPES)
+                        ) or [self.get_default_mime_type()]
         elif self.is_form:
-            return list(set(self.__valid_mime_types) & set([
-                'application/x-www-form-urlencoded',
-                'multipart/form-data'
-            ])) or [self.get_default_mime_type()]
+            return list(
+                set(self.__valid_mime_types) & set([
+                    'application/x-www-form-urlencoded', 'multipart/form-data'
+                ])) or [self.get_default_mime_type()]
         else:
             return self.__valid_mime_types
 
@@ -62,4 +63,3 @@ class ParameterContext(object):
             return 'application/json'
         else:
             return 'text/plain'
-

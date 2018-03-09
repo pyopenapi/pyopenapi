@@ -40,6 +40,7 @@ def up(obj, app, jref):
         # merge path-item
         scanner.scan(root=ret, route=[Merge(app)])
     else:
-        raise Exception('unsupported migration: {} to 2.0'.format(ret.__swagger_version__))
+        raise Exception('unsupported migration: {} to 2.0'.format(
+            ret.__swagger_version__))
 
     return ret, {}

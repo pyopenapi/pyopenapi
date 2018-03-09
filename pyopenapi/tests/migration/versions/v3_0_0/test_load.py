@@ -13,39 +13,50 @@ class Load_3_0_0_SpecTestCase(unittest.TestCase):
         """ load api-with-examples.yaml
         """
         oai = OpenApi(
-            yaml.load(get_test_file(version='3.0.0', which='openapi', file_name='api-with-examples.yaml')),
-            path='#'
-        )
+            yaml.load(
+                get_test_file(
+                    version='3.0.0',
+                    which='openapi',
+                    file_name='api-with-examples.yaml')),
+            path='#')
 
     def test_petstore_expanded(self):
         """ load petstore-expanded.yaml
         """
         oai = OpenApi(
-            yaml.load(get_test_file(version='3.0.0', which='openapi', file_name='petstore-expanded.yaml')),
-            path='#'
-        )
+            yaml.load(
+                get_test_file(
+                    version='3.0.0',
+                    which='openapi',
+                    file_name='petstore-expanded.yaml')),
+            path='#')
 
     def test_petstore(self):
         """ load pestore.yaml
         """
         oai = OpenApi(
-            yaml.load(get_test_file(version='3.0.0', which='openapi', file_name='petstore.yaml')),
-            path='#'
-        )
+            yaml.load(
+                get_test_file(
+                    version='3.0.0', which='openapi',
+                    file_name='petstore.yaml')),
+            path='#')
 
     def test_uber(self):
         """ load uber.yaml
         """
         oai = OpenApi(
-            yaml.load(get_test_file(version='3.0.0', which='openapi', file_name='uber.yaml')),
-            path='#'
-        )
+            yaml.load(
+                get_test_file(
+                    version='3.0.0', which='openapi', file_name='uber.yaml')),
+            path='#')
 
     def test_link_example(self):
         """ load uber.yaml
         """
         oai = OpenApi(
-            yaml.load(get_test_file(version='3.0.0', which='openapi', file_name='link-example.yaml')),
-            path='#'
-        )
-
+            yaml.load(
+                get_test_file(
+                    version='3.0.0',
+                    which='openapi',
+                    file_name='link-example.yaml')),
+            path='#')

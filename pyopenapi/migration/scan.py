@@ -12,7 +12,9 @@ def default_tree_traversal(root, leaves):
         # name of child are json-pointer encoded, we don't have
         # to encode it again.
         if obj.__class__ not in leaves:
-            objs.extend(map(lambda i: (path + '/' + i[0],) + (i[1],), six.iteritems(obj._children_)))
+            objs.extend(
+                map(lambda i: (path + '/' + i[0], ) + (i[1], ),
+                    six.iteritems(obj._children_)))
 
         # the path we expose here follows JsonPointer described here
         #   http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-07
@@ -22,6 +24,7 @@ def default_tree_traversal(root, leaves):
 class DispatcherMeta(type):
     """ metaclass for Dispatcher
     """
+
     def __new__(metacls, name, bases, spc):
         if 'obj_route' not in spc.keys():
             # forcely create a new obj_route
@@ -43,7 +46,9 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
         """
         """
         if not issubclass(t, Base2Obj):
-            raise ValueError('target_cls should be a subclass of Base2Obj, but got:' + str(t))
+            raise ValueError(
+                'target_cls should be a subclass of Base2Obj, but got:' + str(t)
+            )
 
         # allow register multiple handler function
         # against one object
@@ -56,6 +61,7 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
     def register(cls, target):
         """
         """
+
         def outer_fn(f):
             # what we did is simple,
             # register target_cls as key, and f as callback
@@ -88,6 +94,7 @@ def _build_route(route):
 
     return ret
 
+
 def _handle_cls(cls, app, path, obj, the_self, r, res):
     f = r.get(cls, None)
     if f:
@@ -95,6 +102,7 @@ def _handle_cls(cls, app, path, obj, the_self, r, res):
             ret = ff(the_self, path, obj, app)
             if res:
                 res(the_self, ret)
+
 
 def _handle_cls_without_app(cls, path, obj, the_self, r, res):
     f = r.get(cls, None)
@@ -109,6 +117,7 @@ def _handle_cls_without_app(cls, path, obj, the_self, r, res):
 class Scanner(object):
     """ Scanner
     """
+
     def __init__(self, app):
         super(Scanner, self).__init__()
         self.__app = app
@@ -134,6 +143,7 @@ class Scanner2(object):
     """ Scanner v2, the main change is to remove 'app' from default input. The depnedencies
     between Scannner and App should be decoupled.
     """
+
     def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
         if root == None:
             raise ValueError('Can\'t scan because root==None')
@@ -142,4 +152,3 @@ class Scanner2(object):
         for path, obj in nexter(root, leaves):
             for r in merged_r:
                 _handle_cls_without_app(obj.__class__, path, obj, *r)
-

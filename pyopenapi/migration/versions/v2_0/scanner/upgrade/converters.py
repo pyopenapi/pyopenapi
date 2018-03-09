@@ -18,6 +18,7 @@ def _generate_fields(obj, names):
 
     return ret
 
+
 def to_style_and_explode(collection_format, in_, type_, path):
     style = None
     explode = None
@@ -29,42 +30,48 @@ def to_style_and_explode(collection_format, in_, type_, path):
             style = 'simple'
     elif collection_format == 'ssv':
         if in_ != 'query' or type_ != 'array':
-            raise SchemaError('Unsupported style: ssv for {},{} {}'.format(in_, type_, path))
+            raise SchemaError('Unsupported style: ssv for {},{} {}'.format(
+                in_, type_, path))
         style = 'spaceDelimited'
     elif collection_format == 'pipes':
         if in_ != 'query' or type_ != 'array':
-            raise SchemaError('Unsupported style: pipes for {},{} {}'.format(in_, type_, path))
+            raise SchemaError('Unsupported style: pipes for {},{} {}'.format(
+                in_, type_, path))
         style = 'pipeDelimited'
     elif collection_format == 'multi':
-         if in_ in ('query'):
+        if in_ in ('query'):
             style = 'form'
             explode = True
 
     return style, explode
 
+
 def to_tag(obj, path):
     ret = {}
     ret['name'] = obj.name
-    ret.update(_generate_fields(obj, [
-        'description'
-    ]))
+    ret.update(_generate_fields(obj, ['description']))
 
     if obj.externalDocs:
-        ret['externalDocs'] = to_external_docs(obj.externalDocs, jp_compose('externalDocs', base=path))
+        ret['externalDocs'] = to_external_docs(obj.externalDocs,
+                                               jp_compose(
+                                                   'externalDocs', base=path))
 
     return ret
+
 
 def to_xml(obj, path):
     ret = {}
-    ret.update(_generate_fields(obj, [
-        'name',
-        'namespace',
-        'prefix',
-        'attribute',
-        'wrapped',
-    ]))
+    ret.update(
+        _generate_fields(obj, [
+            'name',
+            'namespace',
+            'prefix',
+            'attribute',
+            'wrapped',
+        ]))
 
     return ret
+
 
 def to_external_docs(obj, path):
     ret = {}
@@ -73,6 +80,7 @@ def to_external_docs(obj, path):
         ret['description'] = obj.description
 
     return ret
+
 
 def from_items(obj, path):
     # TODO: raise a warning for unsupported collectionformat in items in 3.0
@@ -88,16 +96,14 @@ def from_items(obj, path):
 
     return ret
 
+
 def to_schema(obj, path, items_converter=None, parameter_context=None):
     ref = getattr(obj, '$ref', None)
     if ref:
         return {'$ref': ref}
 
     if getattr(obj, 'type', None) == 'file':
-        return {
-            'type': 'string',
-            'format': 'binary'
-        }
+        return {'type': 'string', 'format': 'binary'}
 
     items_converter = items_converter or to_schema
 
@@ -112,7 +118,8 @@ def to_schema(obj, path, items_converter=None, parameter_context=None):
     if all_of:
         target = ret.setdefault('allOf', [])
         for index, o in enumerate(all_of):
-            target.append(to_schema(o, jp_compose(['allOf', str(index)], base=path)))
+            target.append(
+                to_schema(o, jp_compose(['allOf', str(index)], base=path)))
 
     items = getattr(obj, 'items', None)
     if items:
@@ -122,14 +129,20 @@ def to_schema(obj, path, items_converter=None, parameter_context=None):
     if properties:
         target = ret.setdefault('properties', {})
         for name, prop in six.iteritems(properties):
-            target[name] = to_schema(prop, jp_compose(['properties', name], base=path), items_converter=items_converter)
+            target[name] = to_schema(
+                prop,
+                jp_compose(['properties', name], base=path),
+                items_converter=items_converter)
 
     additional_properties = getattr(obj, 'additionalProperties', None)
     if isinstance(additional_properties, bool):
         if additional_properties is False:
             ret['additionalProperties'] = additional_properties
     elif additional_properties is not None:
-        ret['additionalProperties'] = to_schema(additional_properties, jp_compose('additionalProperties', base=path))
+        ret['additionalProperties'] = to_schema(additional_properties,
+                                                jp_compose(
+                                                    'additionalProperties',
+                                                    base=path))
 
     discriminator = getattr(obj, 'discriminator', None)
     if discriminator:
@@ -141,9 +154,12 @@ def to_schema(obj, path, items_converter=None, parameter_context=None):
 
     external_docs = getattr(obj, 'externalDocs', None)
     if external_docs:
-        ret['externalDocs'] = to_external_docs(external_docs, jp_compose('externalDocs', base=path))
+        ret['externalDocs'] = to_external_docs(external_docs,
+                                               jp_compose(
+                                                   'externalDocs', base=path))
 
     return ret
+
 
 def to_flows(obj, path):
     if not obj.flow:
@@ -160,6 +176,7 @@ def to_flows(obj, path):
         flow['scopes'] = obj.scopes.dump()
 
     return ret
+
 
 def to_security_scheme(obj, path):
     ret = {}
@@ -178,6 +195,7 @@ def to_security_scheme(obj, path):
 
     return ret
 
+
 def to_header(obj, path):
     ret = {}
     ret.update(_generate_fields(obj, [
@@ -185,21 +203,22 @@ def to_header(obj, path):
     ]))
     ret['schema'] = _generate_fields(obj, BASE_SCHEMA_FIELDS)
     if obj.items:
-        ret['schema']['items'] = from_items(obj.items, jp_compose('items', base=path))
+        ret['schema']['items'] = from_items(obj.items,
+                                            jp_compose('items', base=path))
 
     if obj.is_set('collectionFormat'):
-        style, explode = to_style_and_explode(
-            obj.collectionFormat,
-            'header',
-            getattr(obj, 'type', None),
-            jp_compose('collectionFormat', base=path)
-        )
+        style, explode = to_style_and_explode(obj.collectionFormat, 'header',
+                                              getattr(obj, 'type', None),
+                                              jp_compose(
+                                                  'collectionFormat',
+                                                  base=path))
         if style:
             ret['style'] = style
         if explode is not None:
             ret['explode'] = explode
 
     return ret
+
 
 def _decide_encoding_content_type(obj, path):
     type_ = getattr(obj, 'type', None)
@@ -220,21 +239,21 @@ def _decide_encoding_content_type(obj, path):
 
     return 'text/plain'
 
+
 def to_encoding(obj, content_type, path):
     ret = {}
     # TODO: support multipart/*
     if content_type in [
-        'application/x-www-form-urlencoded',
-        'multipart/form-data'
+            'application/x-www-form-urlencoded', 'multipart/form-data'
     ]:
         ret['contentType'] = _decide_encoding_content_type(obj, path)
         if obj.is_set('collectionFormat'):
-            style, explode = to_style_and_explode(
-                obj.collectionFormat,
-                getattr(obj, 'in', None),
-                getattr(obj, 'type', None),
-                jp_compose('collectionFormat', base=path)
-            )
+            style, explode = to_style_and_explode(obj.collectionFormat,
+                                                  getattr(obj, 'in', None),
+                                                  getattr(obj, 'type', None),
+                                                  jp_compose(
+                                                      'collectionFormat',
+                                                      base=path))
             if style:
                 ret['contentType'] = _decide_encoding_content_type(obj, path)
                 ret['style'] = style
@@ -242,6 +261,7 @@ def to_encoding(obj, content_type, path):
                     ret['explode'] = explode
 
     return ret
+
 
 def to_media_type(obj, content_type, existing, example, ctx, path):
     # parameter object need to merge several objects into one schema object
@@ -252,18 +272,19 @@ def to_media_type(obj, content_type, existing, example, ctx, path):
         dst_schema.setdefault('required', []).append(resolved_obj.name)
     properties = dst_schema.setdefault('properties', {})
     if resolved_obj.name in properties:
-        raise SchemaError('duplicated name of formData parameter: {}'.format(path))
+        raise SchemaError(
+            'duplicated name of formData parameter: {}'.format(path))
 
-    src_schema = getattr(resolved_obj, 'schema', None) or resolved_obj # if it's body parameter, we should use obj.schema
+    src_schema = getattr(
+        resolved_obj, 'schema', None
+    ) or resolved_obj    # if it's body parameter, we should use obj.schema
     prop = properties.setdefault(resolved_obj.name, {})
     prop.update(
         to_schema(
             obj if getattr(obj, '$ref', None) else src_schema,
             path,
             items_converter=from_items,
-            parameter_context=ctx
-        )
-    )
+            parameter_context=ctx))
     if getattr(resolved_obj, 'allowEmptyValue', None) == True:
         prop['nullable'] = True
 
@@ -272,6 +293,7 @@ def to_media_type(obj, content_type, existing, example, ctx, path):
         ret.setdefault('encoding', {})[resolved_obj.name] = encoding
 
     return ret
+
 
 def to_request_body(obj, existing_body, ctx, path):
     ret = existing_body or {}
@@ -284,7 +306,8 @@ def to_request_body(obj, existing_body, ctx, path):
     if ctx.is_file or ctx.is_form:
         for c in content_types:
             existing_media_type = content.setdefault(c, {})
-            content[c] = to_media_type(obj, c, existing_media_type, None, ctx, path)
+            content[c] = to_media_type(obj, c, existing_media_type, None, ctx,
+                                       path)
     elif ctx.is_body:
         if existing_body:
             raise SchemaError('multiple bodies found: {}'.format(path))
@@ -295,23 +318,26 @@ def to_request_body(obj, existing_body, ctx, path):
 
         for c in content_types:
             media_type = content.setdefault(c, {})
-            media_type['schema'] = to_schema(resolved_obj.schema, jp_compose('schema', base=path), parameter_context=ctx)
+            media_type['schema'] = to_schema(
+                resolved_obj.schema,
+                jp_compose('schema', base=path),
+                parameter_context=ctx)
     else:
         raise SchemaError(
             'invalid parameter context: {},{},{} for request body: {}'.format(
-                ctx.is_file, ctx.is_form, ctx.is_body, path
-            )
-        )
+                ctx.is_file, ctx.is_form, ctx.is_body, path))
 
     return ret
 
+
 def to_parameter(obj, ctx, path):
     ret = {}
-    ret.update(_generate_fields(obj, [
-        'description',
-        'required',
-        'allowEmptyValue',
-    ]))
+    ret.update(
+        _generate_fields(obj, [
+            'description',
+            'required',
+            'allowEmptyValue',
+        ]))
 
     type_ = getattr(obj, 'type', None)
     in_ = getattr(obj, 'in', None)
@@ -322,21 +348,21 @@ def to_parameter(obj, ctx, path):
     ret['name'] = obj.name
     ret['in'] = in_
     if obj.items:
-        ret.setdefault('schema', {})['items'] = from_items(obj.items, jp_compose('items', base=path))
+        ret.setdefault('schema', {})['items'] = from_items(
+            obj.items, jp_compose('items', base=path))
 
     if obj.is_set('collectionFormat'):
-        style, explode = to_style_and_explode(
-            obj.collectionFormat,
-            in_,
-            type_,
-            jp_compose('collectionFormat', base=path)
-        )
+        style, explode = to_style_and_explode(obj.collectionFormat, in_, type_,
+                                              jp_compose(
+                                                  'collectionFormat',
+                                                  base=path))
         if style:
             ret['style'] = style
         if explode is not None:
             ret['explode'] = explode
 
     return ret
+
 
 def from_parameter(obj, existing_body, consumes, path):
     ref_ = getattr(obj, '$ref', None)
@@ -356,8 +382,7 @@ def from_parameter(obj, existing_body, consumes, path):
     elif in_ == 'body':
         ctx.update(
             is_body=True,
-            is_file=getattr(deref(resolved_obj.schema), 'type', None) == 'file'
-        )
+            is_file=getattr(deref(resolved_obj.schema), 'type', None) == 'file')
         ret = to_request_body(obj, existing_body, ctx, ref_ or path)
     else:
         if ref_:
@@ -366,6 +391,7 @@ def from_parameter(obj, existing_body, consumes, path):
             ret = to_parameter(obj, ctx, path)
 
     return ret, ctx
+
 
 def to_response(obj, produces, path):
     ref = getattr(obj, '$ref', None)
@@ -378,15 +404,15 @@ def to_response(obj, produces, path):
     # be different from where '$ref' points to.
 
     ret = {}
-    ret.update(_generate_fields(resolved_obj, [
-        'description'
-    ]))
+    ret.update(_generate_fields(resolved_obj, ['description']))
 
     if resolved_obj.schema:
         if not produces:
             # generate a default content-type
             type_ = getattr(resolved_obj.schema, 'type', None)
-            produces = ['application/json' if type_ == 'object' else 'text/plain']
+            produces = [
+                'application/json' if type_ == 'object' else 'text/plain'
+            ]
 
         content = ret.setdefault('content', {})
         type_ = getattr(resolved_obj.schema, 'type', None)
@@ -396,7 +422,11 @@ def to_response(obj, produces, path):
             media_type['format'] = 'binary'
         else:
             for p in produces:
-                content[p] = {'schema': to_schema(resolved_obj.schema, jp_compose('schema', base=path))}
+                content[p] = {
+                    'schema':
+                    to_schema(resolved_obj.schema,
+                              jp_compose('schema', base=path))
+                }
 
     # header
     if resolved_obj.headers:
@@ -406,14 +436,16 @@ def to_response(obj, produces, path):
 
     return ret
 
+
 def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     ret = {}
-    ret.update(_generate_fields(obj, [
-        'summary',
-        'description',
-        'operationId',
-        'deprecated',
-    ]))
+    ret.update(
+        _generate_fields(obj, [
+            'summary',
+            'description',
+            'operationId',
+            'deprecated',
+        ]))
 
     if obj.tags:
         ret['tags'] = obj.tags.dump()
@@ -426,7 +458,8 @@ def to_operation(obj, body, root_url, path, produces=None, consumes=None):
         parameters = None
         for index, p in enumerate(obj.parameters):
             new_path = jp_compose(['parameters', str(index)], base=path)
-            new_p, pctx = from_parameter(p, body, obj.consumes or consumes, new_path)
+            new_p, pctx = from_parameter(p, body, obj.consumes or consumes,
+                                         new_path)
             if pctx.is_body:
                 body = new_p
             else:
@@ -441,29 +474,33 @@ def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     if obj.responses:
         responses = ret.setdefault('responses', {})
         for k, v in six.iteritems(obj.responses):
-            responses[k] = to_response(v, obj.produces or produces, jp_compose(['responses', k], base=path))
+            responses[k] = to_response(v, obj.produces or produces,
+                                       jp_compose(['responses', k], base=path))
 
     # externalDocs
     if obj.externalDocs:
-        ret['externalDocs'] = to_external_docs(obj.externalDocs, jp_compose('externalDocs', base=path))
+        ret['externalDocs'] = to_external_docs(obj.externalDocs,
+                                               jp_compose(
+                                                   'externalDocs', base=path))
 
     # schemes
     if obj.schemes:
         servers = ret.setdefault('servers', [])
         for s in obj.schemes:
             parts = six.moves.urllib.parse.urlsplit(root_url)
-            servers.append({'url': six.moves.urllib.parse.urlunsplit((s,) + parts[1:])})
+            servers.append({
+                'url':
+                six.moves.urllib.parse.urlunsplit((s, ) + parts[1:])
+            })
 
     return ret
+
 
 def to_contact(obj, path):
-    ret = _generate_fields(obj, (
-        'name',
-        'url',
-        'email'
-    ))
+    ret = _generate_fields(obj, ('name', 'url', 'email'))
 
     return ret
+
 
 def to_license(obj, path):
     ret = {}
@@ -471,6 +508,7 @@ def to_license(obj, path):
     ret.update(_generate_fields(obj, ['url']))
 
     return ret
+
 
 def to_info(obj, path):
     ret = {}
@@ -480,17 +518,17 @@ def to_info(obj, path):
     ret['version'] = obj.version
 
     # optional fields
-    ret.update(_generate_fields(obj, [
-        'description',
-        'termsOfService'
-    ]))
+    ret.update(_generate_fields(obj, ['description', 'termsOfService']))
 
     if obj.contact:
-        ret['contact'] = to_contact(obj.contact, jp_compose('contact', base=path))
+        ret['contact'] = to_contact(obj.contact, jp_compose(
+            'contact', base=path))
     if obj.license:
-        ret['license'] = to_license(obj.license, jp_compose('license', base=path))
+        ret['license'] = to_license(obj.license, jp_compose(
+            'license', base=path))
 
     return ret
+
 
 def to_path_item(obj, root_url, path, consumes=None, produces=None):
     ret, reloc = {}, {}
@@ -503,10 +541,13 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
         consumes, parameters = consumes or [], None
         for index, p in enumerate(obj.parameters):
             new_path = jp_compose(['parameters', str(index)], base=path)
-            new_p, pctx = from_parameter(p, body, consumes, jp_compose(['parameters', str(index)], base=path))
+            new_p, pctx = from_parameter(
+                p, body, consumes,
+                jp_compose(['parameters', str(index)], base=path))
             if pctx.is_file or pctx.is_body:
                 body = new_p
-                reloc['parameters/{}'.format(index)] = 'x-pyopenapi_internal_request_body'
+                reloc['parameters/{}'.format(
+                    index)] = 'x-pyopenapi_internal_request_body'
             else:
                 if not parameters:
                     parameters = ret.setdefault('parameters', [])
@@ -514,17 +555,23 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
 
     # operations
     for method in (
-        'get',
-        'put',
-        'post',
-        'delete',
-        'options',
-        'head',
-        'patch',
+            'get',
+            'put',
+            'post',
+            'delete',
+            'options',
+            'head',
+            'patch',
     ):
         op = getattr(obj, method, None)
         if op:
-            ret[method] = to_operation(op, body, root_url, jp_compose(method, base=path), produces=produces, consumes=consumes)
+            ret[method] = to_operation(
+                op,
+                body,
+                root_url,
+                jp_compose(method, base=path),
+                produces=produces,
+                consumes=consumes)
 
     if body:
         # TODO: this part would not be dumpped, so the dumpped
@@ -533,17 +580,15 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
 
     return ret, reloc
 
+
 def from_swagger_to_server(obj, path):
-    url = obj.host if not obj.basePath else six.moves.urllib.parse.urlunsplit((
-        obj.schemes[0] if obj.schemes else 'https',
-        obj.host,
-        obj.basePath,
-        None,
-        None
-    ))
+    url = obj.host if not obj.basePath else six.moves.urllib.parse.urlunsplit(
+        (obj.schemes[0]
+         if obj.schemes else 'https', obj.host, obj.basePath, None, None))
     url = url or '/'
 
     return {'url': url}
+
 
 def to_openapi(obj, path):
     ret = {'openapi': '3.0.0'}
@@ -562,11 +607,18 @@ def to_openapi(obj, path):
         paths = ret.setdefault('paths', {})
         for k, v in six.iteritems(obj.paths):
             if k.startswith('x-'):
-                raise ScheaError('No more extension field in Paths object: {}'.format(path))
+                raise ScheaError(
+                    'No more extension field in Paths object: {}'.format(path))
 
-            paths[k], tmp_reloc = to_path_item(v, server['url'], jp_compose(k, base=path), consumes=obj.consumes, produces=obj.produces)
+            paths[k], tmp_reloc = to_path_item(
+                v,
+                server['url'],
+                jp_compose(k, base=path),
+                consumes=obj.consumes,
+                produces=obj.produces)
             if tmp_reloc:
-                reloc.setdefault('paths', {})[k.replace('~', '~0').replace('/', '~1')] = tmp_reloc
+                reloc.setdefault('paths', {})[k.replace('~', '~0').replace(
+                    '/', '~1')] = tmp_reloc
 
     # security
     if obj.security:
@@ -576,11 +628,14 @@ def to_openapi(obj, path):
     if obj.tags:
         tags = ret.setdefault('tags', [])
         for index, tag in enumerate(obj.tags):
-            tags.append(to_tag(tag, jp_compose(['tags', str(index)], base=path)))
+            tags.append(
+                to_tag(tag, jp_compose(['tags', str(index)], base=path)))
 
     # externalDocs
     if obj.externalDocs:
-        ret['externalDocs'] = to_external_docs(obj.externalDocs, jp_compose('externalDocs', base=path))
+        ret['externalDocs'] = to_external_docs(obj.externalDocs,
+                                               jp_compose(
+                                                   'externalDocs', base=path))
 
     if obj.definitions or obj.parameters or obj.responses or obj.securityDefinitions:
         components = ret.setdefault('components', {})
@@ -589,7 +644,9 @@ def to_openapi(obj, path):
         if obj.definitions:
             schemas = components.setdefault('schemas', {})
             for k, v in six.iteritems(obj.definitions):
-                schemas[k] = to_schema(v, jp_compose(['definitions', k], base=path))
+                schemas[k] = to_schema(v,
+                                       jp_compose(
+                                           ['definitions', k], base=path))
 
             reloc['definitions'] = 'components/schemas'
 
@@ -599,10 +656,13 @@ def to_openapi(obj, path):
             request_bodies = None
             param_reloc = {}
             for k, v in six.iteritems(obj.parameters):
-                param, pctx = from_parameter(v, None, None, jp_compose(['parameters', k], base=path))
+                param, pctx = from_parameter(v, None, None,
+                                             jp_compose(
+                                                 ['parameters', k], base=path))
                 if pctx.is_body:
                     if request_bodies is None:
-                        request_bodies = components.setdefault('requestBodies', {})
+                        request_bodies = components.setdefault(
+                            'requestBodies', {})
                     request_bodies[k] = param
                     param_reloc[k] = '#/components/requestBodies/{}'.format(k)
                 else:
@@ -617,7 +677,9 @@ def to_openapi(obj, path):
         if obj.responses:
             responses = components.setdefault('responses', {})
             for k, v in six.iteritems(obj.responses):
-                responses[k] = to_response(v, obj.produces, jp_compose(['responses', k], base=path))
+                responses[k] = to_response(v, obj.produces,
+                                           jp_compose(
+                                               ['responses', k], base=path))
 
             reloc['responses'] = 'components/responses'
 
@@ -625,9 +687,9 @@ def to_openapi(obj, path):
         if obj.securityDefinitions:
             security_schemes = components.setdefault('securitySchemes', {})
             for k, v in six.iteritems(obj.securityDefinitions):
-                security_schemes[k] = to_security_scheme(v, jp_compose(['securityDefinitions', k], base=path))
+                security_schemes[k] = to_security_scheme(
+                    v, jp_compose(['securityDefinitions', k], base=path))
 
             reloc['securityDefinitions'] = 'components/securitySchemes'
 
     return ret, reloc
-

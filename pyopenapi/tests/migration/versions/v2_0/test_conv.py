@@ -21,10 +21,10 @@ class ConverterTestCase(unittest.TestCase):
 
         # diff for empty list or dict is allowed
         d = app.root.dump()
-        self.assertEqual(sorted(_diff_(origin, d)), sorted([
-            ('paths/~1store~1inventory/get/parameters', None, None),
-            ('paths/~1user~1logout/get/parameters', None, None)
-        ]))
+        self.assertEqual(
+            sorted(_diff_(origin, d)),
+            sorted([('paths/~1store~1inventory/get/parameters', None, None),
+                    ('paths/~1user~1logout/get/parameters', None, None)]))
 
         # try to load the dumped dict back, to see if anything wrong
         Swagger(d)
@@ -43,9 +43,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(kls):
         kls.app = SampleApp.create(
-            get_test_data_folder(
-                version='1.2', which='wordnik'
-            ),
+            get_test_data_folder(version='1.2', which='wordnik'),
             sep=':',
             to_spec_version='2.0',
         )
@@ -54,9 +52,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         """
         # $ref
-        expect = {
-            '$ref':'#/definitions/pet:Pet'
-        }
+        expect = {'$ref': '#/definitions/pet:Pet'}
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1{petId}/patch/responses/default/schema/items',
             from_spec_version='2.0',
@@ -65,8 +61,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
 
         # enum
         expect = {
-            'enum':['available', 'pending', 'sold'],
-            'type':'string',
+            'enum': ['available', 'pending', 'sold'],
+            'type': 'string',
         }
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1findByStatus/get/parameters/0/items',
@@ -75,9 +71,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         self.assertEqual(_diff_(expect, target.dump()), [])
 
         # type
-        expect = {
-            'type':'string'
-        }
+        expect = {'type': 'string'}
         target, _ = self.app.resolve_obj(
             '#/definitions/pet:Pet/properties/photoUrls/items',
             from_spec_version='2.0',
@@ -89,13 +83,13 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         # test scope in Swagger Object
         expect = {
-            'write:pets':'Modify pets in your account',
-            'read:pets':'Read your pets',
+            'write:pets': 'Modify pets in your account',
+            'read:pets': 'Read your pets',
         }
-        self.assertEqual(_diff_(
-            expect,
-            self.app.root.securityDefinitions['oauth2'].scopes.dump()
-        ), [])
+        self.assertEqual(
+            _diff_(expect,
+                   self.app.root.securityDefinitions['oauth2'].scopes.dump()),
+            [])
 
         # test scope in Operation Object
         expect = [dict(oauth2=['write:pets'])]
@@ -109,27 +103,33 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         """
         expect = {
-            'authorizationUrl':"http://petstore.swagger.wordnik.com/api/oauth/dialog",
+            'authorizationUrl':
+            "http://petstore.swagger.wordnik.com/api/oauth/dialog",
         }
 
-        self.assertEqual(_diff_(
-            expect,
-            self.app.root.securityDefinitions['oauth2'].dump(),
-            include=['authorizationUrl']), [])
+        self.assertEqual(
+            _diff_(
+                expect,
+                self.app.root.securityDefinitions['oauth2'].dump(),
+                include=['authorizationUrl']), [])
 
     def test_implicit(self):
         """
         """
         expect = {
-            'type':'oauth2',
-            'authorizationUrl':"http://petstore.swagger.wordnik.com/api/oauth/dialog",
-            'flow':'implicit'
+            'type':
+            'oauth2',
+            'authorizationUrl':
+            "http://petstore.swagger.wordnik.com/api/oauth/dialog",
+            'flow':
+            'implicit'
         }
 
-        self.assertEqual(_diff_(
-            expect,
-            self.app.root.securityDefinitions['oauth2'].dump(),
-            include=['type', 'authorizationUrl', 'flow']), [])
+        self.assertEqual(
+            _diff_(
+                expect,
+                self.app.root.securityDefinitions['oauth2'].dump(),
+                include=['type', 'authorizationUrl', 'flow']), [])
 
     def test_authorizations(self):
         """
@@ -144,31 +144,37 @@ class Converter_v1_2_TestCase(unittest.TestCase):
     def test_authorization(self):
         """
         """
-        expect={
-            'authorizationUrl':'http://petstore.swagger.wordnik.com/api/oauth/dialog',
-            'tokenUrl':'http://petstore.swagger.wordnik.com/api/oauth/token',
-            'type':'oauth2',
-            'flow':'implicit',
+        expect = {
+            'authorizationUrl':
+            'http://petstore.swagger.wordnik.com/api/oauth/dialog',
+            'tokenUrl':
+            'http://petstore.swagger.wordnik.com/api/oauth/token',
+            'type':
+            'oauth2',
+            'flow':
+            'implicit',
         }
 
-        self.assertEqual(_diff_(
-            expect,
-            self.app.root.securityDefinitions['oauth2'].dump(),
-            exclude=['scopes', ]
-        ), [])
+        self.assertEqual(
+            _diff_(
+                expect,
+                self.app.root.securityDefinitions['oauth2'].dump(),
+                exclude=[
+                    'scopes',
+                ]), [])
 
     def test_parameter(self):
         """
         """
         expect = {
-            'name':'petId',
-            'description':'ID of pet that needs to be fetched',
-            'required':True,
-            'type':'integer',
-            'format':'int64',
-            'minimum':1.0,
-            'maximum':100000.0,
-            'in':'path',
+            'name': 'petId',
+            'description': 'ID of pet that needs to be fetched',
+            'required': True,
+            'type': 'integer',
+            'format': 'int64',
+            'minimum': 1.0,
+            'maximum': 100000.0,
+            'in': 'path',
         }
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1{petId}/get/parameters/0',
@@ -178,72 +184,61 @@ class Converter_v1_2_TestCase(unittest.TestCase):
 
         # allowMultiple, defaultValue, enum
         expect = {
-            'default':['available'],
-            'items':{
-                'type':'string',
-                'enum':['available', 'pending', 'sold']
+            'default': ['available'],
+            'items': {
+                'type': 'string',
+                'enum': ['available', 'pending', 'sold']
             },
-            'collectionFormat':'csv',
+            'collectionFormat': 'csv',
         }
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1findByStatus/get/parameters/0',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(
-            expect,
-            target.dump(),
-            include=['collectionFormat', 'default', 'enum']
-        ), [])
+        self.assertEqual(
+            _diff_(
+                expect,
+                target.dump(),
+                include=['collectionFormat', 'default', 'enum']), [])
 
         # $ref, or Model as type
-        expect = {
-            'in':'body',
-            'schema':{
-                '$ref':'#/definitions/pet:Pet'
-            }
-        }
+        expect = {'in': 'body', 'schema': {'$ref': '#/definitions/pet:Pet'}}
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet/post/parameters/0',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(
-            expect,
-            target.dump(),
-            include=['schema', 'in']
-        ), [])
+        self.assertEqual(
+            _diff_(expect, target.dump(), include=['schema', 'in']), [])
 
     def test_operation(self):
         """
         """
         expect = {
-            'operationId':'getPetById',
-            'summary':'Find pet by ID',
-            'description':'Returns a pet based on ID',
+            'operationId': 'getPetById',
+            'summary': 'Find pet by ID',
+            'description': 'Returns a pet based on ID',
         }
-        target, _  = self.app.resolve_obj(
+        target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1{petId}/get',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(
-            expect,
-            target.dump(),
-            include=['operationId', 'summary', 'description']
-        ), [])
+        self.assertEqual(
+            _diff_(
+                expect,
+                target.dump(),
+                include=['operationId', 'summary', 'description']), [])
 
         # produces, consumes
         expect = {
-            'produces':['application/json', 'application/xml'],
-            'consumes':['application/json', 'application/xml']
+            'produces': ['application/json', 'application/xml'],
+            'consumes': ['application/json', 'application/xml']
         }
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1{petId}/patch',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(
-            expect,
-            target.dump(),
-            include=['produces', 'consumes']
-        ), [])
+        self.assertEqual(
+            _diff_(expect, target.dump(), include=['produces', 'consumes']), [])
 
         # deprecated
         expect = dict(deprecated=True)
@@ -251,17 +246,18 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1pet~1findByTags/get',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump(), include=['deprecated']), [])
+        self.assertEqual(
+            _diff_(expect, target.dump(), include=['deprecated']), [])
 
         # responses, in 1.2, the type of Operation is default response
         expect = {
-            'schema':{
-                'type':'array',
+            'schema': {
+                'type': 'array',
                 'items': {
-                    '$ref':'#/definitions/pet:Pet',
+                    '$ref': '#/definitions/pet:Pet',
                 }
             },
-            'description':'',
+            'description': '',
         }
         target, _ = self.app.resolve_obj(
             '#/paths/~1api~1pet~1findByTags/get/responses/default',
@@ -273,14 +269,10 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         """
         expect = {
-            "type":"integer",
-            "format":"int32",
-            "description":"User Status",
-            "enum":[
-                "1-registered",
-                "2-active",
-                "3-closed"
-            ]
+            "type": "integer",
+            "format": "int32",
+            "description": "User Status",
+            "enum": ["1-registered", "2-active", "3-closed"]
         }
         target, _ = self.app.resolve_obj(
             '#/definitions/user:User/properties/userStatus',
@@ -292,44 +284,37 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         """
         """
         expect = {
-            "required":[
-                "id",
-                "name"
-            ],
-            "properties":{
-                "id":{
-                    "type":"integer",
-                    "format":"int64",
-                    "description":"unique identifier for the pet",
-                    "minimum":0,
-                    "maximum":100.0
+            "required": ["id", "name"],
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "unique identifier for the pet",
+                    "minimum": 0,
+                    "maximum": 100.0
                 },
-                "category":{
-                    "$ref":"#/definitions/pet:Category"
+                "category": {
+                    "$ref": "#/definitions/pet:Category"
                 },
-                "name":{
-                    "type":"string"
+                "name": {
+                    "type": "string"
                 },
-                "photoUrls":{
-                    "type":"array",
-                    "items":{
-                        "type":"string"
+                "photoUrls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
-                "tags":{
-                    "type":"array",
-                    "items":{
-                        "$ref":"#/definitions/pet:Tag"
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pet:Tag"
                     }
                 },
-                "status":{
-                    "type":"string",
-                    "description":"pet status in the store",
-                    "enum":[
-                        "available",
-                        "pending",
-                        "sold"
-                    ]
+                "status": {
+                    "type": "string",
+                    "description": "pet status in the store",
+                    "enum": ["available", "pending", "sold"]
                 }
             }
         }
@@ -345,50 +330,41 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         expect = dict(
             version='1.0.0',
             title='Swagger Sample App',
-            description='This is a sample server Petstore server.  You can find out more about Swagger \n    at <a href=\"http://swagger.wordnik.com\">http://swagger.wordnik.com</a> or on irc.freenode.net, #swagger.  For this sample,\n    you can use the api key \"special-key\" to test the authorization filters',
+            description=
+            'This is a sample server Petstore server.  You can find out more about Swagger \n    at <a href=\"http://swagger.wordnik.com\">http://swagger.wordnik.com</a> or on irc.freenode.net, #swagger.  For this sample,\n    you can use the api key \"special-key\" to test the authorization filters',
             termsOfService='http://helloreverb.com/terms/',
-            contact=dict(
-                email='apiteam@wordnik.com'
-            ),
+            contact=dict(email='apiteam@wordnik.com'),
             license=dict(
                 name='Apache 2.0',
-                url='http://www.apache.org/licenses/LICENSE-2.0.html'
-            )
-        )
+                url='http://www.apache.org/licenses/LICENSE-2.0.html'))
         self.assertEqual(_diff_(self.app.root.info.dump(), expect), [])
 
     def test_resource_list(self):
         """
         """
-        expect = dict(
-            swagger='2.0'
-        )
-        self.assertEqual(_diff_(
-            expect,
-            self.app.root.dump(),
-            include=['swagger']
-        ), [])
+        expect = dict(swagger='2.0')
+        self.assertEqual(
+            _diff_(expect, self.app.root.dump(), include=['swagger']), [])
 
 
 class Converter_v1_2_TestCase_Others(unittest.TestCase):
     """ for test cases needs special init
     """
+
     def test_token_endpoint(self):
         """
         """
         app = SampleApp.create(
-            get_test_data_folder(
-                version='1.2', which='simple_auth'
-            ),
+            get_test_data_folder(version='1.2', which='simple_auth'),
             to_spec_version='2.0',
         )
 
-        expect={
-            'tokenUrl':'http://petstore.swagger.wordnik.com/api/oauth/token',
-            'type':'oauth2',
-            'flow':'access_code',
+        expect = {
+            'tokenUrl': 'http://petstore.swagger.wordnik.com/api/oauth/token',
+            'type': 'oauth2',
+            'flow': 'access_code',
             'scopes': {
-                'test:anything':'for testing purpose'
+                'test:anything': 'for testing purpose'
             }
         }
         target, _ = app.resolve_obj(
@@ -401,35 +377,27 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
         """
         """
         app = SampleApp.create(
-            get_test_data_folder(
-                version='1.2', which='simple_auth'
-            ),
+            get_test_data_folder(version='1.2', which='simple_auth'),
             to_spec_version='2.0',
         )
 
-        expect = {
-            'type':'apiKey',
-            'in':'query',
-            'name':'simpleQK'
-        }
+        expect = {'type': 'apiKey', 'in': 'query', 'name': 'simpleQK'}
         target, _ = app.resolve_obj(
             '#/securityDefinitions/simple_key',
             from_spec_version='2.0',
         )
         self.assertEqual(_diff_(expect, target.dump()), [])
 
-        expect = {
-            'type':'apiKey',
-            'in':'header',
-            'name':'simpleHK'
-        }
+        expect = {'type': 'apiKey', 'in': 'header', 'name': 'simpleHK'}
         target, _ = app.resolve_obj(
             '#/securityDefinitions/simple_key2',
             from_spec_version='2.0',
         )
         self.assertEqual(_diff_(expect, target.dump()), [])
 
-        expect = {'type':'basic',}
+        expect = {
+            'type': 'basic',
+        }
         target, _ = app.resolve_obj(
             '#/securityDefinitions/simple_basic',
             from_spec_version='2.0',
@@ -440,16 +408,11 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
         """
         """
         app = SampleApp.create(
-            get_test_data_folder(
-                version='1.2', which='model_subtypes'
-            ),
+            get_test_data_folder(version='1.2', which='model_subtypes'),
             to_spec_version='2.0',
-            sep=':'
-        )
+            sep=':')
 
-        expect = {
-            'allOf': [{'$ref': u'#/definitions/user:User'}]
-        }
+        expect = {'allOf': [{'$ref': u'#/definitions/user:User'}]}
         target, _ = app.resolve_obj(
             '#/definitions/user:UserWithInfo',
             from_spec_version='2.0',

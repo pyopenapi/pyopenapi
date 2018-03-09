@@ -1,11 +1,6 @@
 from pyopenapi.migration.scan import Scanner, Scanner2, Dispatcher
 from pyopenapi.migration.versions.v1_2.objects import (
-    ApiDeclaration,
-    Authorization,
-    Operation,
-    ResponseMessage,
-    Parameter
-)
+    ApiDeclaration, Authorization, Operation, ResponseMessage, Parameter)
 from pyopenapi.migration.versions.v3_0_0.objects import (
     Header as Header3,
     Parameter as Parameter3,
@@ -19,7 +14,9 @@ class CountObject(object):
     """ a scanner for counting objects and looking for
     longest attribute name. Just for test.
     """
-    class Disp(Dispatcher): pass
+
+    class Disp(Dispatcher):
+        pass
 
     def __init__(self):
         self.total = {
@@ -45,7 +42,8 @@ class PathRecord(object):
     """ a scanner to record all json path
     """
 
-    class Disp(Dispatcher): pass
+    class Disp(Dispatcher):
+        pass
 
     def __init__(self):
         self.api_declaration = []
@@ -75,6 +73,7 @@ app = SampleApp.load(get_test_data_folder(version='1.2', which='wordnik'))
 
 class ScannerTestCase(unittest.TestCase):
     """ test scanner """
+
     def test_count(self):
         s = Scanner(app)
         co = CountObject()
@@ -82,7 +81,8 @@ class ScannerTestCase(unittest.TestCase):
         for name in app.raw.cached_apis:
             s.scan(route=[co], root=app.raw.cached_apis[name])
 
-        self.assertEqual(len(co.long_name), len('#/apis/3/operations/0/responseMessages/0'))
+        self.assertEqual(
+            len(co.long_name), len('#/apis/3/operations/0/responseMessages/0'))
         self.assertEqual(co.total, {
             Authorization: 1,
             ApiDeclaration: 3,
@@ -95,7 +95,8 @@ class ScannerTestCase(unittest.TestCase):
         co = CountObject()
         s.scan(route=[co], root=app.raw, leaves=[Operation])
         for name in app.raw.cached_apis:
-            s.scan(route=[co], root=app.raw.cached_apis[name], leaves=[Operation])
+            s.scan(
+                route=[co], root=app.raw.cached_apis[name], leaves=[Operation])
 
         # the scanning would stop at Operation, so ResponseMessage
         # would not be counted.
@@ -106,7 +107,6 @@ class ScannerTestCase(unittest.TestCase):
             ResponseMessage: 0
         })
 
-
     def test_path(self):
         self.maxDiff = None
         s = Scanner(app)
@@ -116,18 +116,22 @@ class ScannerTestCase(unittest.TestCase):
 
         self.assertEqual(sorted(p.api_declaration), sorted(['#']))
         self.assertEqual(p.authorization, ['#/authorizations/oauth2'])
-        self.assertEqual(sorted(p.response_message), sorted([
-            '#/apis/0/operations/0/responseMessages/0',
-            '#/apis/1/operations/0/responseMessages/1',
-            '#/apis/1/operations/0/responseMessages/0',
-            '#/apis/1/operations/1/responseMessages/1',
-            '#/apis/1/operations/1/responseMessages/0'
-        ]))
-        self.assertEqual(sorted(p.parameter), sorted([
-            '#/apis/0/operations/0/parameters/0',
-            '#/apis/1/operations/0/parameters/0',
-            '#/apis/1/operations/1/parameters/0',
-        ]))
+        self.assertEqual(
+            sorted(p.response_message),
+            sorted([
+                '#/apis/0/operations/0/responseMessages/0',
+                '#/apis/1/operations/0/responseMessages/1',
+                '#/apis/1/operations/0/responseMessages/0',
+                '#/apis/1/operations/1/responseMessages/1',
+                '#/apis/1/operations/1/responseMessages/0'
+            ]))
+        self.assertEqual(
+            sorted(p.parameter),
+            sorted([
+                '#/apis/0/operations/0/parameters/0',
+                '#/apis/1/operations/0/parameters/0',
+                '#/apis/1/operations/1/parameters/0',
+            ]))
 
 
 class ResolveTestCase(unittest.TestCase):
@@ -137,15 +141,13 @@ class ResolveTestCase(unittest.TestCase):
     def setUpClass(kls):
         kls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='model_subtypes'),
-            to_spec_version='2.0'
-        )
+            to_spec_version='2.0')
 
     def test_ref_resolve(self):
         """ make sure pre resolve works """
         o, _ = self.app.resolve_obj(
             '#/definitions/user!##!UserWithInfo/allOf/0',
-            from_spec_version='2.0'
-        )
+            from_spec_version='2.0')
         ref = o.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(ref, weakref.ProxyTypes))
 
@@ -159,7 +161,9 @@ class ResolveTestCase(unittest.TestCase):
 class CountParemeter3(object):
     """ a scanner just for test
     """
-    class Disp(Dispatcher): pass
+
+    class Disp(Dispatcher):
+        pass
 
     def __init__(self):
         self.total = {
@@ -185,4 +189,3 @@ class Scanner2TestCase(unittest.TestCase):
 
         self.assertEqual(cp.total[Header3], 1)
         self.assertEqual(cp.total[Parameter3], 0)
-

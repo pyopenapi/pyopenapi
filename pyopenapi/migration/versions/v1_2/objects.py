@@ -128,7 +128,8 @@ class AuthorizationCode(BaseObj_v1_2):
     }
 
     __internal__ = {
-        'token_request_endpoint': dict(key='tokenRequestEndpoint', builder=rename),
+        'token_request_endpoint': dict(
+            key='tokenRequestEndpoint', builder=rename),
         'token_endpoint': dict(key='tokenEndpoint', builder=rename),
     }
 
