@@ -19,14 +19,10 @@ import six
 def _get_name(path):
     return path.split('/', 3)[2]
 
-_primitives = (
-    'integer',
-    'number',
-    'string',
-    'boolean',
-    'array',
-    'void'
-    )
+
+_primitives = ('integer', 'number', 'string', 'boolean', 'array', 'void')
+
+
 def _is_primitive(t):
     return t in _primitives
 
@@ -41,6 +37,7 @@ def update_type_and_ref(dst, src, scope, sep):
     elif src.type:
         dst['$ref'] = '#/definitions/' + scope_compose(scope, src.type, sep=sep)
 
+
 def convert_min_max(dst, src):
     def _from_str(name):
         v = getattr(src, name, None)
@@ -52,7 +49,9 @@ def convert_min_max(dst, src):
             elif src.type == 'number':
                 dst[name] = float(v)
             else:
-                raise SchemaError('minimum/maximum is only allowed on integer/number, not {0}'.format(src.type))
+                raise SchemaError(
+                    'minimum/maximum is only allowed on integer/number, not {0}'.
+                    format(src.type))
         else:
             dst.pop(name, None)
 
@@ -81,6 +80,7 @@ def convert_schema_from_datatype(obj, scope, sep):
 
     return spec
 
+
 def convert_items(o):
     items_spec = {}
     if getattr(o, '$ref'):
@@ -93,6 +93,7 @@ def convert_items(o):
         items_spec['format'] = o.format
 
     return items_spec
+
 
 def convert_parameter(param, scope, sep):
     p_spec = {}
@@ -140,6 +141,7 @@ def convert_parameter(param, scope, sep):
 
     return p_spec
 
+
 def convert_operation(op, api, api_decl, swagger, sep):
     op_spec = {}
 
@@ -179,7 +181,8 @@ def convert_operation(op, api, api_decl, swagger, sep):
     resp_spec = {}
     if op.type != 'void':
         resp_spec['schema'] = convert_schema_from_datatype(op, scope, sep)
-    resp_spec['description'] = '' # description is a required field in 2.0 Response object
+    resp_spec[
+        'description'] = ''    # description is a required field in 2.0 Response object
     op_spec['responses']['default'] = resp_spec
 
     path = api_decl.base_path + api.path
@@ -188,6 +191,7 @@ def convert_operation(op, api, api_decl, swagger, sep):
 
     method = op.method.lower()
     swagger['paths'][path][method] = op_spec
+
 
 def convert_model(model, api_decl, swagger, sep):
     scope = api_decl.resourcePath[1:]
@@ -225,7 +229,9 @@ def convert_model(model, api_decl, swagger, sep):
 class Upgrade(object):
     """ convert 1.2 object to 2.0 object
     """
-    class Disp(Dispatcher): pass
+
+    class Disp(Dispatcher):
+        pass
 
     def __init__(self, sep=consts.SCOPE_SEPARATOR):
         self.__swagger = None
@@ -312,10 +318,12 @@ class Upgrade(object):
             ss_spec['scopes'][s.scope] = s.description
 
         if ss_spec['type'] == 'oauth2':
-            authorization_url = get_or_none(obj, 'grantTypes', 'implicit', 'loginEndpoint', 'url')
+            authorization_url = get_or_none(obj, 'grantTypes', 'implicit',
+                                            'loginEndpoint', 'url')
             if authorization_url:
                 ss_spec['authorizationUrl'] = authorization_url
-            token_url = get_or_none(obj, 'grantTypes', 'authorization_code', 'tokenEndpoint', 'url')
+            token_url = get_or_none(obj, 'grantTypes', 'authorization_code',
+                                    'tokenEndpoint', 'url')
             if token_url:
                 ss_spec['tokenUrl'] = token_url
 
@@ -339,18 +347,18 @@ class Upgrade(object):
         common_path = os.path.commonprefix(list(self.__swagger['paths'].keys()))
         # remove tailing slash,
         # because all paths in Paths Object would prefixed with slah.
-        common_path = common_path[:-1] if common_path[-1] == '/' else common_path
+        common_path = common_path[:-1] if common_path[
+            -1] == '/' else common_path
 
         if len(common_path) > 0:
             p = six.moves.urllib.parse.urlparse(common_path)
             self.__swagger['host'] = p.netloc
 
-            new_common_path = six.moves.urllib.parse.urlunparse((
-                p.scheme, p.netloc, '', '', '', ''))
+            new_common_path = six.moves.urllib.parse.urlunparse(
+                (p.scheme, p.netloc, '', '', '', ''))
             new_path = {}
             for k in self.__swagger['paths'].keys():
                 new_path[k[len(new_common_path):]] = self.__swagger['paths'][k]
             self.__swagger['paths'] = new_path
 
         return Swagger(self.__swagger, '#')
-

@@ -8,12 +8,8 @@ class BitBucketTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(kls):
         kls.app = SampleApp.create(
-            get_test_data_folder(
-                version='2.0',
-                which='bitbucket'
-            ),
-            to_spec_version='2.0'
-        )
+            get_test_data_folder(version='2.0', which='bitbucket'),
+            to_spec_version='2.0')
 
     def test_load(self):
         # make sure loading is fine,

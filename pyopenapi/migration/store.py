@@ -7,7 +7,6 @@ import logging
 import six
 import os
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,9 +29,14 @@ class SpecObjStore(object):
         """ cache 'prepared' spec objects (those under pyopenapi.spec)
         """
         if not issubclass(type(obj), _Base):
-            raise Exception('attemp to cache invalid object for {},{} with type: {}'.format(url, jp, str(type(obj))))
+            raise Exception(
+                'attemp to cache invalid object for {},{} with type: {}'.format(
+                    url, jp, str(type(obj))))
 
-        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({spec_version: obj})
+        self.__spec_objs.setdefault(url, {}).setdefault(jp, {}).update({
+            spec_version:
+            obj
+        })
 
     def get(self, url, jp, spec_version):
         """ get spec object from cache
@@ -44,7 +48,8 @@ class SpecObjStore(object):
         # try to find a 'jp' with common prefix with input under 'url'
         for path, cache in six.iteritems(url_cache):
             if jp.startswith(path) and spec_version in cache:
-                return cache[spec_version].resolve(utils.jp_split(jp[len(path):])[1:])
+                return cache[spec_version].resolve(
+                    utils.jp_split(jp[len(path):])[1:])
 
         return None
 
@@ -53,7 +58,9 @@ class SpecObjStore(object):
         from cache if needed
         """
         if remove and not jp:
-            raise Exception('attemping to remove everything under {}, {}'.format(url, spec_version))
+            raise Exception(
+                'attemping to remove everything under {}, {}'.format(
+                    url, spec_version))
 
         url_cache = self.__spec_objs.get(url, None)
         if not url_cache:
@@ -62,7 +69,7 @@ class SpecObjStore(object):
         ret = {}
         for path, cache in six.iteritems(url_cache):
             if path.startswith(jp) and spec_version in cache:
-                ret[path[len(jp)+1:]] = cache[spec_version]
+                ret[path[len(jp) + 1:]] = cache[spec_version]
                 if remove:
                     del cache[spec_version]
 
@@ -76,9 +83,9 @@ class SpecObjStore(object):
         from_ = spec_version
         src = jp
         for v in self.__migratable_spec_versions[
-            self.__migratable_spec_versions.index(spec_version)+1:
-            self.__migratable_spec_versions.index(until)+1 if until else len(self.__migratable_spec_versions)
-        ]:
+                self.__migratable_spec_versions.index(spec_version) + 1:
+                self.__migratable_spec_versions.index(until) + 1
+                if until else len(self.__migratable_spec_versions)]:
             src = self.relocate(url, src, from_, to_spec=v)
             from_ = v
             jps.append((v, src))
@@ -98,14 +105,18 @@ class SpecObjStore(object):
     def update_routes(self, url, to_spec, routes):
         if url not in self.__routes:
             # init the ordered dict with right version sequence
-            self.__routes.setdefault(url, OrderedDict([
-                # there would be no $ref relocation from 1.2 to 2.0,
-                # reason: there is no 'JSON pointer' concept in 1.2
-                (v, {}) for v in self.__migratable_spec_versions
-            ]))
+            self.__routes.setdefault(
+                url,
+                OrderedDict([
+            # there would be no $ref relocation from 1.2 to 2.0,
+            # reason: there is no 'JSON pointer' concept in 1.2
+                    (v, {}) for v in self.__migratable_spec_versions
+                ]))
 
         if to_spec not in self.__routes[url]:
-            raise Exception('unsupported spec version for $ref-relocation: {}'.format(to_spec))
+            raise Exception(
+                'unsupported spec version for $ref-relocation: {}'.format(
+                    to_spec))
 
         self.__routes[url][to_spec].update(routes)
 
@@ -130,21 +141,20 @@ class SpecObjStore(object):
                     current_routes, patch_to = patch_to, None
                     fixed_prefix += ('/' if fixed_prefix else '') + patch_from
                     remain_jp = remain_jp[len(patch_from):]
-                    remain_jp = remain_jp[1:] if remain_jp.startswith('/') else remain_jp
+                    remain_jp = remain_jp[1:] if remain_jp.startswith(
+                        '/') else remain_jp
                     continue
                 elif isinstance(patch_to, six.string_types):
                     break
                 else:
                     raise Exception(
                         'unexpected JSON pointer patch type: {}:{}'.format(
-                            str(type(patch_to)), patch_to
-                        )
-                    )
+                            str(type(patch_to)), patch_to))
             else:
                 break
 
         if patch_to:
-            remain = jp[len(fixed_prefix + patch_from)+1:] # +1 for '/'
+            remain = jp[len(fixed_prefix + patch_from) + 1:]    # +1 for '/'
             new_jp = None
             # let's patch the JSON pointer
             if patch_to.startswith('#'):
@@ -156,7 +166,8 @@ class SpecObjStore(object):
                 new_jp = fixed_prefix + '/' + patch_to
 
             if remain:
-                new_jp += ('' if new_jp.endswith('/') or remain.startswith('/') else '/') + remain
+                new_jp += ('' if new_jp.endswith('/') or remain.startswith('/')
+                           else '/') + remain
             return new_jp
 
         # there is no need for relocation
@@ -179,7 +190,9 @@ class SpecObjStore(object):
         routes = self.__routes[url]
 
         if to_spec not in routes:
-            raise Exception('unsupported target spec version when patching $ref: {}'.format(to_spec))
+            raise Exception(
+                'unsupported target spec version when patching $ref: {}'.format(
+                    to_spec))
 
         from_spec = StrictVersion(from_spec)
         to_spec = StrictVersion(to_spec)
@@ -198,4 +211,3 @@ class SpecObjStore(object):
     @property
     def routes(self):
         return self.__routes
-

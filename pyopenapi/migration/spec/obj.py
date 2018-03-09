@@ -20,10 +20,13 @@ def field(key, required=False, default=None, restricted=False, readonly=True):
     def _getter_(self):
         if key in self.spec:
             if restricted:
-                raise Exception('this field is restricted, must not be specified: {}:{}'.format(str(type(self)), key))
+                raise Exception(
+                    'this field is restricted, must not be specified: {}:{}'.
+                    format(str(type(self)), key))
             return self.spec[key]
         if required:
-            raise Exception('property not found: {} in {}'.format(key, self.__class__.__name__))
+            raise Exception('property not found: {} in {}'.format(
+                key, self.__class__.__name__))
         return default
 
     def _writer_(self, v):
@@ -35,6 +38,7 @@ def field(key, required=False, default=None, restricted=False, readonly=True):
 def internal(key, default=None):
     """ property factory for internal usage fields
     """
+
     def _getter_(self):
         if key in self.internal:
             return self.internal[key]
@@ -57,6 +61,7 @@ def rename(key):
     This property factory provide a redirection to actual property
     and should only declared under __internal__
     """
+
     def _getter_(self):
         return getattr(self, key)
 
@@ -75,6 +80,7 @@ def child(key, child_builder=None, required=False, default=None):
      - required: if this field is required, would raise exception if corresponding field doesn't
                  existed in json
     """
+
     def _getter_(self):
         if key in self.children:
             return self.children[key]
@@ -92,13 +98,15 @@ def child(key, child_builder=None, required=False, default=None):
             val = self.spec[key]
         else:
             if required:
-                raise FieldNotExist('child not found: {} in {}, {}'.format(key, self.__class__.__name__, self._path_))
+                raise FieldNotExist('child not found: {} in {}, {}'.format(
+                    key, self.__class__.__name__, self._path_))
 
         if val is None and default is not None:
             val = copy.copy(default)
 
         if val is not None:
-            chd = child_builder(val, path=jp_compose(key, base=self._path_), override=ovr)
+            chd = child_builder(
+                val, path=jp_compose(key, base=self._path_), override=ovr)
             self.children[key] = chd
             return chd
         else:
@@ -108,7 +116,9 @@ def child(key, child_builder=None, required=False, default=None):
         if issubclass(v.__class__, (Base2Obj, _Map, _List)):
             self.children[key] = v
         else:
-            raise Exception('assignment of this type of object is prohibited: {}, {}'.format(str(type(v)), self._path_))
+            raise Exception(
+                'assignment of this type of object is prohibited: {}, {}'.
+                format(str(type(v)), self._path_))
 
     return property(_getter_, _setter_)
 
@@ -127,10 +137,13 @@ class _Base(object):
             tokens = jp_split(k, 1)
             if len(tokens) > 0:
                 self.override.setdefault(tokens[0], {}).update({
-                    tokens[1] if len(tokens) > 1 else '': v
+                    tokens[1] if len(tokens) > 1 else '':
+                    v
                 })
             else:
-                raise Exception('invalid token found for "override": {}, in {}'.format(k, path))
+                raise Exception(
+                    'invalid token found for "override": {}, in {}'.format(
+                        k, path))
 
     def is_set(self, k):
         """ check if a key is setted from Swagger API document
@@ -168,14 +181,12 @@ def list_(builder):
      - builder: child class, whose __init__ in the form: (self, val), where 'val' is something parsed from json,
               would be assigned to __child_builder__ of the newly created class, or a function accept a argument in dict.
     """
-    return type(
-        'List_' + builder.__name__,
-        (_List,),
-        dict(
-            __child_builder__=builder,
-            __child_builder_unbound__ = isinstance(builder, types.FunctionType),
-        )
-    )
+    return type('List_' + builder.__name__, (_List, ),
+                dict(
+                    __child_builder__=builder,
+                    __child_builder_unbound__=isinstance(
+                        builder, types.FunctionType),
+                ))
 
 
 class _List(_Base):
@@ -183,12 +194,15 @@ class _List(_Base):
     object with the same property-set. The constructor would call its __child_class__
     on all those objects.
     """
+
     def __init__(self, spec, path=None, override=None):
         super(_List, self).__init__(spec, path, override)
         self.__elm = []
 
         if not isinstance(spec, list):
-            raise Exception('should be a list when constructing _List, not {}, {}'.format(str(type(spec)), path))
+            raise Exception(
+                'should be a list when constructing _List, not {}, {}'.format(
+                    str(type(spec)), path))
 
         # generate children for all keys in spec
         for idx, e in enumerate(spec):
@@ -199,7 +213,8 @@ class _List(_Base):
             if not elm:
                 path = jp_compose(idx, base=self._path_)
                 if self.__child_builder_unbound__:
-                    elm = self.__child_builder__.__func__(e, path=path, override=ovr)
+                    elm = self.__child_builder__.__func__(
+                        e, path=path, override=ovr)
                 else:
                     elm = self.__child_builder__(e, path=path, override=ovr)
 
@@ -262,7 +277,10 @@ class _List(_Base):
         for idx, obj in enumerate(self.__elm):
             if isinstance(obj, Base2Obj):
                 ret[str(idx)] = obj
-            elif isinstance(obj, (_Map, _List,)):
+            elif isinstance(obj, (
+                    _Map,
+                    _List,
+            )):
                 c = obj._children_
                 for cc in c:
                     ret[jp_compose([str(idx), cc])] = c[cc]
@@ -297,14 +315,12 @@ def map_(builder):
               would be assigned to __child_builder__ of the newly created class, or a function accept a argument in dict.
     """
 
-    return type(
-        'Map_' + builder.__name__,
-        (_Map,),
-        dict(
-            __child_builder__=builder,
-            __child_builder_unbound__ = isinstance(builder, types.FunctionType),
-        )
-    )
+    return type('Map_' + builder.__name__, (_Map, ),
+                dict(
+                    __child_builder__=builder,
+                    __child_builder_unbound__=isinstance(
+                        builder, types.FunctionType),
+                ))
 
 
 class _Map(_Base):
@@ -312,12 +328,15 @@ class _Map(_Base):
     objects with the same property-set. The constructor would call its __child_class__
     on all those objects.
     """
+
     def __init__(self, spec, path=None, override=None):
         super(_Map, self).__init__(spec, path, override)
         self.__elm = {}
 
         if not isinstance(spec, dict):
-            raise Exception('should be an instance of dict when reaching _Map constructor, not {}, {}'.format(str(type(spec)), self._path_))
+            raise Exception(
+                'should be an instance of dict when reaching _Map constructor, not {}, {}'.
+                format(str(type(spec)), self._path_))
 
         # generate children for all keys in spec
         for k in spec:
@@ -326,9 +345,11 @@ class _Map(_Base):
             if not elm:
                 path = jp_compose(str(k), base=self._path_)
                 if self.__child_builder_unbound__:
-                    elm = self.__child_builder__.__func__(spec[k], path=path, override=ovr)
+                    elm = self.__child_builder__.__func__(
+                        spec[k], path=path, override=ovr)
                 else:
-                    elm = self.__child_builder__(spec[k], path=path, override=ovr)
+                    elm = self.__child_builder__(
+                        spec[k], path=path, override=ovr)
 
             if hasattr(elm, '_parent_'):
                 elm._parent_ = self
@@ -361,7 +382,8 @@ class _Map(_Base):
 
         for name in self.__elm:
             new_base = jp_compose(name, base=base)
-            if isinstance(self.__elm[name], six.string_types + six.integer_types):
+            if isinstance(self.__elm[name],
+                          six.string_types + six.integer_types):
                 return self.__elm[name] == other[name], new_base
 
             s, n = self.__elm[name].compare(other[name], base=new_base)
@@ -393,7 +415,10 @@ class _Map(_Base):
         for name, obj in six.iteritems(self.__elm):
             if isinstance(obj, Base2Obj):
                 ret[name] = obj
-            elif isinstance(obj, (_Map, _List,)):
+            elif isinstance(obj, (
+                    _Map,
+                    _List,
+            )):
                 c = obj._children_
                 for cc in c:
                     ret[jp_compose([name, cc])] = c[cc]
@@ -434,6 +459,7 @@ class _Map(_Base):
 class FieldMeta(type):
     """ metaclass to init fields, similar to the one in base.py
     """
+
     def __new__(metacls, name, bases, spc):
         """ scan through MRO to get a merged list of fields and create them
         """
@@ -557,8 +583,11 @@ class Base2Obj(_Base):
                 return s == o, name
             return True, ''
 
-        for name in itertools.chain(six.iterkeys(self.__fields__), six.iterkeys(self.__children__)):
-            same, n = _cmp_(jp_compose(name, base), getattr(self, name), getattr(other, name))
+        for name in itertools.chain(
+                six.iterkeys(self.__fields__), six.iterkeys(self.__children__)):
+            same, n = _cmp_(
+                jp_compose(name, base), getattr(self, name), getattr(
+                    other, name))
             if not same:
                 return same, n
 
@@ -595,7 +624,9 @@ class Base2Obj(_Base):
 
     def attach_child(self, name, obj):
         if name not in self.__children__:
-            raise Exception('attemp to attach a children not in child fields {}:{}, {}'.format(str(type(self)), name, self._path_))
+            raise Exception(
+                'attemp to attach a children not in child fields {}:{}, {}'.
+                format(str(type(self)), name, self._path_))
 
         setattr(self, name, obj)
         if hasattr(obj, '_parent_'):
@@ -633,7 +664,10 @@ class Base2Obj(_Base):
                 continue
             if isinstance(obj, Base2Obj):
                 ret[name] = obj
-            elif isinstance(obj, (_Map, _List,)):
+            elif isinstance(obj, (
+                    _Map,
+                    _List,
+            )):
                 c = obj._children_
                 for cc in c:
                     ret[jp_compose([name, cc])] = c[cc]
@@ -660,5 +694,3 @@ class Base2Obj(_Base):
 
 
 Base2 = six.with_metaclass(FieldMeta, Base2Obj)
-
-

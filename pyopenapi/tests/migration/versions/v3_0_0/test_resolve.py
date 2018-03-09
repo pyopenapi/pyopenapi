@@ -1,10 +1,17 @@
 from pyopenapi.utils import jr_split, normalize_url
 from pyopenapi.migration.versions.v3_0_0.objects import (
-    Reference, Schema, Parameter,
-    Header, RequestBody, Response,
-    Link, Callback, PathItem,
-    Operation, SecurityScheme,
-    )
+    Reference,
+    Schema,
+    Parameter,
+    Header,
+    RequestBody,
+    Response,
+    Link,
+    Callback,
+    PathItem,
+    Operation,
+    SecurityScheme,
+)
 from ....utils import get_test_data_folder, gen_test_folder_hook, SampleApp
 import unittest
 
@@ -16,9 +23,9 @@ class PathItemMergeTestCase(unittest.TestCase):
     def setUpClass(kls):
         kls.app = SampleApp.create(
             url='file:///root.yml',
-            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='3.0.0', which='external')),
-            to_spec_version='3.0.0'
-        )
+            url_load_hook=gen_test_folder_hook(
+                get_test_data_folder(version='3.0.0', which='external')),
+            to_spec_version='3.0.0')
 
     def test_merge_basic(self):
         """ one path item in root ref to an external path item
@@ -136,9 +143,9 @@ class ResolveTestCase(unittest.TestCase):
     def setUpClass(kls):
         kls.app = SampleApp.create(
             url='file:///root.yml',
-            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='3.0.0', which='external')),
-            to_spec_version='3.0.0'
-        )
+            url_load_hook=gen_test_folder_hook(
+                get_test_data_folder(version='3.0.0', which='external')),
+            to_spec_version='3.0.0')
 
     def test_normalized_ref(self):
         """ make sure all '$ref' are cached with a normalized one
@@ -153,8 +160,7 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(resp, Reference))
         self.assertEqual(
             resp.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/responses/void'
-        )
+            'file:///root.yml#/components/responses/void')
 
     def test_resolve_schema(self):
         """ make sure 'Schema' is resolved and cached
@@ -166,8 +172,7 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(s, Reference))
         self.assertEqual(
             s.get_attrs('migration').normalized_ref,
-            'file:///partial_1.yml#/schemas/partial_1'
-        )
+            'file:///partial_1.yml#/schemas/partial_1')
         self.assertTrue(isinstance(s.get_attrs('migration').ref_obj, Schema))
         self.assertEqual(s.get_attrs('migration').ref_obj.type_, 'string')
 
@@ -180,15 +185,13 @@ class ResolveTestCase(unittest.TestCase):
         )
         self.assertEqual(
             p.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/parameters/test3.p1'
-        )
+            'file:///root.yml#/components/parameters/test3.p1')
         self.assertTrue(isinstance(p.get_attrs('migration').ref_obj, Reference))
 
         p = p.get_attrs('migration').ref_obj
         self.assertEqual(
             p.get_attrs('migration').normalized_ref,
-            'file:///partial_1.yml#/parameters/test3.p1'
-        )
+            'file:///partial_1.yml#/parameters/test3.p1')
         self.assertTrue(isinstance(p.get_attrs('migration').ref_obj, Parameter))
 
         p = p.get_attrs('migration').ref_obj
@@ -198,8 +201,7 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(s, Reference))
         self.assertEqual(
             s.get_attrs('migration').normalized_ref,
-            'file:///partial_2.yml#/schemas/test3.p1.schema'
-        )
+            'file:///partial_2.yml#/schemas/test3.p1.schema')
 
         s = s.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(s, Schema))
@@ -216,15 +218,13 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(p, Reference))
         self.assertEqual(
             p.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/headers/test3.header.1'
-        )
+            'file:///root.yml#/components/headers/test3.header.1')
 
         p = p.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(p, Reference))
         self.assertEqual(
             p.get_attrs('migration').normalized_ref,
-            'file:///partial_1.yml#/headers/test3.header.1'
-        )
+            'file:///partial_1.yml#/headers/test3.header.1')
 
         h = p.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(h, Header))
@@ -233,8 +233,7 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(h.schema, Reference))
         self.assertEqual(
             h.schema.get_attrs('migration').normalized_ref,
-            'file:///partial_2.yml#/schemas/test3.header.1.schema'
-        )
+            'file:///partial_2.yml#/schemas/test3.header.1.schema')
 
         s = h.schema.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(s, Schema))
@@ -251,15 +250,13 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(b, Reference))
         self.assertEqual(
             b.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/requestBodies/test3.body.1'
-        )
+            'file:///root.yml#/components/requestBodies/test3.body.1')
 
         b = b.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(b, Reference))
         self.assertEqual(
             b.get_attrs('migration').normalized_ref,
-            'file:///partial_1.yml#/bodies/test3.body.1'
-        )
+            'file:///partial_1.yml#/bodies/test3.body.1')
 
         b = b.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(b, RequestBody))
@@ -269,15 +266,13 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(s, Reference))
         self.assertEqual(
             s.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/schemas/test3.body.1.schema.1'
-        )
+            'file:///root.yml#/components/schemas/test3.body.1.schema.1')
 
         s = s.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(s, Reference))
         self.assertEqual(
             s.get_attrs('migration').normalized_ref,
-            'file:///partial_2.yml#/schemas/test3.body.1.schema.1'
-        )
+            'file:///partial_2.yml#/schemas/test3.body.1.schema.1')
 
         s = s.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(s, Schema))
@@ -298,15 +293,13 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(r, Reference))
         self.assertEqual(
             r.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/responses/BadRequest'
-        )
+            'file:///root.yml#/components/responses/BadRequest')
 
         r = r.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(r, Reference))
         self.assertEqual(
             r.get_attrs('migration').normalized_ref,
-            'file:///partial_1.yml#/responses/test3.get.response.400'
-        )
+            'file:///partial_1.yml#/responses/test3.get.response.400')
 
         r = r.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(r, Response))
@@ -324,7 +317,8 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(lk, Reference))
         lk = lk.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(lk, Link))
-        self.assertEqual(lk.operation_ref, 'file:///root.yml#/paths/~1test1/post')
+        self.assertEqual(lk.operation_ref,
+                         'file:///root.yml#/paths/~1test1/post')
         self.assertTrue('id_1' in lk.parameters)
         self.assertEqual(lk.parameters['id_1'], '$response.body#/id_1')
 
@@ -338,12 +332,12 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(cb, Reference))
         self.assertEqual(
             cb.get_attrs('migration').normalized_ref,
-            'file:///partial_1.yml#/callbacks/cb.1'
-        )
+            'file:///partial_1.yml#/callbacks/cb.1')
 
         cb = cb.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(cb, Callback))
-        self.assertEqual(cb['/test-cb-1'].summary, 'some test path item for callback')
+        self.assertEqual(cb['/test-cb-1'].summary,
+                         'some test path item for callback')
 
         pi = cb['/test-cb-1'].get
         self.assertEqual(pi.operation_id, 'cb.1.get')
@@ -356,8 +350,7 @@ class ResolveTestCase(unittest.TestCase):
         self.assertTrue(isinstance(r, Reference))
         self.assertEqual(
             r.get_attrs('migration').normalized_ref,
-            'file:///root.yml#/components/responses/void'
-        )
+            'file:///root.yml#/components/responses/void')
 
         r = r.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(r, Response))
@@ -390,8 +383,7 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """
         jref = '#/paths/~1p1/get'
         op, new_ref = self.app.resolve_obj(
-            jref, from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            jref, from_spec_version='2.0', to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(jp, jref)
         self.assertEqual(url, self.doc_path)
@@ -401,8 +393,9 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """ parameters -> components/parameters
         """
         p, new_ref = self.app.resolve_obj(
-            '#/parameters/query_string', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/parameters/query_string',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/components/parameters/query_string')
@@ -412,8 +405,9 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """ parameters -> components/requestBodies
         """
         bp, new_ref = self.app.resolve_obj(
-            '#/parameters/body_file_ref', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/parameters/body_file_ref',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/components/requestBodies/body_file_ref')
@@ -423,8 +417,9 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """ parameters -> components/requestBodies
         """
         fp, new_ref = self.app.resolve_obj(
-            '#/parameters/form_string', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/parameters/form_string',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/components/requestBodies/form_string')
@@ -434,8 +429,9 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """ responses -> components/responses
         """
         vd, new_ref = self.app.resolve_obj(
-            '#/responses/void', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/responses/void',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/components/responses/void')
@@ -445,8 +441,9 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """ definitions -> components/schemas
         """
         d, new_ref = self.app.resolve_obj(
-            '#/definitions/category', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/definitions/category',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/components/schemas/category')
@@ -456,8 +453,9 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         """ securityDefinitions -> components/securitySchemes
         """
         s, new_ref = self.app.resolve_obj(
-            '#/securityDefinitions/petstore_auth', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/securityDefinitions/petstore_auth',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
         self.assertEqual(jp, '#/components/securitySchemes/petstore_auth')
@@ -468,11 +466,13 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
         should support object relocation, too
         """
         p, new_ref = self.app.resolve_obj(
-            '#/paths/~1p3~1{user_name}/parameters/0', from_spec_version='2.0', to_spec_version='3.0.0'
-        )
+            '#/paths/~1p3~1{user_name}/parameters/0',
+            from_spec_version='2.0',
+            to_spec_version='3.0.0')
         url, jp = jr_split(new_ref)
         self.assertEqual(url, self.doc_path)
-        self.assertEqual(jp, '#/paths/~1p3~1{user_name}/x-pyopenapi_internal_request_body')
+        self.assertEqual(
+            jp, '#/paths/~1p3~1{user_name}/x-pyopenapi_internal_request_body')
         self.assertTrue(isinstance(p, RequestBody))
 
 
@@ -485,9 +485,9 @@ class MutualReferenceTestCase(unittest.TestCase):
     def setUpClass(kls):
         kls.app = SampleApp.create(
             url='file:///root/swagger.json',
-            url_load_hook=gen_test_folder_hook(get_test_data_folder(version='2.0', which='ex')),
-            to_spec_version='3.0.0'
-        )
+            url_load_hook=gen_test_folder_hook(
+                get_test_data_folder(version='2.0', which='ex')),
+            to_spec_version='3.0.0')
 
     def test_from_ex_back_to_root(self):
         """ make sure a $ref (to an object in root document)
@@ -496,12 +496,9 @@ class MutualReferenceTestCase(unittest.TestCase):
         o, _ = self.app.resolve_obj(
             '#/definitions/s4',
             from_spec_version='2.0',
-            to_spec_version='3.0.0'
-        )
+            to_spec_version='3.0.0')
 
         # '#/definitions/s3' -> '#/components/schemas/s3'
         self.assertEqual(
             o.items.get_attrs('migration').ref_obj.items.ref,
-            'file:///root/swagger.json#/components/schemas/s3'
-        )
-
+            'file:///root/swagger.json#/components/schemas/s3')

@@ -11,19 +11,13 @@ class YAMLTestCase(unittest.TestCase):
     def test_load(self):
         """ make sure the result of yaml and json are identical """
         app_json = SampleApp.load(
-            get_test_data_folder(
-                version='2.0',
-                which='wordnik'
-            )
-        )
+            get_test_data_folder(version='2.0', which='wordnik'))
         app_yaml = SampleApp.load(
             get_test_data_folder(
                 version='2.0',
                 which='yaml',
-            )
-        )
+            ))
         s = Scanner2()
         s.scan(route=[YamlFixer()], root=app_yaml.raw, leaves=[Operation])
 
         self.assertEqual((True, ''), app_json.raw.compare(app_yaml.raw))
-

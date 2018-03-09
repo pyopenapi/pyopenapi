@@ -7,9 +7,10 @@ from ..v2_0.objects import (
     License,
     Schema,
     PathItem,
-    )
+)
 from .scanner import Resolve, NormalizeRef, Merge
 from . import objects
+
 
 def up(obj, app, jref):
     ret = obj
@@ -18,22 +19,28 @@ def up(obj, app, jref):
     if ret.__swagger_version__ == '2.0':
         override = None
         if isinstance(ret, (Swagger, License, Info, Schema)):
-            override = app.spec_obj_store.get_under(url, jp, '3.0.0', remove=False)
+            override = app.spec_obj_store.get_under(
+                url, jp, '3.0.0', remove=False)
 
         if isinstance(ret, Swagger):
             migrated, reloc = converters.to_openapi(ret, jp)
             ret = objects.OpenApi(migrated, path=jp, override=override)
         elif isinstance(ret, License):
-            ret = objects.License(converters.to_license(ret, jp), path=jp, override=override)
+            ret = objects.License(
+                converters.to_license(ret, jp), path=jp, override=override)
         elif isinstance(ret, Info):
-            ret = objects.Info(converters.to_info(ret, jp), path=jp, override=override)
+            ret = objects.Info(
+                converters.to_info(ret, jp), path=jp, override=override)
         elif isinstance(ret, Schema):
-            ret = objects.Schema(converters.to_schema(ret, jp), path=jp, override=override)
+            ret = objects.Schema(
+                converters.to_schema(ret, jp), path=jp, override=override)
         elif isinstance(ret, PathItem):
             migrated, reloc = converters.to_path_item(ret, url, jp)
             ret = objects.PathItem(migrated, path=jp, override=override)
         else:
-            raise Exception('unable to upgrade from 2.0: {} for type: {}'.format(jref, str(type(ret))))
+            raise Exception(
+                'unable to upgrade from 2.0: {} for type: {}'.format(
+                    jref, str(type(ret))))
 
     if ret.__swagger_version__ == '3.0.0':
         scanner = Scanner2()
@@ -53,6 +60,7 @@ def up(obj, app, jref):
         # phase 4: merge path item from $ref
         scanner.scan(root=ret, route=[Merge(app)])
     else:
-        raise Exception('unsupported migration: {} to 3.0.0'.format(obj.__swagger_version__))
+        raise Exception('unsupported migration: {} to 3.0.0'.format(
+            obj.__swagger_version__))
 
     return ret, reloc

@@ -12,6 +12,7 @@ import functools
 import pkgutil
 import distutils
 
+
 #TODO: accept varg
 def scope_compose(scope, name, sep=consts.SCOPE_SEPARATOR):
     """ compose a new scope
@@ -31,6 +32,7 @@ def scope_compose(scope, name, sep=consts.SCOPE_SEPARATOR):
 
     return new_scope
 
+
 def scope_split(scope, sep=consts.SCOPE_SEPARATOR):
     """ split a scope into names
 
@@ -44,6 +46,7 @@ def scope_split(scope, sep=consts.SCOPE_SEPARATOR):
 class ScopeDict(dict):
     """ ScopeDict
     """
+
     def __init__(self, *a, **k):
         self.__sep = consts.SCOPE_SEPARATOR
         super(ScopeDict, self).__init__(*a, **k)
@@ -69,7 +72,9 @@ class ScopeDict(dict):
 
         :param dict keys: keys to access via scopes.
         """
-        k = six.moves.reduce(lambda k1, k2: scope_compose(k1, k2, sep=self.__sep), keys[0]) if isinstance(keys[0], tuple) else keys[0]
+        k = six.moves.reduce(
+            lambda k1, k2: scope_compose(k1, k2, sep=self.__sep),
+            keys[0]) if isinstance(keys[0], tuple) else keys[0]
         try:
             return super(ScopeDict, self).__getitem__(k)
         except KeyError as e:
@@ -85,7 +90,9 @@ class ScopeDict(dict):
                 #  - b!##!something-get
                 #  and access with 'get'
                 last_k = k.rsplit(self.__sep, 1)[-1]
-                matched = [r for r in ret if r.rsplit(self.__sep, 1)[-1] == last_k]
+                matched = [
+                    r for r in ret if r.rsplit(self.__sep, 1)[-1] == last_k
+                ]
                 if len(matched) == 1:
                     return super(ScopeDict, self).__getitem__(matched[0])
 
@@ -103,7 +110,8 @@ class CycleGuard(object):
 
     def update(self, obj):
         if obj in self.__visited:
-            raise CycleDetectionError('Cycle detected: {0}'.format(getattr(obj, '$ref', None)))
+            raise CycleDetectionError('Cycle detected: {0}'.format(
+                getattr(obj, '$ref', None)))
         self.__visited.append(obj)
 
 
@@ -119,6 +127,7 @@ def jp_compose(s, base=None):
         ss.insert(0, base)
     return '/'.join(ss)
 
+
 def jp_split(s, max_split=-1):
     """ split/decode a string from json-pointer
     """
@@ -131,14 +140,14 @@ def jp_split(s, max_split=-1):
 
     return [_decode(ss) for ss in s.split('/', max_split)]
 
+
 def jr_split(s):
     """ split a json-reference into (url, json-pointer)
     """
     p = six.moves.urllib.parse.urlparse(s)
-    return (
-        normalize_url(six.moves.urllib.parse.urlunparse(p[:5]+('',))),
-        '#'+p.fragment if p.fragment else '#'
-    )
+    return (normalize_url(six.moves.urllib.parse.urlunparse(p[:5] + ('', ))),
+            '#' + p.fragment if p.fragment else '#')
+
 
 def deref(obj, guard=None):
     """ dereference $ref
@@ -157,10 +166,12 @@ def deref(obj, guard=None):
 
     return cur
 
+
 def final(obj):
     if obj.ref:
         return obj.get_attrs('migration').final_obj or obj
     return obj
+
 
 def path2url(p):
     """ Return file:// URL from a filename.
@@ -170,10 +181,11 @@ def path2url(p):
         return pathlib.Path(p).as_uri()
     else:
         return six.moves.urllib.parse.urljoin(
-            'file:', six.moves.urllib.request.pathname2url(p)
-        )
+            'file:', six.moves.urllib.request.pathname2url(p))
+
 
 _windows_path_prefix = re.compile(r'(^[A-Za-z]:\\)')
+
 
 def normalize_url(url):
     """ Normalize url
@@ -195,6 +207,7 @@ def normalize_url(url):
 
     return url
 
+
 def url_dirname(url):
     """ Return the folder containing the '.json' file
     """
@@ -202,11 +215,9 @@ def url_dirname(url):
     for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
         if p.path.endswith(e):
             return six.moves.urllib.parse.urlunparse(
-                p[:2]+
-                (os.path.dirname(p.path),)+
-                p[3:]
-            )
+                p[:2] + (os.path.dirname(p.path), ) + p[3:])
     return url
+
 
 def url_join(url, path):
     """ url version of os.path.join
@@ -222,10 +233,9 @@ def url_join(url, path):
         t = ('' if path and path[0] == '/' else '/').join([p.path, path])
 
     return six.moves.urllib.parse.urlunparse(
-        p[:2] +
-        (t,) + # os.sep is different on windows, don't use it here.
-        p[3:]
-    )
+        p[:2] + (t, ) +    # os.sep is different on windows, don't use it here.
+        p[3:])
+
 
 def normalize_jr(jr, url=None):
     """ normalize JSON reference, also fix
@@ -246,14 +256,15 @@ def normalize_jr(jr, url=None):
         return jr
 
     idx = jr.find('#')
-    path, jp = (jr[:idx], jr[idx+1:]) if idx != -1 else (jr, None)
+    path, jp = (jr[:idx], jr[idx + 1:]) if idx != -1 else (jr, None)
 
     if len(path) > 0:
         p = six.moves.urllib.parse.urlparse(path)
         if p.scheme == '' and url:
             p = six.moves.urllib.parse.urlparse(url)
             # it's the path of relative file
-            path = six.moves.urllib.parse.urlunparse(p[:2]+('/'.join([os.path.dirname(p.path), path]),)+p[3:])
+            path = six.moves.urllib.parse.urlunparse(
+                p[:2] + ('/'.join([os.path.dirname(p.path), path]), ) + p[3:])
             path = derelativise_url(path)
     else:
         path = url
@@ -263,31 +274,35 @@ def normalize_jr(jr, url=None):
     else:
         return '#' + jp
 
+
 def _fullmatch(regex, chunk):
     m = re.match(regex, chunk)
     if m and m.span()[1] == len(chunk):
         return m
     return None
 
+
 def derelativise_url(url):
     '''
     Normalizes URLs, gets rid of .. and .
     '''
     parsed = six.moves.urllib.parse.urlparse(url)
-    newpath=[]
+    newpath = []
     for chunk in parsed.path[1:].split('/'):
         if chunk == '.':
             continue
         elif chunk == '..':
             # parent dir.
-            newpath=newpath[:-1]
+            newpath = newpath[:-1]
             continue
         elif _fullmatch(r'\.{3,}', chunk) is not None:
             # parent dir.
-            newpath=newpath[:-1]
+            newpath = newpath[:-1]
             continue
         newpath += [chunk]
-    return six.moves.urllib.parse.urlunparse(parsed[:2]+('/'+('/'.join(newpath)),)+parsed[3:])
+    return six.moves.urllib.parse.urlunparse(
+        parsed[:2] + ('/' + ('/'.join(newpath)), ) + parsed[3:])
+
 
 def get_swagger_version(obj):
     """ get swagger version from loaded json """
@@ -302,7 +317,9 @@ def get_swagger_version(obj):
         return None
     else:
         # should be an instance of BaseObj
-        return obj.swaggerVersion if hasattr(obj, 'swaggerVersion') else obj.swagger
+        return obj.swaggerVersion if hasattr(obj,
+                                             'swaggerVersion') else obj.swagger
+
 
 def _diff_(src, dst, ret=None, jp=None, exclude=[], include=[]):
     """ compare 2 dict/list, return a list containing
@@ -323,21 +340,38 @@ def _diff_(src, dst, ret=None, jp=None, exclude=[], include=[]):
 
         # added keys
         for k in sd - ss:
-            ret.append((jp_compose(k, base=jp), None, None,))
+            ret.append((
+                jp_compose(k, base=jp),
+                None,
+                None,
+            ))
 
         # removed keys
         for k in ss - sd:
-            ret.append((jp_compose(k, base=jp), None, None,))
+            ret.append((
+                jp_compose(k, base=jp),
+                None,
+                None,
+            ))
 
         # same key
         for k in ss & sd:
-            _diff_(src[k], dst[k], ret, jp_compose(k, base=jp), exclude, include)
+            _diff_(src[k], dst[k], ret, jp_compose(k, base=jp), exclude,
+                   include)
 
     def _list_(src, dst, ret, jp):
         if len(src) < len(dst):
-            ret.append((jp, len(src), len(dst),))
+            ret.append((
+                jp,
+                len(src),
+                len(dst),
+            ))
         elif len(src) > len(dst):
-            ret.append((jp, len(src), len(dst),))
+            ret.append((
+                jp,
+                len(src),
+                len(dst),
+            ))
         else:
             if len(src) == 0:
                 return
@@ -345,20 +379,29 @@ def _diff_(src, dst, ret=None, jp=None, exclude=[], include=[]):
             # make sure every element in list is the same
             def r(x, y):
                 if type(y) != type(x):
-                    raise ValueError('different type: {0}, {1}'.format(type(y).__name__, type(x).__name__))
+                    raise ValueError('different type: {0}, {1}'.format(
+                        type(y).__name__,
+                        type(x).__name__))
                 return x
+
             ts = type(functools.reduce(r, src))
             td = type(functools.reduce(r, dst))
 
             # when type is different
             while True:
-                if issubclass(ts, six.string_types) and issubclass(td, six.string_types):
+                if issubclass(ts, six.string_types) and issubclass(
+                        td, six.string_types):
                     break
-                if issubclass(ts, six.integer_types) and issubclass(td, six.integer_types):
+                if issubclass(ts, six.integer_types) and issubclass(
+                        td, six.integer_types):
                     break
                 if ts == td:
                     break
-                ret.append((jp, str(ts), str(td),))
+                ret.append((
+                    jp,
+                    str(ts),
+                    str(td),
+                ))
                 return
 
             if ts != dict:
@@ -369,25 +412,39 @@ def _diff_(src, dst, ret=None, jp=None, exclude=[], include=[]):
                 ss, sd = src, dst
 
             for idx, (s, d) in enumerate(zip(src, dst)):
-                _diff_(s, d, ret, jp_compose(str(idx), base=jp), exclude, include)
+                _diff_(s, d, ret, jp_compose(str(idx), base=jp), exclude,
+                       include)
 
     ret = [] if ret == None else ret
     jp = '' if jp == None else jp
 
     if isinstance(src, dict):
         if not isinstance(dst, dict):
-            ret.append((jp, type(src).__name__, type(dst).__name__,))
+            ret.append((
+                jp,
+                type(src).__name__,
+                type(dst).__name__,
+            ))
         else:
             _dict_(src, dst, ret, jp)
     elif isinstance(src, list):
         if not isinstance(dst, list):
-            ret.append((jp, type(src).__name__, type(dst).__name__,))
+            ret.append((
+                jp,
+                type(src).__name__,
+                type(dst).__name__,
+            ))
         else:
             _list_(src, dst, ret, jp)
     elif src != dst:
-        ret.append((jp, src, dst,))
+        ret.append((
+            jp,
+            src,
+            dst,
+        ))
 
     return ret
+
 
 def get_or_none(obj, *a):
     ret = obj
@@ -396,6 +453,7 @@ def get_or_none(obj, *a):
         if not ret:
             break
     return ret
+
 
 def patch_path(base_path, path):
     # try to get extension from base_path
@@ -420,12 +478,18 @@ def patch_path(base_path, path):
 
     return path
 
+
 def get_supported_versions(module_name, is_pkg=False):
-    versions = [name for _, name, pkg in pkgutil.iter_modules([os.path.join(os.path.dirname(__file__), module_name)]) if pkg == is_pkg]
+    versions = [
+        name for _, name, pkg in pkgutil.iter_modules(
+            [os.path.join(os.path.dirname(__file__), module_name)])
+        if pkg == is_pkg
+    ]
 
     # skip every file name that is not started with 'v'
     versions = [name for name in versions if name.startswith('v')]
 
     # convert v1_2 to 1.2, and sort
-    return sorted([v[1:].replace('_', '.') for v in versions], key=distutils.version.StrictVersion)
-
+    return sorted(
+        [v[1:].replace('_', '.') for v in versions],
+        key=distutils.version.StrictVersion)

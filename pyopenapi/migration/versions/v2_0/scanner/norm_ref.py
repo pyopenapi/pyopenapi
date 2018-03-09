@@ -5,12 +5,12 @@ from ..objects import (
     Schema,
     PathItem,
     Reference,
-    )
+)
 from ..attrs import (
     SchemaAttributeGroup,
     ReferenceAttributeGroup,
     PathItemAttributeGroup,
-    )
+)
 
 
 def _normalize(obj, base_url, attr_group_cls):
@@ -22,7 +22,8 @@ def _normalize(obj, base_url, attr_group_cls):
 class NormalizeRef(object):
     """ normalized all $ref """
 
-    class Disp(Dispatcher): pass
+    class Disp(Dispatcher):
+        pass
 
     def __init__(self, base_url):
         self.base_url = base_url
@@ -38,4 +39,3 @@ class NormalizeRef(object):
     @Disp.register([PathItem])
     def _path_item(self, path, obj):
         _normalize(obj, self.base_url, PathItemAttributeGroup)
-

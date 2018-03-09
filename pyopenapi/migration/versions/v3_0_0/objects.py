@@ -12,9 +12,7 @@ class Reference(Base2_v3_0_0):
         '$ref': dict(required=True, readonly=False),
     }
 
-    __internal__ = {
-        'ref': dict(key='$ref', builder=rename)
-    }
+    __internal__ = {'ref': dict(key='$ref', builder=rename)}
 
 
 def if_not_ref_else(class_builder):
@@ -22,30 +20,37 @@ def if_not_ref_else(class_builder):
         if '$ref' in spec:
             return Reference(spec, path=path, override=override)
         return class_builder(spec, path=path, override=override)
+
     _f.__name__ = 'if_not_ref_else_' + class_builder.__name__
     return _f
+
 
 def if_not_bool_else(class_builder):
     def _f(spec, path, override):
         if isinstance(spec, bool):
             return spec
         return class_builder(spec, path=path, override=override)
+
     _f.__name__ = 'if_not_bool_else_' + class_builder.__name__
     return _f
+
 
 def is_str(spec, path, override):
     if override:
         raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types):
         return spec
-    raise Exception('should be a string, not {}, {}'.format(str(type(spec)), path))
+    raise Exception('should be a string, not {}, {}'.format(
+        str(type(spec)), path))
+
 
 def is_str_or_int(spec, path, override):
     if override:
         raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types + six.integer_types):
         return spec
-    raise Exception('should be a string or int, not {}'.format(str(type(spec)), path))
+    raise Exception('should be a string or int, not {}'.format(
+        str(type(spec)), path))
 
 
 class Contact(Base2_v3_0_0):
@@ -91,9 +96,7 @@ class ServerVariable(Base2_v3_0_0):
         'enum': dict(child_builder=list_(is_str)),
     }
 
-    __internal__ = {
-        'enum_': dict(key='enum', builder=rename)
-    }
+    __internal__ = {'enum_': dict(key='enum', builder=rename)}
 
 
 class Server(Base2_v3_0_0):
@@ -118,6 +121,7 @@ class Example(Base2_v3_0_0):
     __internal__ = {
         'external_value': dict(key='externalValue', builder=rename),
     }
+
 
 ExampleOrReference = if_not_ref_else(Example)
 
@@ -185,7 +189,7 @@ class Schema(Base2_v3_0_0):
     __children__ = {
         'discriminator': dict(child_builder=Discriminator),
         'xml': dict(child_builder=XML_),
-        'externalDocs':  dict(child_builder=ExternalDocumentation),
+        'externalDocs': dict(child_builder=ExternalDocumentation),
     }
 
     __internal__ = {
@@ -206,23 +210,28 @@ class Schema(Base2_v3_0_0):
         'write_only': dict(key='writeOnly', builder=rename),
         'xml_': dict(key='xml', builder=rename),
         'external_docs': dict(key='externalDocs', builder=rename),
-
         'all_of': dict(key='allOf', builder=rename),
         'one_of': dict(key='oneOf', builder=rename),
         'any_of': dict(key='anyOf', builder=rename),
         'not_': dict(key='not', builder=rename),
-        'additional_properties': dict(key='additionalProperties', builder=rename),
+        'additional_properties': dict(
+            key='additionalProperties', builder=rename),
     }
+
 
 SchemaOrReference = if_not_ref_else(Schema)
 BoolOrSchemaOrReference = if_not_bool_else(SchemaOrReference)
 
-Schema.attach_field('allOf', builder=child, child_builder=list_(SchemaOrReference))
-Schema.attach_field('oneOf', builder=child, child_builder=list_(SchemaOrReference))
-Schema.attach_field('anyOf', builder=child, child_builder=list_(SchemaOrReference))
+Schema.attach_field(
+    'allOf', builder=child, child_builder=list_(SchemaOrReference))
+Schema.attach_field(
+    'oneOf', builder=child, child_builder=list_(SchemaOrReference))
+Schema.attach_field(
+    'anyOf', builder=child, child_builder=list_(SchemaOrReference))
 Schema.attach_field('not', builder=child, child_builder=SchemaOrReference)
 Schema.attach_field('items', builder=child, child_builder=SchemaOrReference)
-Schema.attach_field('properties', builder=child, child_builder=map_(SchemaOrReference))
+Schema.attach_field(
+    'properties', builder=child, child_builder=map_(SchemaOrReference))
 Schema.attach_field(
     'additionalProperties',
     builder=child,
@@ -255,6 +264,7 @@ class Parameter(Base2_v3_0_0):
         'allow_reserved': dict(key='allowReserved', builder=rename),
     }
 
+
 ParameterOrReference = if_not_ref_else(Parameter)
 
 
@@ -267,6 +277,7 @@ class Header(Parameter):
     __internal__ = {
         'in_': dict(key='in', builder=rename),
     }
+
 
 HeaderOrReference = if_not_ref_else(Header)
 
@@ -314,6 +325,7 @@ class RequestBody(Base2_v3_0_0):
         'content': dict(child_builder=map_(MediaType), required=True),
     }
 
+
 RequestBodyOrReference = if_not_ref_else(RequestBody)
 
 
@@ -336,6 +348,7 @@ class Link(Base2_v3_0_0):
         'request_body': dict(key='requestBody', builder=rename),
     }
 
+
 LinkOrReference = if_not_ref_else(Link)
 
 
@@ -349,6 +362,7 @@ class Response(Base2_v3_0_0):
         'content': dict(child_builder=map_(MediaType)),
         'links': dict(child_builder=map_(LinkOrReference)),
     }
+
 
 ResponseOrReference = if_not_ref_else(Response)
 
@@ -407,6 +421,7 @@ class SecurityScheme(Base2_v3_0_0):
         'openid_connect_url': dict(key='openIdConnectUrl', builder=rename),
     }
 
+
 SecuritySchemeOrReference = if_not_ref_else(SecurityScheme)
 
 
@@ -443,8 +458,10 @@ class PathItem(Base2_v3_0_0):
     }
 
     __internal__ = {
-        'ref': dict(key='$ref', builder=rename),
-        'x_pyopenapi_internal_request_body': dict(key='x-pyopenapi_internal_request_body', builder=rename),
+        'ref':
+        dict(key='$ref', builder=rename),
+        'x_pyopenapi_internal_request_body':
+        dict(key='x-pyopenapi_internal_request_body', builder=rename),
     }
 
     __children__ = {
@@ -459,8 +476,8 @@ class PathItem(Base2_v3_0_0):
         'servers': dict(child_builder=list_(Server)),
         'parameters': dict(child_builder=list_(ParameterOrReference)),
 
-        # a cached place for body parameter under PathItem object
-        # in Swager 2.0 when migration
+    # a cached place for body parameter under PathItem object
+    # in Swager 2.0 when migration
         'x-pyopenapi_internal_request_body': dict(child_builder=RequestBody),
     }
 
@@ -470,7 +487,8 @@ class Callback(map_(PathItem)):
 
 
 CallbackOrReference = if_not_ref_else(Callback)
-Operation.attach_field('callbacks', builder=child, child_builder=map_(CallbackOrReference))
+Operation.attach_field(
+    'callbacks', builder=child, child_builder=map_(CallbackOrReference))
 
 
 class Components(Base2_v3_0_0):
@@ -525,4 +543,3 @@ class OpenApi(Base2_v3_0_0):
     __internal__ = {
         'external_docs': dict(key='externalDocs', builder=rename),
     }
-

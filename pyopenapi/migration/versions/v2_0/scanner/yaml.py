@@ -3,14 +3,15 @@ from ....scan import Dispatcher
 from ..objects import (
     Operation,
     MapOfResponseOrReference,
-    )
+)
 import six
 
 
 class YamlFixer(object):
     """ fix objects loaded by pyaml """
 
-    class Disp(Dispatcher): pass
+    class Disp(Dispatcher):
+        pass
 
     @Disp.register([Operation])
     def _op(self, _, obj):
@@ -25,4 +26,3 @@ class YamlFixer(object):
             else:
                 responses[k] = v
         obj.attach_child('responses', responses)
-

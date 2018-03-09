@@ -8,7 +8,6 @@ import os
 import logging
 import re
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +46,8 @@ class Getter(six.Iterator):
                 else:
                     obj = yaml.load(obj)
             except ValueError:
-                raise Exception('Unknown format startswith {0} ...'.format(obj[:10]))
+                raise Exception('Unknown format startswith {0} ...'.format(
+                    obj[:10]))
 
         return obj
 
@@ -59,9 +59,11 @@ class Getter(six.Iterator):
         """
         raise NotImplementedError()
 
+
 class LocalGetter(Getter):
     """ default getter implmenetation for local resource file
     """
+
     def __init__(self, path):
         super(LocalGetter, self).__init__(path)
 
@@ -89,7 +91,10 @@ class LocalGetter(Getter):
             # - when 'path' points to a specific file, and its
             #   extension is either 'json' or 'yaml'.
             _, ext = os.path.splitext(path)
-            for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML, consts.FILE_EXT_YML]:
+            for e in [
+                    consts.FILE_EXT_JSON, consts.FILE_EXT_YAML,
+                    consts.FILE_EXT_YML
+            ]:
                 if ext.endswith(e):
                     self.base_path = os.path.dirname(path)
                     self.urls = [path]
@@ -100,7 +105,8 @@ class LocalGetter(Getter):
                         self.urls = [path + '.' + e]
                         break
                 else:
-                    raise ValueError('Unable to locate resource file: [{0}]'.format(path))
+                    raise ValueError(
+                        'Unable to locate resource file: [{0}]'.format(path))
 
     def load(self, path):
         logger.info('to load: [{0}]'.format(path))
@@ -129,7 +135,9 @@ class SimpleGetter(Getter):
                 self.base_path = self.base_path[:-1]
             self.urls = [path]
         else:
-            raise Exception('Unsupported type for "path": {} in SimpleGetter'.format(str(type(path))))
+            raise Exception(
+                'Unsupported type for "path": {} in SimpleGetter'.format(
+                    str(type(path))))
 
     def load(self, path):
         logger.info('to load: [{0}]'.format(path))
@@ -148,6 +156,7 @@ def _url_load(path):
 
     return ret
 
+
 class UrlGetter(SimpleGetter):
     """ default getter implementation for remote resource file
     """
@@ -161,6 +170,7 @@ class DictGetter(Getter):
      - urls: the urls to be loaded in upcoming resolving (the order should be matched to get result correct)
      - path2dict: a mapping from 'path' to 'dict', which is the mocking of 'downloaded data'
     """
+
     def __init__(self, urls, path2dict):
         super(DictGetter, self).__init__(urls[0])
         self.urls = urls
@@ -170,4 +180,3 @@ class DictGetter(Getter):
         logger.info('to load: [{0}]'.format(path))
 
         return self._path2dict.get(path, {})
-

@@ -13,7 +13,6 @@ import pkgutil
 import weakref
 import os
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +20,11 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
     """
     """
 
-    def __init__(self, url=None, url_load_hook=None, resolver=None, sep=consts.SCOPE_SEPARATOR):
+    def __init__(self,
+                 url=None,
+                 url_load_hook=None,
+                 resolver=None,
+                 sep=consts.SCOPE_SEPARATOR):
         """ constructor
 
         :param url str: url of swagger.json
@@ -31,13 +34,11 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         """
 
         self.__original_spec_version = ''
-        self.__url=url
+        self.__url = url
 
         # migratable spec version
         self.__migratable_spec_versions = utils.get_supported_versions(
-            os.path.join('migration', 'versions'),
-            is_pkg=True
-        )
+            os.path.join('migration', 'versions'), is_pkg=True)
 
         # a map from json-reference to
         # - spec.base2._Base
@@ -46,11 +47,12 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         # and a map from json-reference in older OpenApi spec
         # to json-reference in migrated OpenApi spec
         self.__store = SpecObjStore(
-            migratable_spec_versions=self.migratable_spec_versions
-        )
+            migratable_spec_versions=self.migratable_spec_versions)
 
         if url_load_hook and resolver:
-            raise ValueError('when use customized Resolver, please pass url_load_hook to that one')
+            raise ValueError(
+                'when use customized Resolver, please pass url_load_hook to that one'
+            )
 
         # the start-point when you want to traverse the code to laod new object
         self.__resolver = resolver or Resolver(url_load_hook)
@@ -129,7 +131,8 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         if obj:
             return obj
 
-        override = self.spec_obj_store.get_under(url, jp, version, remove=remove_dummy)
+        override = self.spec_obj_store.get_under(
+            url, jp, version, remove=remove_dummy)
         if version == '1.2':
             obj = ResourceListing(src_spec, jref, {})
 
@@ -139,16 +142,19 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
 
             base = utils.url_dirname(jref)
             urls = zip(
-                map(lambda u: utils.url_join(base,  u[1:]), resources),
-                map(lambda u: u[1:], resources)
-            )
+                map(lambda u: utils.url_join(base, u[1:]), resources),
+                map(lambda u: u[1:], resources))
 
             cached_apis = {}
             for url, name in urls:
                 resource_spec = self.resolver.resolve(url, getter)
                 if resource_spec is None:
-                    raise Exception('unable to resolve {} when load spec from {}'.format(url, jref))
-                cached_apis[name] = ApiDeclaration(resource_spec, utils.jp_compose(name, base=url), {})
+                    raise Exception(
+                        'unable to resolve {} when load spec from {}'.format(
+                            url, jref))
+                cached_apis[name] = ApiDeclaration(resource_spec,
+                                                   utils.jp_compose(
+                                                       name, base=url), {})
 
             obj.cached_apis = cached_apis
 
@@ -165,9 +171,12 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
 
         elif version == None and parser:
             obj = parser(src_spec, jref, {})
-            version = obj.__swagger_version__ if hasattr(obj, '__swagger_version__') else version
+            version = obj.__swagger_version__ if hasattr(
+                obj, '__swagger_version__') else version
         else:
-            raise NotImplementedError('Unsupported Swagger Version: {0} from {1}'.format(version, jref))
+            raise NotImplementedError(
+                'Unsupported Swagger Version: {0} from {1}'.format(
+                    version, jref))
 
         if not obj:
             raise Exception('Unable to parse object from {0}'.format(jref))
@@ -190,27 +199,35 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         supported_versions = self.migratable_spec_versions
 
         if spec_version not in supported_versions:
-            raise ValueError('unsupported spec version: {}'.format(spec_version))
+            raise ValueError(
+                'unsupported spec version: {}'.format(spec_version))
 
         # only keep required version strings for this migration
-        supported_versions = supported_versions[:(supported_versions.index(spec_version)+1)]
+        supported_versions = supported_versions[:(
+            supported_versions.index(spec_version) + 1)]
 
         # filter out those migration with lower version than current one
-        supported_versions = [v for v in supported_versions if StrictVersion(obj.__swagger_version__) <= StrictVersion(v)]
+        supported_versions = [
+            v for v in supported_versions
+            if StrictVersion(obj.__swagger_version__) <= StrictVersion(v)
+        ]
 
         # load migration module
         url, relocated_jp = utils.jr_split(jref)
         from_spec_version = obj.__swagger_version__
         for v in supported_versions:
             patched_version = 'v{}'.format(v).replace('.', '_')
-            migration_module_path = '.'.join(['pyopenapi', 'migration', 'versions', patched_version, 'main'])
+            migration_module_path = '.'.join(
+                ['pyopenapi', 'migration', 'versions', patched_version, 'main'])
             loader = pkgutil.find_loader(migration_module_path)
             if not loader:
-                raise Exception('unable to find module loader for {}'.format(migration_module_path))
+                raise Exception('unable to find module loader for {}'.format(
+                    migration_module_path))
 
             migration_module = loader.load_module(migration_module_path)
             if not migration_module:
-                raise Exception('unable to load {} for migration'.format(migration_module_path))
+                raise Exception('unable to load {} for migration'.format(
+                    migration_module_path))
 
             # preform migration
             obj, reloc = migration_module.up(obj, self, jref)
@@ -219,9 +236,8 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             self.spec_obj_store.update_routes(url, v, {relocated_jp: reloc})
 
             # update JSON pointer for next round
-            relocated_jp = self.spec_obj_store.relocate(
-                url, relocated_jp, from_spec_version, v
-            )
+            relocated_jp = self.spec_obj_store.relocate(url, relocated_jp,
+                                                        from_spec_version, v)
 
             # prepare this object if needy
             obj = self.prepare_obj(obj, url + relocated_jp)
@@ -236,7 +252,12 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
 
         return obj
 
-    def resolve_obj(self, jref, from_spec_version, parser=None, to_spec_version=None, remove_dummy=False):
+    def resolve_obj(self,
+                    jref,
+                    from_spec_version,
+                    parser=None,
+                    to_spec_version=None,
+                    remove_dummy=False):
         """ internal JSON reference resolver
 
         :param str jref: a JSON Reference, refer to http://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03 for details.
@@ -268,8 +289,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         relocated_jp = jp
         if from_spec_version != to_spec_version:
             relocated_jp = self.spec_obj_store.relocate(
-                url, jp, from_spec_version, to_spec_version
-            )
+                url, jp, from_spec_version, to_spec_version)
 
         # check cacahed object against json reference by
         # comparing url first, and find those object prefixed with
@@ -279,14 +299,15 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         # this object is not found in cache
         if obj is None:
             # attempt to load object via input JSON pointer
-            obj, j, _ = self.spec_obj_store.get_until(url, jp, from_spec_version, until=to_spec_version)
+            obj, j, _ = self.spec_obj_store.get_until(
+                url, jp, from_spec_version, until=to_spec_version)
             if obj is None:
                 if from_spec_version != self.original_spec_version:
                     raise Exception(
-                        'object is not loadable, you need to provide JSON pointer from source spec version:{}, not {}'.format(
-                            self.original_spec_version, from_spec_version
-                    ))
-                obj = self.load_obj(jref, parser=parser, remove_dummy=remove_dummy)
+                        'object is not loadable, you need to provide JSON pointer from source spec version:{}, not {}'.
+                        format(self.original_spec_version, from_spec_version))
+                obj = self.load_obj(
+                    jref, parser=parser, remove_dummy=remove_dummy)
             else:
                 jref = url + j
 
@@ -294,8 +315,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             obj = obj and self.prepare_obj(obj, jref)
 
             relocated_jp = self.spec_obj_store.relocate(
-                url, jp, from_spec_version, to_spec_version
-            )
+                url, jp, from_spec_version, to_spec_version)
 
         if obj is None:
             raise ValueError('Unable to resolve path, [{0}]'.format(jref))
@@ -308,4 +328,3 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
     @abc.abstractmethod
     def prepare_obj(self, obj, jref):
         return obj
-

@@ -7,21 +7,26 @@ import six
 def is_str(spec, path, override):
     if isinstance(spec, six.string_types):
         return spec
-    raise Exception('should be a string, not {}, {}'.format(str(type(spec)), path))
+    raise Exception('should be a string, not {}, {}'.format(
+        str(type(spec)), path))
+
 
 def if_not_ref_else(class_builder):
     def _f(spec, path, override):
         if '$ref' in spec:
             return Reference(spec, path=path, override=override)
         return class_builder(spec, path=path, override=override)
+
     _f.__name__ = 'if_not_ref_else_' + class_builder.__name__
     return _f
+
 
 def if_not_bool_else(class_builder):
     def _f(spec, path, override):
         if isinstance(spec, bool):
             return spec
         return class_builder(spec, path=path, override=override)
+
     _f.__name__ = 'if_not_bool_else_' + class_builder.__name__
     return _f
 
@@ -163,18 +168,21 @@ class Schema(BaseSchema):
         'read_only': dict(key='readOnly', builder=rename),
         'external_docs': dict(key='externalDocs', builder=rename),
         'all_of': dict(key='allOf', builder=rename),
-        'additional_properties': dict(key='additionalProperties', builder=rename),
+        'additional_properties': dict(
+            key='additionalProperties', builder=rename),
     }
 
     def _prim_(self, v, prim_factory, ctx=None):
         return prim_factory.produce(self, v, ctx)
+
 
 BoolOrSchema = if_not_bool_else(Schema)
 
 Schema.attach_field('items', builder=child, child_builder=Schema)
 Schema.attach_field('allOf', builder=child, child_builder=list_(Schema))
 Schema.attach_field('properties', builder=child, child_builder=map_(Schema))
-Schema.attach_field('additionalProperties', builder=child, child_builder=BoolOrSchema)
+Schema.attach_field(
+    'additionalProperties', builder=child, child_builder=BoolOrSchema)
 
 
 class Contact(BaseObj_v2_0):
@@ -221,7 +229,7 @@ class Parameter(BaseSchema):
     """
     __fields__ = {
         'name': dict(),
-        'in':  dict(),
+        'in': dict(),
         'required': dict(),
         'collectionFormat': dict(default='csv'),
         'description': dict(),
@@ -241,7 +249,10 @@ class Parameter(BaseSchema):
 
     def _prim_(self, v, prim_factory, ctx=None):
         i = getattr(self, 'in')
-        return prim_factory.produce(self.schema, v, ctx) if i == 'body' else prim_factory.produce(self, v, ctx)
+        return prim_factory.produce(
+            self.schema, v, ctx) if i == 'body' else prim_factory.produce(
+                self, v, ctx)
+
 
 ParameterOrReference = if_not_ref_else(Parameter)
 
@@ -314,7 +325,6 @@ class Operation(BaseObj_v2_0):
         'cached_consumes': dict(default=[]),
         'cached_produces': dict(default=[]),
         'cached_security': dict(),
-
         'operation_id': dict(key='operationId', builder=rename),
         'external_docs': dict(key='externalDocs', builder=rename),
     }
@@ -356,9 +366,7 @@ class SecurityScheme(BaseObj_v2_0):
         'tokenUrl': dict(),
     }
 
-    __children__ = {
-        'scopes': dict(child_builder=map_(is_str))
-    }
+    __children__ = {'scopes': dict(child_builder=map_(is_str))}
 
     __internal__ = {
         'type_': dict(key='type', builder=rename),
@@ -396,4 +404,3 @@ class Swagger(BaseObj_v2_0):
         'security_definitions': dict(key='securityDefinitions', builder=rename),
         'external_docs': dict(key='externalDocs', builder=rename),
     }
-
