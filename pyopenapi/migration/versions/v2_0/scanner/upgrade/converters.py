@@ -574,8 +574,11 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
                 consumes=consumes)
 
     if body:
-        # TODO: this part would not be dumpped, so the dumpped
-        #       spec would be corrupted.
+        # Valid $ref for Parameter in Swagger 2.0 should only point
+        # to 'parameters' field under Swagger object, therefore, there
+        # should be no $ref point to here.
+        #
+        # This dumped field is only intended for debug only
         ret['x-pyopenapi_internal_request_body'] = body
 
     return ret, reloc
