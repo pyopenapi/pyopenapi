@@ -610,7 +610,7 @@ def to_openapi(obj, path):
         paths = ret.setdefault('paths', {})
         for k, v in six.iteritems(obj.paths):
             if k.startswith('x-'):
-                raise ScheaError(
+                raise SchemaError(
                     'No more extension field in Paths object: {}'.format(path))
 
             paths[k], tmp_reloc = to_path_item(
