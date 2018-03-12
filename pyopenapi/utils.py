@@ -492,4 +492,6 @@ def get_supported_versions(module_name, is_pkg=False):
     # convert v1_2 to 1.2, and sort
     return sorted(
         [v[1:].replace('_', '.') for v in versions],
+
+        # pylint: disable=no-member
         key=distutils.version.StrictVersion)

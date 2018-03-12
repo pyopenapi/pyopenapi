@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from collections import OrderedDict
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion  # pylint: disable=no-name-in-module,import-error
 from .. import utils, consts
 from .spec import _Base
 import logging

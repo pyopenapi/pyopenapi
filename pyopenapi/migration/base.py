@@ -5,7 +5,7 @@ from .store import SpecObjStore
 from .versions.v1_2.objects import ResourceListing, ApiDeclaration
 from .versions.v2_0.objects import Swagger
 from .versions.v3_0_0.objects import OpenApi
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion  # pylint: disable=no-name-in-module,import-error
 import abc
 import six
 import logging
