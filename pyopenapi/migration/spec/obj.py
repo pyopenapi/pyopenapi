@@ -195,6 +195,8 @@ class _List(_Base):
     on all those objects.
     """
 
+    __child_builder_unbound__ = False
+
     def __init__(self, spec, path=None, override=None):
         super(_List, self).__init__(spec, path, override)
         self.__elm = []
@@ -213,10 +215,12 @@ class _List(_Base):
             if not elm:
                 path = jp_compose(idx, base=self._path_)
                 if self.__child_builder_unbound__:
-                    elm = self.__child_builder__.__func__(
-                        e, path=path, override=ovr)
+                    elm = self.__child_builder__.__func__(  # pylint: disable=no-member
+                        e,
+                        path=path,
+                        override=ovr)
                 else:
-                    elm = self.__child_builder__(e, path=path, override=ovr)
+                    elm = self.__child_builder__(e, path=path, override=ovr)  # pylint: disable=no-member
 
             if hasattr(elm, '_parent_'):
                 elm._parent_ = self
@@ -329,6 +333,8 @@ class _Map(_Base):
     on all those objects.
     """
 
+    __child_builder_unbound__ = False
+
     def __init__(self, spec, path=None, override=None):
         super(_Map, self).__init__(spec, path, override)
         self.__elm = {}
@@ -345,11 +351,15 @@ class _Map(_Base):
             if not elm:
                 path = jp_compose(str(k), base=self._path_)
                 if self.__child_builder_unbound__:
-                    elm = self.__child_builder__.__func__(
-                        spec[k], path=path, override=ovr)
+                    elm = self.__child_builder__.__func__(  # pylint: disable=no-member
+                        spec[k],
+                        path=path,
+                        override=ovr)
                 else:
-                    elm = self.__child_builder__(
-                        spec[k], path=path, override=ovr)
+                    elm = self.__child_builder__(  # pylint: disable=no-member
+                        spec[k],
+                        path=path,
+                        override=ovr)
 
             if hasattr(elm, '_parent_'):
                 elm._parent_ = self
@@ -496,6 +506,10 @@ class FieldMeta(type):
 class Base2Obj(_Base):
     """ Base implementation of all Open API objects
     """
+
+    __children__ = {}
+    __fields__ = {}
+    __internal__ = {}
 
     def __init__(self, spec, path=None, override=None):
         """ constructor

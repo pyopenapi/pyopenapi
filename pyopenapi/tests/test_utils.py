@@ -239,8 +239,8 @@ class SwaggerUtilsTestCase(unittest.TestCase):
 
         a = A()
         setattr(A, 'b', A())
-        setattr(a.b, 'c', A())
-        setattr(a.b.c, 'd', 'test string')
+        setattr(a.b, 'c', A())  # pylint: disable=no-member
+        setattr(a.b.c, 'd', 'test string')  # pylint: disable=no-member
         self.assertEqual(utils.get_or_none(a, 'b', 'c', 'd'), 'test string')
         self.assertEqual(utils.get_or_none(a, 'b', 'c', 'd', 'e'), None)
 

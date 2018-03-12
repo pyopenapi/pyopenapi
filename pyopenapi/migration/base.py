@@ -137,7 +137,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             obj = ResourceListing(src_spec, jref, {})
 
             resources = []
-            for r in obj.apis:
+            for r in obj.apis:  # pylint: disable=no-member
                 resources.append(r.path)
 
             base = utils.url_dirname(jref)

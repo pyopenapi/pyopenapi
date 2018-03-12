@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+
 from pyopenapi.migration.spec import (
     Base2,
     field,

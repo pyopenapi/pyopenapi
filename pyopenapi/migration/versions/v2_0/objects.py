@@ -134,9 +134,6 @@ class Items(BaseSchema):
         'collection_format': dict(key='collectionFormat'),
     }
 
-    def _prim_(self, v, prim_factory, ctx=None):
-        return prim_factory.produce(self, v, ctx)
-
 
 Items.attach_field('items', builder=child, child_builder=Items)
 
@@ -171,9 +168,6 @@ class Schema(BaseSchema):
         'additional_properties': dict(
             key='additionalProperties', builder=rename),
     }
-
-    def _prim_(self, v, prim_factory, ctx=None):
-        return prim_factory.produce(self, v, ctx)
 
 
 BoolOrSchema = if_not_bool_else(Schema)
@@ -247,12 +241,6 @@ class Parameter(BaseSchema):
         'allow_empty_value': dict(key='allowEmptyValue', builder=rename),
     }
 
-    def _prim_(self, v, prim_factory, ctx=None):
-        i = getattr(self, 'in')
-        return prim_factory.produce(
-            self.schema, v, ctx) if i == 'body' else prim_factory.produce(
-                self, v, ctx)
-
 
 ParameterOrReference = if_not_ref_else(Parameter)
 
@@ -272,9 +260,6 @@ class Header(BaseSchema):
     __internal__ = {
         'collection_format': dict(key='collectionFormat', builder=rename),
     }
-
-    def _prim_(self, v, prim_factory, ctx=None):
-        return prim_factory.produce(self, v, ctx)
 
 
 class Response(BaseObj_v2_0):

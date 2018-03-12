@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+
 from pyopenapi.migration.store import SpecObjStore
 from pyopenapi.migration.versions.v2_0.objects import Swagger, Info
 from pyopenapi.migration.versions.v3_0_0.objects import OpenApi
