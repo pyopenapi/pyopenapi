@@ -49,7 +49,7 @@ def is_str_or_int(spec, path, override):
         raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types + six.integer_types):
         return spec
-    raise Exception('should be a string or int, not {}'.format(
+    raise Exception('should be a string or int, not {} in {}'.format(
         str(type(spec)), path))
 
 
