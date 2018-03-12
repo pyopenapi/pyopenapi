@@ -277,7 +277,7 @@ def to_media_type(obj, content_type, existing, example, ctx, path):
 
     src_schema = getattr(
         resolved_obj, 'schema', None
-    ) or resolved_obj    # if it's body parameter, we should use obj.schema
+    ) or resolved_obj  # if it's body parameter, we should use obj.schema
     prop = properties.setdefault(resolved_obj.name, {})
     prop.update(
         to_schema(

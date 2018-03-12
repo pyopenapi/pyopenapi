@@ -229,11 +229,11 @@ class SpecObjStoreTestCase(unittest.TestCase):
             {
                 '#': {
                     'some/path': {
-        # relative, just replace the last part
+                        # relative, just replace the last part
                         'to/another/one': 'another2/two'
                     },
 
-        # real example from 3.0.0
+                    # real example from 3.0.0
                     'parameters': {
                         '': '#/components/parameters',
                         'body_1': '#/components/requestBodies/body_1'

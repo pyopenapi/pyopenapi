@@ -476,8 +476,8 @@ class PathItem(Base2_v3_0_0):
         'servers': dict(child_builder=list_(Server)),
         'parameters': dict(child_builder=list_(ParameterOrReference)),
 
-    # a cached place for body parameter under PathItem object
-    # in Swager 2.0 when migration
+        # a cached place for body parameter under PathItem object
+        # in Swager 2.0 when migration
         'x-pyopenapi_internal_request_body': dict(child_builder=RequestBody),
     }
 

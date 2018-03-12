@@ -233,7 +233,7 @@ def url_join(url, path):
         t = ('' if path and path[0] == '/' else '/').join([p.path, path])
 
     return six.moves.urllib.parse.urlunparse(
-        p[:2] + (t, ) +    # os.sep is different on windows, don't use it here.
+        p[:2] + (t, ) +  # os.sep is different on windows, don't use it here.
         p[3:])
 
 

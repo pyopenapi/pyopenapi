@@ -108,8 +108,8 @@ class SpecObjStore(object):
             self.__routes.setdefault(
                 url,
                 OrderedDict([
-            # there would be no $ref relocation from 1.2 to 2.0,
-            # reason: there is no 'JSON pointer' concept in 1.2
+                    # there would be no $ref relocation from 1.2 to 2.0,
+                    # reason: there is no 'JSON pointer' concept in 1.2
                     (v, {}) for v in self.__migratable_spec_versions
                 ]))
 
@@ -154,7 +154,7 @@ class SpecObjStore(object):
                 break
 
         if patch_to:
-            remain = jp[len(fixed_prefix + patch_from) + 1:]    # +1 for '/'
+            remain = jp[len(fixed_prefix + patch_from) + 1:]  # +1 for '/'
             new_jp = None
             # let's patch the JSON pointer
             if patch_to.startswith('#'):

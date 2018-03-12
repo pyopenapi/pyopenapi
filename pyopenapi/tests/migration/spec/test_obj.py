@@ -152,12 +152,11 @@ class Base2TestCase(unittest.TestCase):
         """ make sure builder:internal works
         """
         a = AObj({'a': 1, 'b': 2, 'ic': 3})
-        self.assertEqual(sorted(a._field_names_),
-                         ['a', 'b', 'c', 'd'
-                          ])    # internal is not included in '_field_names_'
         self.assertEqual(
-            a.ic,
-            None)    # internal is separated from input spec (in __fields__)
+            sorted(a._field_names_),
+            ['a', 'b', 'c', 'd'])  # internal is not included in '_field_names_'
+        self.assertEqual(
+            a.ic, None)  # internal is separated from input spec (in __fields__)
 
         a.ic = 4
         self.assertEqual(a.ic, 4)
@@ -702,7 +701,7 @@ class Base2TestCase(unittest.TestCase):
         """ property name of key to underlying dict can be different
         """
         h = HObj({'a': 1, 'b': 2})
-        self.assertEqual(h.a, 2)    # should be the value of 'b'
+        self.assertEqual(h.a, 2)  # should be the value of 'b'
 
     def test_inherit_overwrite_fields(self):
         """ when inheriting, child's field would overwrite parent's

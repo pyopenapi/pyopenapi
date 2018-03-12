@@ -182,7 +182,7 @@ def convert_operation(op, api, api_decl, swagger, sep):
     if op.type != 'void':
         resp_spec['schema'] = convert_schema_from_datatype(op, scope, sep)
     resp_spec[
-        'description'] = ''    # description is a required field in 2.0 Response object
+        'description'] = ''  # description is a required field in 2.0 Response object
     op_spec['responses']['default'] = resp_spec
 
     path = api_decl.base_path + api.path

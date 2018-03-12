@@ -126,8 +126,8 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             utils.jr_split(r'C:\user\tmp\local\ttt'), (target, '#'))
         self.assertEqual(
             utils.jr_split(
-        # check here for adding backslach at the end of raw string
-        #   https://pythonconquerstheuniverse.wordpress.com/2008/06/04/gotcha-%E2%80%94-backslashes-in-windows-filenames/
+                # check here for adding backslach at the end of raw string
+                #   https://pythonconquerstheuniverse.wordpress.com/2008/06/04/gotcha-%E2%80%94-backslashes-in-windows-filenames/
                 os.path.normpath('C:/user/tmp/local/ttt/')),
             (target, '#'))
 
