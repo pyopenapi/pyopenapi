@@ -19,29 +19,29 @@ class ResolvePathItemTestCase(unittest.TestCase):
 
     def test_path_item(self):
         """ make sure PathItem is correctly merged """
-        a, _ = self.app.resolve_obj(
+        path_item_a, _ = self.app.resolve_obj(
             jp_compose('/a', '#/paths'), from_spec_version='2.0')
-        a = final(a)
+        path_item_a = final(path_item_a)
 
-        self.assertTrue(isinstance(a, PathItem))
-        self.assertTrue(a.get.operationId, 'a.get')
-        self.assertTrue(a.put.description, 'c.put')
-        self.assertTrue(a.post.description, 'd.post')
+        self.assertTrue(isinstance(path_item_a, PathItem))
+        self.assertTrue(path_item_a.get.operationId, 'a.get')
+        self.assertTrue(path_item_a.put.description, 'c.put')
+        self.assertTrue(path_item_a.post.description, 'd.post')
 
-        b, _ = self.app.resolve_obj(
+        path_item_b, _ = self.app.resolve_obj(
             jp_compose('/b', '#/paths'), from_spec_version='2.0')
-        b = final(b)
+        path_item_b = final(path_item_b)
 
-        self.assertTrue(b.get.operationId, 'b.get')
-        self.assertTrue(b.put.description, 'c.put')
-        self.assertTrue(b.post.description, 'd.post')
+        self.assertTrue(path_item_b.get.operationId, 'b.get')
+        self.assertTrue(path_item_b.put.description, 'c.put')
+        self.assertTrue(path_item_b.post.description, 'd.post')
 
-        c, _ = self.app.resolve_obj(
+        path_item_c, _ = self.app.resolve_obj(
             jp_compose('/c', '#/paths'), from_spec_version='2.0')
-        c = final(c)
+        path_item_c = final(path_item_c)
 
-        self.assertTrue(b.put.description, 'c.put')
-        self.assertTrue(b.post.description, 'd.post')
+        self.assertTrue(path_item_b.put.description, 'c.put')
+        self.assertTrue(path_item_b.post.description, 'd.post')
 
 
 class ResolveTestCase(unittest.TestCase):
@@ -57,17 +57,22 @@ class ResolveTestCase(unittest.TestCase):
 
     def test_schema(self):
         """ make sure $ref to Schema works """
-        op, _ = self.app.resolve_obj('#/paths/~1a/get', from_spec_version='2.0')
-        m, _ = self.app.resolve_obj('#/definitions/d1', from_spec_version='2.0')
+        operation, _ = self.app.resolve_obj(
+            '#/paths/~1a/get', from_spec_version='2.0')
+        schema, _ = self.app.resolve_obj(
+            '#/definitions/d1', from_spec_version='2.0')
 
         self.assertEqual(
-            id(op.parameters[2].schema.get_attrs('migration').ref_obj), id(m))
+            id(operation.parameters[2].schema.get_attrs('migration').ref_obj),
+            id(schema))
 
     def test_response(self):
         """ make sure $ref to Response works """
-        p, _ = self.app.resolve_obj('#/paths/~1a/get', from_spec_version='2.0')
+        operation, _ = self.app.resolve_obj(
+            '#/paths/~1a/get', from_spec_version='2.0')
 
-        self.assertEqual(deref(p.responses['default']).description, 'void, r1')
+        self.assertEqual(
+            deref(operation.responses['default']).description, 'void, r1')
 
     def test_raises(self):
         """ make sure to raise for invalid input """
@@ -88,12 +93,13 @@ class DerefTestCase(unittest.TestCase):
             to_spec_version='2.0')
 
     def test_deref(self):
-        od, _ = self.app.resolve_obj(
+        schema_1, _ = self.app.resolve_obj(
             '#/definitions/s1', from_spec_version='2.0')
-        od = deref(od)
+        schema_1 = deref(schema_1)
 
-        m, _ = self.app.resolve_obj('#/definitions/s4', from_spec_version='2.0')
-        self.assertEqual(id(od), id(m))
+        schema_4, _ = self.app.resolve_obj(
+            '#/definitions/s4', from_spec_version='2.0')
+        self.assertEqual(id(schema_1), id(schema_4))
 
     def test_external_ref_loading_order(self):
         """ make sure pyopenapi.spec_obj_store would remove
@@ -159,7 +165,7 @@ class DerefTestCase(unittest.TestCase):
         # this case is not taken care here.
 
         # resolve their root object with latest version
-        oai, _ = app.resolve_obj(
+        root, _ = app.resolve_obj(
             'file:///wordnik/swagger.json',
             from_spec_version='2.0',
             to_spec_version='3.0.0',
@@ -168,4 +174,4 @@ class DerefTestCase(unittest.TestCase):
 
         # make sure root objec use those dummy objects during loading
         self.assertEqual(
-            weakref.proxy(oai.resolve(['info', 'license'])), license)
+            weakref.proxy(root.resolve(['info', 'license'])), license)

@@ -137,8 +137,8 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             obj = ResourceListing(src_spec, jref, {})
 
             resources = []
-            for r in obj.apis:  # pylint: disable=no-member
-                resources.append(r.path)
+            for resource in obj.apis:  # pylint: disable=no-member
+                resources.append(resource.path)
 
             base = utils.url_dirname(jref)
             urls = zip(
@@ -215,8 +215,8 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         # load migration module
         url, relocated_jp = utils.jr_split(jref)
         from_spec_version = obj.__swagger_version__
-        for v in supported_versions:
-            patched_version = 'v{}'.format(v).replace('.', '_')
+        for version in supported_versions:
+            patched_version = 'v{}'.format(version).replace('.', '_')
             migration_module_path = '.'.join(
                 ['pyopenapi', 'migration', 'versions', patched_version, 'main'])
             loader = pkgutil.find_loader(migration_module_path)
@@ -230,22 +230,24 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
                     migration_module_path))
 
             # preform migration
-            obj, reloc = migration_module.up(obj, self, jref)
+            obj, reloc = migration_module.upgrade(obj, self, jref)
 
             # update route for object relocation
-            self.spec_obj_store.update_routes(url, v, {relocated_jp: reloc})
+            self.spec_obj_store.update_routes(url, version,
+                                              {relocated_jp: reloc})
 
             # update JSON pointer for next round
-            relocated_jp = self.spec_obj_store.relocate(url, relocated_jp,
-                                                        from_spec_version, v)
+            relocated_jp = self.spec_obj_store.relocate(
+                url, relocated_jp, from_spec_version, version)
 
             # prepare this object if needy
             obj = self.prepare_obj(obj, url + relocated_jp)
 
             # cache migrated and prepared object if we need it later
-            self.spec_obj_store.set(obj, url, relocated_jp, spec_version=v)
+            self.spec_obj_store.set(
+                obj, url, relocated_jp, spec_version=version)
 
-            from_spec_version = v
+            from_spec_version = version
 
         if isinstance(obj, (OpenApi, Swagger, ResourceListing)):
             self.__current_spec_version = spec_version

@@ -31,6 +31,7 @@ def if_not_bool_else(class_builder):
     return _f
 
 
+# pylint: disable=invalid-name
 class BaseObj_v2_0(Base2):
     __swagger_version__ = '2.0'
 

@@ -5,6 +5,7 @@ import os
 import yaml
 
 
+# pylint: disable=invalid-name
 class Load_3_0_0_SpecTestCase(unittest.TestCase):
     """ test loading open-api 3.0 spec
     """

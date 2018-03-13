@@ -42,74 +42,73 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
     result_fn = [None]
 
     @classmethod
-    def __add_route(cls, t, f):
+    def __add_route(cls, target_cls, func):
         """
         """
-        if not issubclass(t, Base2Obj):
+        if not issubclass(target_cls, Base2Obj):
             raise ValueError(
-                'target_cls should be a subclass of Base2Obj, but got:' + str(t)
-            )
+                'target_cls should be a subclass of Base2Obj, but got:' +
+                str(target_cls))
 
         # allow register multiple handler function
         # against one object
-        if t in cls.obj_route.keys():
-            cls.obj_route[t].append(f)
-        else:
-            cls.obj_route[t] = [f]
+        cls.obj_route.setdefault(target_cls, []).append(func)
 
     @classmethod
-    def register(cls, target):
+    def register(cls, target_classes):
         """
         """
 
-        def outer_fn(f):
+        def outer_func(func):
             # what we did is simple,
             # register target_cls as key, and f as callback
             # then keep this record in cls.
-            for t in target:
-                cls.__add_route(t, f)
+            for x in target_classes:
+                cls.__add_route(x, func)
 
             # nothing is decorated. Just return original one.
-            return f
+            return func
 
-        return outer_fn
+        return outer_func
 
     @classmethod
-    def result(cls, f):
+    def result(cls, func):
         """
         """
 
         # avoid bound error
-        cls.result_fn = [f]
-        return f
+        cls.result_fn = [func]
+        return func
 
 
-def _build_route(route):
+def _build_route(routes):
     ret = []
-    for r in route:
-        for attr in r.__class__.__dict__:
-            o = getattr(r, attr)
-            if type(o) == DispatcherMeta:
-                ret.append((r, o.obj_route, o.result_fn[0]))
+    for route in routes:
+        for attr in route.__class__.__dict__:
+            obj = getattr(route, attr)
+            if type(obj) == DispatcherMeta:
+                ret.append((route, obj.obj_route, obj.result_fn[0]))
+
+            # TODO: add a break or find a better way to load DispatchMeta
 
     return ret
 
 
-def _handle_cls(cls, app, path, obj, the_self, r, res):
-    f = r.get(cls, None)
-    if f:
-        for ff in f:
-            ret = ff(the_self, path, obj, app)
+def _handle_cls(cls, app, path, obj, the_self, route, res):
+    funcs = route.get(cls, None)
+    if funcs:
+        for handler in funcs:
+            ret = handler(the_self, path, obj, app)
             if res:
                 res(the_self, ret)
 
 
-def _handle_cls_without_app(cls, path, obj, the_self, r, res):
-    f = r.get(cls, None)
-    if not f:
+def _handle_cls_without_app(cls, path, obj, the_self, route, res):
+    funcs = route.get(cls, None)
+    if not funcs:
         return
-    for ff in f:
-        ret = ff(the_self, path, obj)
+    for handler in funcs:
+        ret = handler(the_self, path, obj)
         if res:
             res(the_self, ret)
 
@@ -132,11 +131,11 @@ class Scanner(object):
 
         merged_r = _build_route(route)
         for path, obj in nexter(root, leaves):
-            for r in merged_r:
+            for args in merged_r:
                 for cls in obj.__class__.__mro__[:-1]:
                     if cls is Base2Obj:
                         break
-                    _handle_cls(cls, self.app, path, obj, *r)
+                    _handle_cls(cls, self.app, path, obj, *args)
 
 
 class Scanner2(object):
@@ -150,5 +149,5 @@ class Scanner2(object):
 
         merged_r = _build_route(route)
         for path, obj in nexter(root, leaves):
-            for r in merged_r:
-                _handle_cls_without_app(obj.__class__, path, obj, *r)
+            for args in merged_r:
+                _handle_cls_without_app(obj.__class__, path, obj, *args)

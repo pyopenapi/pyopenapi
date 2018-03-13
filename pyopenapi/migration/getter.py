@@ -73,15 +73,15 @@ class LocalGetter(Getter):
         if re.match('^/[A-Z]+:', path) is not None:
             path = os.path.abspath(path[1:])
 
-        for n in consts.SWAGGER_FILE_NAMES:
-            if self.base_path.endswith(n):
+        for name in consts.SWAGGER_FILE_NAMES:
+            if self.base_path.endswith(name):
                 self.base_path = os.path.dirname(self.base_path)
                 self.urls = [path]
                 break
             else:
-                p = os.path.join(path, n)
-                if os.path.isfile(p):
-                    self.urls = [p]
+                target_path = os.path.join(path, name)
+                if os.path.isfile(target_path):
+                    self.urls = [target_path]
                     break
         else:
             # there is no file matched predefined file name:
@@ -115,8 +115,8 @@ class LocalGetter(Getter):
         logger.info('final path to load: [{0}]'.format(path))
 
         ret = None
-        with open(path, 'r') as f:
-            ret = f.read()
+        with open(path, 'r') as file_handle:
+            ret = file_handle.read()
         return ret
 
 
@@ -146,13 +146,13 @@ class SimpleGetter(Getter):
 
 
 def _url_load(path):
-    ret = f = None
+    ret = file_handle = None
     try:
-        f = six.moves.urllib.request.urlopen(path)
-        ret = f.read()
+        file_handle = six.moves.urllib.request.urlopen(path)
+        ret = file_handle.read()
     finally:
-        if f:
-            f.close()
+        if file_handle:
+            file_handle.close()
 
     return ret
 

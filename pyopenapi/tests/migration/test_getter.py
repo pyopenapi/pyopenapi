@@ -38,7 +38,7 @@ class GetterTestCase(unittest.TestCase):
         # should not raise ValueError
         app = SampleApp.create(path, to_spec_version='2.0')
 
-    def test_local_path_with_custome_getter(self):
+    def test_local_path(self):
         """ make sure path would be assigned when
         passing a getter class
         """
@@ -63,14 +63,14 @@ class GetterTestCase(unittest.TestCase):
         path_pet = os.path.join(path, 'pet.json')
         path_store = os.path.join(path, 'store.json')
         path_user = os.path.join(path, 'user.json')
-        with open(path_resource_list, 'r') as f:
-            resource_list = json.loads(f.read())
-        with open(path_pet, 'r') as f:
-            pet = json.loads(f.read())
-        with open(path_store, 'r') as f:
-            store = json.loads(f.read())
-        with open(path_user, 'r') as f:
-            user = json.loads(f.read())
+        with open(path_resource_list, 'r') as handle:
+            resource_list = json.loads(handle.read())
+        with open(path_pet, 'r') as handle:
+            pet = json.loads(handle.read())
+        with open(path_store, 'r') as handle:
+            store = json.loads(handle.read())
+        with open(path_user, 'r') as handle:
+            user = json.loads(handle.read())
 
         getter = DictGetter(
             [
@@ -160,8 +160,8 @@ class GetterTestCase(unittest.TestCase):
 
         origin_app = SampleApp.create(path, to_spec_version='2.0')
 
-        with open(os.path.join(path, 'swagger.json'), 'r') as f:
-            spec = json.loads(f.read())
+        with open(os.path.join(path, 'swagger.json'), 'r') as handle:
+            spec = json.loads(handle.read())
 
         getter = DictGetter([path], {os.path.join(path, 'swagger.json'): spec})
         app = SampleApp.create(

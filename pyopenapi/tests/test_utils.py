@@ -19,10 +19,10 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         self.assertEqual(utils.jp_compose(''), '')
         self.assertEqual(utils.jp_compose(None, 'base'), 'base')
 
-        cs = ['~test1', '/test2', 'test3']
-        c = utils.jp_compose(cs, 'base')
-        self.assertEqual(c, 'base/~0test1/~1test2/test3')
-        self.assertEqual(utils.jp_split(c)[1:], cs)
+        parts = ['~test1', '/test2', 'test3']
+        composed = utils.jp_compose(parts, 'base')
+        self.assertEqual(composed, 'base/~0test1/~1test2/test3')
+        self.assertEqual(utils.jp_split(composed)[1:], parts)
 
         self.assertEqual(utils.jp_split('~1test'), ['/test'])
         self.assertEqual(utils.jp_split('~0test'), ['~test'])
@@ -55,27 +55,27 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             'e!f!g': 3,
             'a!f!g': 4,
         }
-        d = utils.ScopeDict(obj)
-        d.sep = '!'
-        self.assertEqual(d['a!b'], 1)
-        self.assertEqual(d['b'], 1)
-        self.assertEqual(d['ee'], 2)
-        self.assertEqual(d['a', 'b'], 1)
-        self.assertEqual(d['c', 'd', 'ee'], 2)
-        self.assertEqual(d['d', 'ee'], 2)
-        self.assertRaises(ValueError, d.__getitem__, ('f', 'g'))
-        self.assertRaises(TypeError, lambda x: d.sep)
+        dict_ = utils.ScopeDict(obj)
+        dict_.sep = '!'
+        self.assertEqual(dict_['a!b'], 1)
+        self.assertEqual(dict_['b'], 1)
+        self.assertEqual(dict_['ee'], 2)
+        self.assertEqual(dict_['a', 'b'], 1)
+        self.assertEqual(dict_['c', 'd', 'ee'], 2)
+        self.assertEqual(dict_['d', 'ee'], 2)
+        self.assertRaises(ValueError, dict_.__getitem__, ('f', 'g'))
+        self.assertRaises(TypeError, lambda x: dict_.sep)
 
         obj = {
             'tag1!##!get': 1,
             'tag2!##!something-get': 2,
         }
-        d = utils.ScopeDict(obj)
-        d.sep = '!##!'
-        self.assertEqual(d['tag1', 'get'], 1)
-        self.assertEqual(d['tag2', 'something-get'], 2)
-        self.assertEqual(d['get'], 1)
-        self.assertEqual(d['something-get'], 2)
+        dict_ = utils.ScopeDict(obj)
+        dict_.sep = '!##!'
+        self.assertEqual(dict_['tag1', 'get'], 1)
+        self.assertEqual(dict_['tag2', 'something-get'], 2)
+        self.assertEqual(dict_['get'], 1)
+        self.assertEqual(dict_['something-get'], 2)
 
     @unittest.skipUnless(not is_windows(), 'make no sense on windows')
     def test_path2url_on_unix(self):
@@ -132,9 +132,9 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             (target, '#'))
 
     def test_cycle_guard(self):
-        c = utils.CycleGuard()
-        c.update(1)
-        self.assertRaises(errs.CycleDetectionError, c.update, 1)
+        guard = utils.CycleGuard()
+        guard.update(1)
+        self.assertRaises(errs.CycleDetectionError, guard.update, 1)
 
     @unittest.skipUnless(not is_windows(), 'make no sense on windows')
     def test_normalize_url(self):
@@ -234,15 +234,15 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         """ test for get_or_none
         """
 
-        class A(object):
+        class AObj(object):
             pass
 
-        a = A()
-        setattr(A, 'b', A())
-        setattr(a.b, 'c', A())  # pylint: disable=no-member
-        setattr(a.b.c, 'd', 'test string')  # pylint: disable=no-member
-        self.assertEqual(utils.get_or_none(a, 'b', 'c', 'd'), 'test string')
-        self.assertEqual(utils.get_or_none(a, 'b', 'c', 'd', 'e'), None)
+        obj = AObj()
+        setattr(AObj, 'b', AObj())
+        setattr(obj.b, 'c', AObj())  # pylint: disable=no-member
+        setattr(obj.b.c, 'd', 'test string')  # pylint: disable=no-member
+        self.assertEqual(utils.get_or_none(obj, 'b', 'c', 'd'), 'test string')
+        self.assertEqual(utils.get_or_none(obj, 'b', 'c', 'd', 'e'), None)
 
     def test_url_dirname(self):
         """ test url_dirname

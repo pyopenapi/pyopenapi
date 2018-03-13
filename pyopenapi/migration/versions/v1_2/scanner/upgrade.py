@@ -20,11 +20,11 @@ def _get_name(path):
     return path.split('/', 3)[2]
 
 
-_primitives = ('integer', 'number', 'string', 'boolean', 'array', 'void')
+_PRIMITIVES = ('integer', 'number', 'string', 'boolean', 'array', 'void')
 
 
-def _is_primitive(t):
-    return t in _primitives
+def _is_primitive(type_):
+    return type_ in _PRIMITIVES
 
 
 def update_type_and_ref(dst, src, scope, sep):
@@ -40,14 +40,14 @@ def update_type_and_ref(dst, src, scope, sep):
 
 def convert_min_max(dst, src):
     def _from_str(name):
-        v = getattr(src, name, None)
-        if v:
+        val = getattr(src, name, None)
+        if val:
             if src.type == 'integer':
                 # we need to handle 1.0 when converting to int
                 # that's why we need to convert to float first
-                dst[name] = int(float(v))
+                dst[name] = int(float(val))
             elif src.type == 'number':
-                dst[name] = float(v)
+                dst[name] = float(val)
             else:
                 raise SchemaError(
                     'minimum/maximum is only allowed on integer/number, not {0}'.
@@ -81,16 +81,16 @@ def convert_schema_from_datatype(obj, scope, sep):
     return spec
 
 
-def convert_items(o):
+def convert_items(obj):
     items_spec = {}
-    if getattr(o, '$ref'):
+    if getattr(obj, '$ref'):
         raise SchemaError('Can\'t have $ref for Items')
-    if not _is_primitive(getattr(o, 'type', None)):
+    if not _is_primitive(getattr(obj, 'type', None)):
         raise SchemaError('Non primitive type is not allowed for Items')
-    items_spec['type'] = o.type.lower()
+    items_spec['type'] = obj.type.lower()
 
-    if o.is_set('format'):
-        items_spec['format'] = o.format
+    if obj.is_set('format'):
+        items_spec['format'] = obj.format
 
     return items_spec
 
@@ -142,35 +142,35 @@ def convert_parameter(param, scope, sep):
     return p_spec
 
 
-def convert_operation(op, api, api_decl, swagger, sep):
+def convert_operation(obj, api, api_decl, swagger, sep):
     op_spec = {}
 
     scope = api_decl.resourcePath[1:]
     if scope:
         op_spec['tags'] = [scope]
-    if op.is_set('nickname'):
-        op_spec['operationId'] = op.nickname
-    if op.is_set('summary'):
-        op_spec['summary'] = op.summary
-    if op.is_set('notes'):
-        op_spec['description'] = op.notes
-    op_spec['deprecated'] = op.deprecated == 'true'
+    if obj.is_set('nickname'):
+        op_spec['operationId'] = obj.nickname
+    if obj.is_set('summary'):
+        op_spec['summary'] = obj.summary
+    if obj.is_set('notes'):
+        op_spec['description'] = obj.notes
+    op_spec['deprecated'] = obj.deprecated == 'true'
 
-    c = op.consumes if op.consumes else api_decl.consumes
-    if c:
-        op_spec['consumes'] = c if c else []
+    consumes = obj.consumes if obj.consumes else api_decl.consumes
+    if consumes:
+        op_spec['consumes'] = consumes
 
-    p = op.produces if op.produces else api_decl.produces
-    if p:
-        op_spec['produces'] = p if p else []
+    produces = obj.produces if obj.produces else api_decl.produces
+    if produces:
+        op_spec['produces'] = produces
 
     parameters = op_spec.setdefault('parameters', [])
-    for p in op.parameters:
-        parameters.append(convert_parameter(p, scope, sep))
+    for param in obj.parameters:
+        parameters.append(convert_parameter(param, scope, sep))
 
     # if there is not authorizations in this operation,
     # looking for it in api-declaration object.
-    _auth = op.authorizations if op.authorizations else api_decl.authorizations
+    _auth = obj.authorizations if obj.authorizations else api_decl.authorizations
     if _auth:
         op_spec['security'] = []
         for name, scopes in six.iteritems(_auth):
@@ -179,8 +179,8 @@ def convert_operation(op, api, api_decl, swagger, sep):
     # Operation return value
     op_spec['responses'] = {}
     resp_spec = {}
-    if op.type != 'void':
-        resp_spec['schema'] = convert_schema_from_datatype(op, scope, sep)
+    if obj.type != 'void':
+        resp_spec['schema'] = convert_schema_from_datatype(obj, scope, sep)
     resp_spec[
         'description'] = ''  # description is a required field in 2.0 Response object
     op_spec['responses']['default'] = resp_spec
@@ -189,7 +189,7 @@ def convert_operation(op, api, api_decl, swagger, sep):
     if path not in swagger['paths']:
         swagger['paths'][path] = {}
 
-    method = op.method.lower()
+    method = obj.method.lower()
     swagger['paths'][path][method] = op_spec
 
 
@@ -198,8 +198,8 @@ def convert_model(model, api_decl, swagger, sep):
 
     # Ex. a 'Status' model under 'Pet' resource
     # => new model-id would be 'Pet##Status'
-    s = scope_compose(scope, model.id, sep=sep)
-    s_spec = swagger['definitions'].setdefault(s, {})
+    new_scope = scope_compose(scope, model.id, sep=sep)
+    s_spec = swagger['definitions'].setdefault(new_scope, {})
 
     props = {}
     for name, prop in six.iteritems(model.properties):
@@ -215,14 +215,14 @@ def convert_model(model, api_decl, swagger, sep):
     if model.is_set('description'):
         s_spec['description'] = model.description
 
-    for t in model.subTypes or []:
+    for type_ in model.subTypes or []:
         # here we assume those child models belongs to
         # the same resource.
-        sub_s = scope_compose(scope, t, sep=sep)
+        sub_s = scope_compose(scope, type_, sep=sep)
         sub_o_spec = swagger['definitions'].setdefault(sub_s, {})
 
         new_ref = {}
-        new_ref['$ref'] = '#/definitions/' + s
+        new_ref['$ref'] = '#/definitions/' + new_scope
         sub_o_spec.setdefault('allOf', []).append(new_ref)
 
 
@@ -292,8 +292,8 @@ class Upgrade(object):
     @Disp.register([ApiDeclaration])
     def _api_declaration(self, path, obj):
         name = obj.resource_path[1:]
-        for t in self.__swagger['tags']:
-            if t['name'] == name:
+        for tag in self.__swagger['tags']:
+            if tag['name'] == name:
                 break
         else:
             tag_spec = {}
@@ -301,8 +301,9 @@ class Upgrade(object):
             self.__swagger['tags'].append(tag_spec)
 
         for api in obj.apis:
-            for op in api.operations:
-                convert_operation(op, api, obj, self.__swagger, self.__sep)
+            for operation in api.operations:
+                convert_operation(operation, api, obj, self.__swagger,
+                                  self.__sep)
         for _, model in obj.models.iteritems():
             convert_model(model, obj, self.__swagger, self.__sep)
 
@@ -314,8 +315,8 @@ class Upgrade(object):
         else:
             ss_spec['type'] = obj.type
         ss_spec['scopes'] = {}
-        for s in obj.scopes or []:
-            ss_spec['scopes'][s.scope] = s.description
+        for scope in obj.scopes or []:
+            ss_spec['scopes'][scope.scope] = scope.description
 
         if ss_spec['type'] == 'oauth2':
             authorization_url = get_or_none(obj, 'grantTypes', 'implicit',
@@ -351,11 +352,11 @@ class Upgrade(object):
             -1] == '/' else common_path
 
         if len(common_path) > 0:
-            p = six.moves.urllib.parse.urlparse(common_path)
-            self.__swagger['host'] = p.netloc
+            parsed = six.moves.urllib.parse.urlparse(common_path)
+            self.__swagger['host'] = parsed.netloc
 
             new_common_path = six.moves.urllib.parse.urlunparse(
-                (p.scheme, p.netloc, '', '', '', ''))
+                (parsed.scheme, parsed.netloc, '', '', '', ''))
             new_path = {}
             for k in self.__swagger['paths'].keys():
                 new_path[k[len(new_common_path):]] = self.__swagger['paths'][k]

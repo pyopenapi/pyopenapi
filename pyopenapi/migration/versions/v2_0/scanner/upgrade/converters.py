@@ -11,10 +11,10 @@ import copy
 
 def _generate_fields(obj, names):
     ret = {}
-    for n in names:
-        v = getattr(obj, n, None)
-        if v is not None:
-            ret[n] = v
+    for name in names:
+        val = getattr(obj, name, None)
+        if val is not None:
+            ret[name] = val
 
     return ret
 
@@ -117,9 +117,9 @@ def to_schema(obj, path, items_converter=None, parameter_context=None):
     all_of = getattr(obj, 'allOf', None)
     if all_of:
         target = ret.setdefault('allOf', [])
-        for index, o in enumerate(all_of):
+        for index, schema in enumerate(all_of):
             target.append(
-                to_schema(o, jp_compose(['allOf', str(index)], base=path)))
+                to_schema(schema, jp_compose(['allOf', str(index)], base=path)))
 
     items = getattr(obj, 'items', None)
     if items:
@@ -304,10 +304,10 @@ def to_request_body(obj, existing_body, ctx, path):
 
     content_types = ctx.get_valid_mime_type()
     if ctx.is_file or ctx.is_form:
-        for c in content_types:
-            existing_media_type = content.setdefault(c, {})
-            content[c] = to_media_type(obj, c, existing_media_type, None, ctx,
-                                       path)
+        for type_ in content_types:
+            existing_media_type = content.setdefault(type_, {})
+            content[type_] = to_media_type(obj, type_, existing_media_type,
+                                           None, ctx, path)
     elif ctx.is_body:
         if existing_body:
             raise SchemaError('multiple bodies found: {}'.format(path))
@@ -316,8 +316,8 @@ def to_request_body(obj, existing_body, ctx, path):
             'description',
         ]))
 
-        for c in content_types:
-            media_type = content.setdefault(c, {})
+        for type_ in content_types:
+            media_type = content.setdefault(type_, {})
             media_type['schema'] = to_schema(
                 resolved_obj.schema,
                 jp_compose('schema', base=path),
@@ -421,8 +421,8 @@ def to_response(obj, produces, path):
             media_type['type'] = 'string'
             media_type['format'] = 'binary'
         else:
-            for p in produces:
-                content[p] = {
+            for type_ in produces:
+                content[type_] = {
                     'schema':
                     to_schema(resolved_obj.schema,
                               jp_compose('schema', base=path))
@@ -431,8 +431,9 @@ def to_response(obj, produces, path):
     # header
     if resolved_obj.headers:
         headers = ret.setdefault('headers', {})
-        for k, v in six.iteritems(resolved_obj.headers or {}):
-            headers[k] = to_header(v, jp_compose(['headers', k], base=path))
+        for k, header in six.iteritems(resolved_obj.headers or {}):
+            headers[k] = to_header(header, jp_compose(
+                ['headers', k], base=path))
 
     return ret
 
@@ -456,9 +457,9 @@ def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     # parameters
     if obj.parameters:
         parameters = None
-        for index, p in enumerate(obj.parameters):
+        for index, param in enumerate(obj.parameters):
             new_path = jp_compose(['parameters', str(index)], base=path)
-            new_p, pctx = from_parameter(p, body, obj.consumes or consumes,
+            new_p, pctx = from_parameter(param, body, obj.consumes or consumes,
                                          new_path)
             if pctx.is_body:
                 body = new_p
@@ -473,8 +474,8 @@ def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     # responses
     if obj.responses:
         responses = ret.setdefault('responses', {})
-        for k, v in six.iteritems(obj.responses):
-            responses[k] = to_response(v, obj.produces or produces,
+        for k, resp in six.iteritems(obj.responses):
+            responses[k] = to_response(resp, obj.produces or produces,
                                        jp_compose(['responses', k], base=path))
 
     # externalDocs
@@ -486,11 +487,11 @@ def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     # schemes
     if obj.schemes:
         servers = ret.setdefault('servers', [])
-        for s in obj.schemes:
+        for scheme in obj.schemes:
             parts = six.moves.urllib.parse.urlsplit(root_url)
             servers.append({
                 'url':
-                six.moves.urllib.parse.urlunsplit((s, ) + parts[1:])
+                six.moves.urllib.parse.urlunsplit((scheme, ) + parts[1:])
             })
 
     return ret
@@ -539,10 +540,10 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
     body = None
     if obj.parameters:
         consumes, parameters = consumes or [], None
-        for index, p in enumerate(obj.parameters):
+        for index, param in enumerate(obj.parameters):
             new_path = jp_compose(['parameters', str(index)], base=path)
             new_p, pctx = from_parameter(
-                p, body, consumes,
+                param, body, consumes,
                 jp_compose(['parameters', str(index)], base=path))
             if pctx.is_file or pctx.is_body:
                 body = new_p
@@ -563,10 +564,10 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
             'head',
             'patch',
     ):
-        op = getattr(obj, method, None)
-        if op:
+        operation = getattr(obj, method, None)
+        if operation:
             ret[method] = to_operation(
-                op,
+                operation,
                 body,
                 root_url,
                 jp_compose(method, base=path),
@@ -608,13 +609,13 @@ def to_openapi(obj, path):
     # paths
     if obj.paths:
         paths = ret.setdefault('paths', {})
-        for k, v in six.iteritems(obj.paths):
+        for k, path_ in six.iteritems(obj.paths):
             if k.startswith('x-'):
                 raise SchemaError(
                     'No more extension field in Paths object: {}'.format(path))
 
             paths[k], tmp_reloc = to_path_item(
-                v,
+                path_,
                 server['url'],
                 jp_compose(k, base=path),
                 consumes=obj.consumes,
@@ -646,8 +647,8 @@ def to_openapi(obj, path):
         # definitions
         if obj.definitions:
             schemas = components.setdefault('schemas', {})
-            for k, v in six.iteritems(obj.definitions):
-                schemas[k] = to_schema(v,
+            for k, schema in six.iteritems(obj.definitions):
+                schemas[k] = to_schema(schema,
                                        jp_compose(
                                            ['definitions', k], base=path))
 
@@ -658,8 +659,8 @@ def to_openapi(obj, path):
             parameters = None
             request_bodies = None
             param_reloc = {}
-            for k, v in six.iteritems(obj.parameters):
-                param, pctx = from_parameter(v, None, None,
+            for k, param in six.iteritems(obj.parameters):
+                param, pctx = from_parameter(param, None, None,
                                              jp_compose(
                                                  ['parameters', k], base=path))
                 if pctx.is_body:
@@ -679,8 +680,8 @@ def to_openapi(obj, path):
         # responses
         if obj.responses:
             responses = components.setdefault('responses', {})
-            for k, v in six.iteritems(obj.responses):
-                responses[k] = to_response(v, obj.produces,
+            for k, resp in six.iteritems(obj.responses):
+                responses[k] = to_response(resp, obj.produces,
                                            jp_compose(
                                                ['responses', k], base=path))
 
@@ -689,9 +690,9 @@ def to_openapi(obj, path):
         # securityDefinitions
         if obj.securityDefinitions:
             security_schemes = components.setdefault('securitySchemes', {})
-            for k, v in six.iteritems(obj.securityDefinitions):
+            for k, sec in six.iteritems(obj.securityDefinitions):
                 security_schemes[k] = to_security_scheme(
-                    v, jp_compose(['securityDefinitions', k], base=path))
+                    sec, jp_compose(['securityDefinitions', k], base=path))
 
             reloc['securityDefinitions'] = 'components/securitySchemes'
 

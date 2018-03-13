@@ -3,6 +3,7 @@ from ...spec import Base2, field, rename, child, list_, map_
 import six
 
 
+# pylint: disable=invalid-name
 class Base2_v3_0_0(Base2):
     __swagger_version__ = '3.0.0'
 

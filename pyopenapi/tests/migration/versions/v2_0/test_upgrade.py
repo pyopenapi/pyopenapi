@@ -4,7 +4,7 @@ import unittest
 import os
 import six
 
-app = SampleApp.create(
+_APP = SampleApp.create(
     get_test_data_folder(version='2.0', which='upgrade'), to_spec_version='2.0')
 
 
@@ -12,7 +12,7 @@ class ExternalDocConverterTestCase(unittest.TestCase):
     """ test case for externalDoc converter """
 
     def test_external_doc(self):
-        ex_doc, _ = app.resolve_obj('#/externalDocs', from_spec_version='2.0')
+        ex_doc, _ = _APP.resolve_obj('#/externalDocs', from_spec_version='2.0')
 
         obj = converters.to_external_docs(ex_doc, '')
         self.assertTrue('url' in obj)
@@ -25,14 +25,14 @@ class ItemsConverterTestCase(unittest.TestCase):
     """ test case for items converter """
 
     def test_with_type(self):
-        items, _ = app.resolve_obj(
+        items, _ = _APP.resolve_obj(
             '#/paths/~1p1/get/parameters/0/items', from_spec_version='2.0')
 
         obj = converters.from_items(items, '')
         self.assertEqual(obj['type'], getattr(items, 'type'))
 
     def test_with_ref(self):
-        items, _ = app.resolve_obj(
+        items, _ = _APP.resolve_obj(
             '#/paths/~1p1/get/responses/200/schema/items',
             from_spec_version='2.0')
 
@@ -44,7 +44,7 @@ class TagConverterTestCase(unittest.TestCase):
     """ test case for tag converter """
 
     def test_basic(self):
-        tags, _ = app.resolve_obj('#/tags', from_spec_version='2.0')
+        tags, _ = _APP.resolve_obj('#/tags', from_spec_version='2.0')
 
         obj = converters.to_tag(tags[0], '')
         self.assertEqual(obj['name'], tags[0].name)
@@ -57,7 +57,7 @@ class XMLConverterTestCase(unittest.TestCase):
     """ test case for XML converter """
 
     def test_basic(self):
-        pet, _ = app.resolve_obj('#/definitions/pet', from_spec_version='2.0')
+        pet, _ = _APP.resolve_obj('#/definitions/pet', from_spec_version='2.0')
 
         x = pet.properties['photoUrls'].xml
         obj = converters.to_xml(x, '')
@@ -69,7 +69,7 @@ class SchemaConverterTestCase(unittest.TestCase):
     """ test case for schema converter """
 
     def test_basic(self):
-        pet, _ = app.resolve_obj('#/definitions/pet', from_spec_version='2.0')
+        pet, _ = _APP.resolve_obj('#/definitions/pet', from_spec_version='2.0')
 
         obj = converters.to_schema(pet, '')
         self.assertEqual(obj['required'], pet.required)
@@ -90,7 +90,7 @@ class SecuritySchemeConverterTestCase(unittest.TestCase):
     """ test case for security scheme """
 
     def test_basic(self):
-        auth, _ = app.resolve_obj(
+        auth, _ = _APP.resolve_obj(
             '#/securityDefinitions/petstore_auth', from_spec_version='2.0')
 
         obj = converters.to_security_scheme(auth, '')
@@ -106,7 +106,7 @@ class HeaderConverterTestCase(unittest.TestCase):
     """ test case for header """
 
     def test_basic(self):
-        header, _ = app.resolve_obj(
+        header, _ = _APP.resolve_obj(
             '#/paths/~1p2/get/responses/200/headers/X-TEST',
             from_spec_version='2.0')
 
@@ -120,10 +120,10 @@ class ParameterConverterTestCase(unittest.TestCase):
     """ test case for parameter """
 
     def test_basic(self):
-        p, _ = app.resolve_obj(
+        param, _ = _APP.resolve_obj(
             '#/paths/~1p1/get/parameters/0', from_spec_version='2.0')
 
-        obj, pctx = converters.from_parameter(p, None, [], '')
+        obj, pctx = converters.from_parameter(param, None, [], '')
         self.assertFalse(pctx.is_body)
         self.assertFalse(pctx.is_file)
         self.assertEqual(obj['style'], 'form')
@@ -141,11 +141,11 @@ class ParameterConverterTestCase(unittest.TestCase):
             sorted(_items['enum']), sorted(['available', 'pending', 'sold']))
 
     def test_file_in_form(self):
-        p, _ = app.resolve_obj(
+        param, _ = _APP.resolve_obj(
             '#/parameters/form_file', from_spec_version='2.0')
 
         obj, pctx = converters.from_parameter(
-            p, None, ['application/x-www-form-urlencoded'], '')
+            param, None, ['application/x-www-form-urlencoded'], '')
         self.assertTrue(pctx.is_body)
         self.assertTrue(pctx.is_file)
 
@@ -160,11 +160,11 @@ class ParameterConverterTestCase(unittest.TestCase):
         """
 
         # normal body parameter with file type
-        p, _ = app.resolve_obj(
+        param, _ = _APP.resolve_obj(
             '#/parameters/body_file', from_spec_version='2.0')
 
         obj, pctx = converters.from_parameter(
-            p, None, ['application/x-www-form-urlencoded'], '')
+            param, None, ['application/x-www-form-urlencoded'], '')
         self.assertTrue(pctx.is_body)
         self.assertTrue(pctx.is_file)
         _schema = obj['content']['application/x-www-form-urlencoded']['schema'][
@@ -173,11 +173,11 @@ class ParameterConverterTestCase(unittest.TestCase):
         self.assertEqual(_schema['format'], 'binary')
 
         # body parameter with $ref to schema with file type
-        p, _ = app.resolve_obj(
+        param, _ = _APP.resolve_obj(
             '#/parameters/body_file_ref', from_spec_version='2.0')
 
         obj, pctx = converters.from_parameter(
-            p, None, ['application/x-www-form-urlencoded'], '')
+            param, None, ['application/x-www-form-urlencoded'], '')
         self.assertTrue(pctx.is_body)
         self.assertTrue(pctx.is_file)
         _schema = obj['content']['application/x-www-form-urlencoded']['schema'][
@@ -189,8 +189,10 @@ class ResponseConverterTestCase(unittest.TestCase):
     """ test case for response """
 
     def test_basic(self):
-        op, _ = app.resolve_obj('#/paths/~1p1/get', from_spec_version='2.0')
-        obj = converters.to_response(op.responses['200'], op.produces, '')
+        operation, _ = _APP.resolve_obj(
+            '#/paths/~1p1/get', from_spec_version='2.0')
+        obj = converters.to_response(operation.responses['200'],
+                                     operation.produces, '')
 
         self.assertEqual(obj['description'], 'successful operation')
         self.assertTrue('content' in obj)
@@ -201,8 +203,9 @@ class ResponseConverterTestCase(unittest.TestCase):
         self.assertTrue(_content['application/json']['schema']['type'], 'array')
 
     def test_with_header(self):
-        op, _ = app.resolve_obj('#/paths/~1p2/get', from_spec_version='2.0')
-        obj = converters.to_response(op.responses['200'], [], '')
+        operation, _ = _APP.resolve_obj(
+            '#/paths/~1p2/get', from_spec_version='2.0')
+        obj = converters.to_response(operation.responses['200'], [], '')
 
         self.assertEqual(obj['description'], 'test for header')
         self.assertTrue('headers' in obj and 'X-TEST' in obj['headers'])
@@ -212,40 +215,46 @@ class ResponseConverterTestCase(unittest.TestCase):
         self.assertEqual(_header['schema']['type'], 'array')
 
     def test_with_ref(self):
-        op, _ = app.resolve_obj('#/paths/~1p4/post', from_spec_version='2.0')
+        operation, _ = _APP.resolve_obj(
+            '#/paths/~1p4/post', from_spec_version='2.0')
 
         # without 'schema', just keep $ref
-        obj = converters.to_response(op.responses['default'], op.produces,
+        obj = converters.to_response(operation.responses['default'],
+                                     operation.produces,
                                      'test_response_default')
         self.assertEqual(obj['$ref'], '#/responses/void')
 
         # with 'schema', should inline it
-        obj = converters.to_response(op.responses['401'], op.produces,
-                                     'test_response_401')
+        obj = converters.to_response(operation.responses['401'],
+                                     operation.produces, 'test_response_401')
         self.assertEqual(obj['description'], 'unauthorized')
         self.assertTrue('application/json' in obj['content'])
-        o = obj['content']['application/json']
-        self.assertEqual(o['schema']['$ref'], '#/definitions/generic_response')
+        media = obj['content']['application/json']
+        self.assertEqual(media['schema']['$ref'],
+                         '#/definitions/generic_response')
 
         self.assertTrue('application/xml' in obj['content'])
-        o = obj['content']['application/xml']
-        self.assertEqual(o['schema']['$ref'], '#/definitions/generic_response')
+        media = obj['content']['application/xml']
+        self.assertEqual(media['schema']['$ref'],
+                         '#/definitions/generic_response')
 
         # with 'schema', and without content-types as 'produces'
-        obj = converters.to_response(op.responses['401'], op.produces,
-                                     'test_response_401')
+        obj = converters.to_response(operation.responses['401'],
+                                     operation.produces, 'test_response_401')
         self.assertTrue('application/json' in obj['content'])
-        o = obj['content']['application/json']
-        self.assertEqual(o['schema']['$ref'], '#/definitions/generic_response')
+        media = obj['content']['application/json']
+        self.assertEqual(media['schema']['$ref'],
+                         '#/definitions/generic_response')
 
 
 class OperationConverterTestCase(unittest.TestCase):
     """ test case for operation """
 
     def test_basic(self):
-        op, _ = app.resolve_obj('#/paths/~1p1/get', from_spec_version='2.0')
+        operation, _ = _APP.resolve_obj(
+            '#/paths/~1p1/get', from_spec_version='2.0')
 
-        obj = converters.to_operation(op, None, 'test_root', '')
+        obj = converters.to_operation(operation, None, 'test_root', '')
         self.assertTrue('responses' in obj and '200' in obj['responses'])
         _response = obj['responses']['200']
         self.assertEqual(_response['description'], 'successful operation')
@@ -270,9 +279,10 @@ class OperationConverterTestCase(unittest.TestCase):
             sorted(['available', 'pending', 'sold']))
         self.assertEqual(_schema['items']['type'], 'string')
 
-    def test_multiple_file_with_other_type(self):
-        op, _ = app.resolve_obj('#/paths/~1p1/post', from_spec_version='2.0')
-        obj = converters.to_operation(op, None, 'test_root', '')
+    def test_multiple_file(self):
+        operation, _ = _APP.resolve_obj(
+            '#/paths/~1p1/post', from_spec_version='2.0')
+        obj = converters.to_operation(operation, None, 'test_root', '')
 
         # requestBody
         self.assertEqual(obj['requestBody']['required'], True)
@@ -302,8 +312,9 @@ class OperationConverterTestCase(unittest.TestCase):
     def test_parameter_ref(self):
         """ test parameters declared with '$ref'
         """
-        op, _ = app.resolve_obj('#/paths/~1p2/post', from_spec_version='2.0')
-        obj = converters.to_operation(op, None, 'test_root', '')
+        operation, _ = _APP.resolve_obj(
+            '#/paths/~1p2/post', from_spec_version='2.0')
+        obj = converters.to_operation(operation, None, 'test_root', '')
         _content = obj['requestBody']['content']
         self.assertTrue('application/x-www-form-urlencoded' in _content)
         _properties = _content['application/x-www-form-urlencoded']['schema'][
@@ -329,7 +340,7 @@ class InfoConverterTestCase(unittest.TestCase):
     """ test case for info """
 
     def test_basic(self):
-        info, _ = app.resolve_obj('#/info', from_spec_version='2.0')
+        info, _ = _APP.resolve_obj('#/info', from_spec_version='2.0')
 
         obj = converters.to_info(info, '')
         self.assertEqual(obj['title'], 'Swagger Petstore')
@@ -349,9 +360,9 @@ class PathItemConverterTestCase(unittest.TestCase):
     """ test case for path item """
 
     def test_basic(self):
-        p, _ = app.resolve_obj('#/paths/~1p1', from_spec_version='2.0')
+        path_item, _ = _APP.resolve_obj('#/paths/~1p1', from_spec_version='2.0')
 
-        obj, reloc = converters.to_path_item(p, 'test_root', '')
+        obj, reloc = converters.to_path_item(path_item, 'test_root', '')
         self.assertTrue('get' in obj)
         self.assertTrue('post' in obj)
         self.assertFalse('options' in obj)
@@ -365,39 +376,40 @@ class PathItemConverterTestCase(unittest.TestCase):
             to each operation
             - other parameter: let them stay in PathItem.parameters
         """
-        p, _ = app.resolve_obj(
+        path_item, _ = _APP.resolve_obj(
             '#/paths/~1p3~1{user_name}', from_spec_version='2.0')
 
-        obj, reloc = converters.to_path_item(p, 'test_root', '')
+        obj, reloc = converters.to_path_item(path_item, 'test_root', '')
         self.assertTrue('post' in obj)
         _post = obj['post']
         self.assertFalse('parameters' in _post)
 
         self.assertTrue('requestBody' in _post)
-        o = _post['requestBody']['content']['multipart/form-data']
-        self.assertTrue('encoding' in o)
-        self.assertEqual(o['encoding']['form_file']['contentType'],
+        media = _post['requestBody']['content']['multipart/form-data']
+        self.assertTrue('encoding' in media)
+        self.assertEqual(media['encoding']['form_file']['contentType'],
                          'application/octet-stream')
-        self.assertTrue('schema' in o)
-        self.assertEqual(o['schema']['properties']['form_file']['$ref'],
+        self.assertTrue('schema' in media)
+        self.assertEqual(media['schema']['properties']['form_file']['$ref'],
                          '#/parameters/form_file')
 
-        o = _post['requestBody']['content']['application/x-www-form-urlencoded']
-        self.assertTrue('encoding' in o)
-        self.assertEqual(o['encoding']['description']['contentType'],
+        media = _post['requestBody']['content'][
+            'application/x-www-form-urlencoded']
+        self.assertTrue('encoding' in media)
+        self.assertEqual(media['encoding']['description']['contentType'],
                          'text/plain')
-        self.assertTrue('schema' in o)
-        self.assertEqual(o['schema']['required'], ['description'])
-        self.assertEqual(o['schema']['properties']['description']['$ref'],
+        self.assertTrue('schema' in media)
+        self.assertEqual(media['schema']['required'], ['description'])
+        self.assertEqual(media['schema']['properties']['description']['$ref'],
                          '#/parameters/form_string')
 
         self.assertTrue('parameters' in obj)
         _parameters = obj['parameters']
-        for p in _parameters:
-            if '$ref' in p:
-                self.assertEqual(p['$ref'], '#/parameters/query_string')
-            elif 'name' in p:
-                self.assertEqual(p['name'], 'user_name')
+        for param in _parameters:
+            if '$ref' in param:
+                self.assertEqual(param['$ref'], '#/parameters/query_string')
+            elif 'name' in param:
+                self.assertEqual(param['name'], 'user_name')
             else:
                 self.assertTrue(False)
 
@@ -412,7 +424,7 @@ class ServerTestCase(unittest.TestCase):
     """ test case for server """
 
     def test_from_swagger(self):
-        obj = converters.from_swagger_to_server(app.root, '')
+        obj = converters.from_swagger_to_server(_APP.root, '')
 
         self.assertTrue('url' in obj)
         self.assertEqual(obj['url'], '/')
@@ -424,7 +436,7 @@ class OpenAPITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(kls):
         kls.from_upgrade, kls.upgrade_reloc = converters.to_openapi(
-            app.root, '')
+            _APP.root, '')
 
     def test_basic(self):
         obj = self.from_upgrade

@@ -16,20 +16,21 @@ class ConverterTestCase(unittest.TestCase):
 
         # load swagger.json into dict
         origin = None
-        with open(os.path.join(path, 'swagger.json')) as r:
-            origin = json.loads(r.read())
+        with open(os.path.join(path, 'swagger.json')) as handle:
+            origin = json.loads(handle.read())
 
         # diff for empty list or dict is allowed
-        d = app.root.dump()
+        dumped = app.root.dump()
         self.assertEqual(
-            sorted(_diff_(origin, d)),
+            sorted(_diff_(origin, dumped)),
             sorted([('paths/~1store~1inventory/get/parameters', None, None),
                     ('paths/~1user~1logout/get/parameters', None, None)]))
 
         # try to load the dumped dict back, to see if anything wrong
-        Swagger(d)
+        Swagger(dumped)
 
 
+# pylint: disable=invalid-name
 class Converter_v1_2_TestCase(unittest.TestCase):
     """ test for convert from 1.2
 
@@ -347,6 +348,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             _diff_(expect, self.app.root.dump(), include=['swagger']), [])
 
 
+# pylint: disable=invalid-name
 class Converter_v1_2_TestCase_Others(unittest.TestCase):
     """ for test cases needs special init
     """

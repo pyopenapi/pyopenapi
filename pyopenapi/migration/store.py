@@ -82,19 +82,19 @@ class SpecObjStore(object):
         jps = [(spec_version, jp)]
         from_ = spec_version
         src = jp
-        for v in self.__migratable_spec_versions[
+        for version in self.__migratable_spec_versions[
                 self.__migratable_spec_versions.index(spec_version) + 1:
                 self.__migratable_spec_versions.index(until) + 1
                 if until else len(self.__migratable_spec_versions)]:
-            src = self.relocate(url, src, from_, to_spec=v)
-            from_ = v
-            jps.append((v, src))
+            src = self.relocate(url, src, from_, to_spec=version)
+            from_ = version
+            jps.append((version, src))
 
         # seeking for cached spec objects from newer to older
-        for v, j in reversed(jps):
-            obj = self.get(url, j, v)
+        for version, tmp_jp in reversed(jps):
+            obj = self.get(url, tmp_jp, version)
             if obj:
-                return obj, j, v
+                return obj, tmp_jp, version
 
         return None, None, None
 
@@ -128,12 +128,12 @@ class SpecObjStore(object):
         remain_jp = jp
         while True:
             patch_from = None
-            for f, t in six.iteritems(current_routes):
+            for from_, to_ in six.iteritems(current_routes):
                 # find the longest prefix in f(rom)
-                if not remain_jp.startswith(f):
+                if not remain_jp.startswith(from_):
                     continue
-                if not patch_from or len(f) > len(patch_from):
-                    patch_from, patch_to = f, t
+                if not patch_from or len(from_) > len(patch_from):
+                    patch_from, patch_to = from_, to_
 
             if patch_to:
                 if isinstance(patch_to, dict):
@@ -187,9 +187,9 @@ class SpecObjStore(object):
             return jp
 
         to_spec = to_spec or consts.DEFAULT_OPENAPI_SPEC_VERSION
-        routes = self.__routes[url]
+        url_routes = self.__routes[url]
 
-        if to_spec not in routes:
+        if to_spec not in url_routes:
             raise Exception(
                 'unsupported target spec version when patching $ref: {}'.format(
                     to_spec))
@@ -197,14 +197,14 @@ class SpecObjStore(object):
         from_spec = StrictVersion(from_spec)
         to_spec = StrictVersion(to_spec)
         cur = jp
-        for version, r in six.iteritems(routes):
+        for version, version_routes in six.iteritems(url_routes):
             version = StrictVersion(version)
             if version <= from_spec:
                 continue
             if version > to_spec:
                 break
 
-            cur = SpecObjStore._patch_jp(cur, r)
+            cur = SpecObjStore._patch_jp(cur, version_routes)
 
         return cur
 

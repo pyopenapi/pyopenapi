@@ -5,7 +5,7 @@ from .scanner import Resolve, YamlFixer, NormalizeRef, Merge
 from .objects import Operation
 
 
-def up(obj, app, jref):
+def upgrade(obj, app, jref):
     ret = obj
     scanner = Scanner2()
 

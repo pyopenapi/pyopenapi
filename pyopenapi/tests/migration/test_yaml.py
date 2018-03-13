@@ -17,7 +17,7 @@ class YAMLTestCase(unittest.TestCase):
                 version='2.0',
                 which='yaml',
             ))
-        s = Scanner2()
-        s.scan(route=[YamlFixer()], root=app_yaml.raw, leaves=[Operation])
+        scanner = Scanner2()
+        scanner.scan(route=[YamlFixer()], root=app_yaml.raw, leaves=[Operation])
 
         self.assertEqual((True, ''), app_json.raw.compare(app_yaml.raw))

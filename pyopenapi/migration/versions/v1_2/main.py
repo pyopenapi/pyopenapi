@@ -1,2 +1,2 @@
-def up(obj, app, jref):
+def upgrade(obj, app, jref):
     return obj, {}

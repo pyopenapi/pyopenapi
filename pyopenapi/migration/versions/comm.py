@@ -15,27 +15,27 @@ def _merge_path_item(obj, path, from_spec_version, to_spec_version, app, parser,
     final.merge_children(obj)
 
     attrs = obj.get_attrs('migration', attr_group_cls)
-    r = attrs.normalized_ref
-    while r:
-        ro, _ = app.resolve_obj(
-            r,
+    cur_ref = attrs.normalized_ref
+    while cur_ref:
+        resolved, _ = app.resolve_obj(
+            cur_ref,
             parser=parser,
             from_spec_version=from_spec_version,
             to_spec_version=to_spec_version)
-        if not ro:
+        if not resolved:
             raise Exception('unable to resolve {} when merging for {}'.format(
-                r, path))
+                cur_ref, path))
 
         try:
-            guard.update(ro)
+            guard.update(resolved)
         except CycleDetectionError:
             # avoid infinite loop,
             # cycle detection has a dedicated scanner.
             break
 
-        final.merge_children(ro)
+        final.merge_children(resolved)
 
-        attrs = ro.get_attrs('migration', attr_group_cls)
-        r = attrs.normalized_ref
+        attrs = resolved.get_attrs('migration', attr_group_cls)
+        cur_ref = attrs.normalized_ref
 
     return final

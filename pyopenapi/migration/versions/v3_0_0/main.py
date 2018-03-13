@@ -12,7 +12,7 @@ from .scanner import Resolve, NormalizeRef, Merge
 from . import objects
 
 
-def up(obj, app, jref):
+def upgrade(obj, app, jref):
     ret = obj
     reloc = {}
     url, jp = jr_split(jref)

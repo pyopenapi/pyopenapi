@@ -4,6 +4,7 @@ import six
 import copy
 
 
+# pylint: disable=invalid-name
 class BaseObj_v1_2(Base2):
     __swagger_version__ = '1.2'
 

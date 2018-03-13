@@ -20,8 +20,8 @@ def get_test_data_folder(version='1.2', which=''):
 def get_test_file(version, which, file_name):
     with open(
             os.path.join(get_test_data_folder(version, which), file_name),
-            'r') as f:
-        return f.read()
+            'r') as handle:
+        return handle.read()
 
 
 class DictDB(dict):
@@ -56,28 +56,28 @@ class DictDB(dict):
         return found
 
 
-pet_Tom = dict(
+_PET_TOM = dict(
     id=1,
     category=dict(id=1, name='dog'),
     name='Tom',
     tags=[dict(id=2, name='yellow'),
           dict(id=3, name='big')],
     status='sold')
-pet_Mary = dict(
+_PET_MARY = dict(
     id=2,
     category=dict(id=2, name='cat'),
     name='Mary',
     tags=[dict(id=1, name='white'),
           dict(id=4, name='small')],
     status='pending')
-pet_John = dict(
+_PET_JOHN = dict(
     id=3,
     category=dict(id=2, name='cat'),
     name='John',
     tags=[dict(id=2, name='yellow'),
           dict(id=4, name='small')],
     status='available')
-pet_Sue = dict(
+_PET_SUE = dict(
     id=4,
     category=dict(id=3, name='fish'),
     name='Sue',
@@ -88,23 +88,25 @@ pet_Sue = dict(
 
 def create_pet_db():
     pet = DictDB()
-    pet.create_(**pet_Tom)
-    pet.create_(**pet_Mary)
-    pet.create_(**pet_John)
-    pet.create_(**pet_Sue)
+    pet.create_(**_PET_TOM)
+    pet.create_(**_PET_MARY)
+    pet.create_(**_PET_JOHN)
+    pet.create_(**_PET_SUE)
 
     return pet
 
 
 def gen_test_folder_hook(folder):
     def _hook(url):
-        p = six.moves.urllib.parse.urlparse(url)
-        if p.scheme != 'file':
+        parsed = six.moves.urllib.parse.urlparse(url)
+        if parsed.scheme != 'file':
             return url
 
-        path = os.path.join(folder, p.path
-                            if not p.path.startswith('/') else p.path[1:])
-        return six.moves.urllib.parse.urlunparse(p[:2] + (path, ) + p[3:])
+        path = os.path.join(folder, parsed.path
+                            if not parsed.path.startswith('/') else
+                            parsed.path[1:])
+        return six.moves.urllib.parse.urlunparse(parsed[:2] +
+                                                 (path, ) + parsed[3:])
 
     return _hook
 

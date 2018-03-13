@@ -21,8 +21,8 @@ def attr(key, required=False, default=None):
                 key, self.__class__.__name__))
         return default
 
-    def _setter_(self, v):
-        self.attrs[key] = v
+    def _setter_(self, val):
+        self.attrs[key] = val
 
     return property(_getter_, _setter_)
 
@@ -34,10 +34,10 @@ class AttributeMeta(type):
     def __new__(metacls, name, bases, spec):
         attrs = spec.setdefault('__attributes__', {})
 
-        for n, args in six.iteritems(attrs):
+        for name, args in six.iteritems(attrs):
             args = copy.copy(args)
             builder = args.pop('builder', None) or attr
-            spec[n] = builder(args.pop('key', None) or n, **args)
+            spec[name] = builder(args.pop('key', None) or name, **args)
 
         return type.__new__(metacls, name, bases, spec)
 

@@ -29,8 +29,8 @@ def field(key, required=False, default=None, restricted=False, readonly=True):
                 key, self.__class__.__name__))
         return default
 
-    def _writer_(self, v):
-        self.spec[key] = v
+    def _writer_(self, val):
+        self.spec[key] = val
 
     return property(_getter_, None if readonly else _writer_)
 
@@ -44,8 +44,8 @@ def internal(key, default=None):
             return self.internal[key]
         return default
 
-    def _setter_(self, v):
-        self.internal[key] = v
+    def _setter_(self, val):
+        self.internal[key] = val
 
     return property(_getter_, _setter_)
 
@@ -65,8 +65,8 @@ def rename(key):
     def _getter_(self):
         return getattr(self, key)
 
-    def _setter_(self, v):
-        return setattr(self, key, v)
+    def _setter_(self, val):
+        return setattr(self, key, val)
 
     return property(_getter_, _setter_)
 
@@ -112,13 +112,13 @@ def child(key, child_builder=None, required=False, default=None):
         else:
             return None
 
-    def _setter_(self, v):
-        if issubclass(v.__class__, (Base2Obj, _Map, _List)):
-            self.children[key] = v
+    def _setter_(self, val):
+        if issubclass(val.__class__, (Base2Obj, _Map, _List)):
+            self.children[key] = val
         else:
             raise Exception(
                 'assignment of this type of object is prohibited: {}, {}'.
-                format(str(type(v)), self._path_))
+                format(str(type(val)), self._path_))
 
     return property(_getter_, _setter_)
 
@@ -133,12 +133,12 @@ class _Base(object):
         #   (first token of jp_split) => (reminder of jp_split, value)
 
         # setup override
-        for k, v in six.iteritems(override or {}):
+        for k, val in six.iteritems(override or {}):
             tokens = jp_split(k, 1)
             if len(tokens) > 0:
                 self.override.setdefault(tokens[0], {}).update({
                     tokens[1] if len(tokens) > 1 else '':
-                    v
+                    val
                 })
             else:
                 raise Exception(
@@ -162,16 +162,16 @@ class _Base(object):
         return self._parent
 
     @_parent_.setter
-    def _parent_(self, v):
-        self._parent = v
+    def _parent_(self, val):
+        self._parent = val
 
     @property
     def _path_(self):
         return self._path
 
     @_path_.setter
-    def _path_(self, v):
-        self._path = v
+    def _path_(self, val):
+        self._path = val
 
 
 def list_(builder):
@@ -227,14 +227,14 @@ class _List(_Base):
 
             self.__elm.append(elm)
 
-    def resolve(self, ts):
-        if isinstance(ts, six.string_types):
-            ts = [ts]
+    def resolve(self, parts):
+        if isinstance(parts, six.string_types):
+            parts = [parts]
 
         obj = self
-        if len(ts) > 0:
-            t = ts.pop(0)
-            return self.__elm[int(t)].resolve(ts)
+        if len(parts) > 0:
+            idx = parts.pop(0)
+            return self.__elm[int(idx)].resolve(parts)
         return obj
 
     def merge_children(self, other):
@@ -247,12 +247,12 @@ class _List(_Base):
         if len(self.__elm) != len(other.__elm):
             return False, ''
 
-        for idx, (s, o) in enumerate(zip(self, other)):
+        for idx, (self_, other_) in enumerate(zip(self, other)):
             new_base = jp_compose(str(idx), base=base)
-            if isinstance(s, six.string_types + six.integer_types):
-                return s == o, new_base
+            if isinstance(self_, six.string_types + six.integer_types):
+                return self_ == other_, new_base
 
-            same, name = s.compare(o, base=new_base)
+            same, name = self_.compare(other_, base=new_base)
             if not same:
                 return same, name
 
@@ -285,9 +285,9 @@ class _List(_Base):
                     _Map,
                     _List,
             )):
-                c = obj._children_
-                for cc in c:
-                    ret[jp_compose([str(idx), cc])] = c[cc]
+                children = obj._children_
+                for name in children:
+                    ret[jp_compose([str(idx), name])] = children[name]
 
         return ret
 
@@ -366,14 +366,14 @@ class _Map(_Base):
 
             self.__elm[k] = elm
 
-    def resolve(self, ts):
-        if isinstance(ts, six.string_types):
-            ts = [ts]
+    def resolve(self, parts):
+        if isinstance(parts, six.string_types):
+            parts = [parts]
 
         obj = self
-        if len(ts) > 0:
-            t = ts.pop(0)
-            return self.__elm[t].resolve(ts)
+        if len(parts) > 0:
+            key = parts.pop(0)
+            return self.__elm[key].resolve(parts)
         return obj
 
     def merge_children(self, other):
@@ -396,19 +396,19 @@ class _Map(_Base):
                           six.string_types + six.integer_types):
                 return self.__elm[name] == other[name], new_base
 
-            s, n = self.__elm[name].compare(other[name], base=new_base)
-            if not s:
-                return s, n
+            same, name = self.__elm[name].compare(other[name], base=new_base)
+            if not same:
+                return same, name
 
         return True, ''
 
     def dump(self):
         ret = {}
-        for k, v in six.iteritems(self.__elm):
-            if hasattr(v, 'dump') and callable(v.dump):
-                ret[k] = v.dump()
+        for k, obj in six.iteritems(self.__elm):
+            if hasattr(obj, 'dump') and callable(obj.dump):
+                ret[k] = obj.dump()
             else:
-                ret[k] = v
+                ret[k] = obj
 
         return ret
 
@@ -429,9 +429,9 @@ class _Map(_Base):
                     _Map,
                     _List,
             )):
-                c = obj._children_
-                for cc in c:
-                    ret[jp_compose([name, cc])] = c[cc]
+                children = obj._children_
+                for key in children:
+                    ret[jp_compose([name, key])] = children[key]
 
         return ret
 
@@ -474,31 +474,31 @@ class FieldMeta(type):
         """ scan through MRO to get a merged list of fields and create them
         """
         fields = spc.setdefault('__fields__', {})
-        cn = spc.setdefault('__children__', {})
+        children = spc.setdefault('__children__', {})
         intl = spc.setdefault('__internal__', {})
 
-        def _from_parent_(s, name):
-            p = getattr(b, name, None)
-            if p:
-                d = {}
-                for k in set(p.keys()) - set(s.keys()):
-                    d[k] = p[k]
-                s.update(d)
+        def _from_parent_(base, spec, name):
+            parent_spec = getattr(base, name, None)
+            if parent_spec:
+                tmp = {}
+                for k in set(parent_spec.keys()) - set(spec.keys()):
+                    tmp[k] = parent_spec[k]
+                spec.update(tmp)
 
-        for b in bases:
-            _from_parent_(fields, '__fields__')
-            _from_parent_(cn, '__children__')
-            _from_parent_(intl, '__internal__')
+        for base in bases:
+            _from_parent_(base, fields, '__fields__')
+            _from_parent_(base, children, '__children__')
+            _from_parent_(base, intl, '__internal__')
 
-        def _update_to_spc(default_builder, fs):
-            for n, args in six.iteritems(fs):
+        def _update_to_spc(default_builder, spec):
+            for name, args in six.iteritems(spec):
                 args = copy.copy(args)
                 builder = args.pop('builder', None) or default_builder
-                spc[n] = builder(args.pop('key', None) or n, **args)
+                spc[name] = builder(args.pop('key', None) or name, **args)
 
         _update_to_spc(field, fields)
         _update_to_spc(internal, intl)
-        _update_to_spc(child, cn)
+        _update_to_spc(child, children)
 
         return type.__new__(metacls, name, bases, spc)
 
@@ -530,26 +530,27 @@ class Base2Obj(_Base):
             if chd and hasattr(chd, '_parent_'):
                 chd._parent_ = self
 
-    def resolve(self, ts):
+    def resolve(self, parts):
         """ resolve a list of tokens to an child object
         :param list ts: list of tokens
         """
-        if isinstance(ts, six.string_types):
-            ts = [ts]
+        if isinstance(parts, six.string_types):
+            parts = [parts]
 
         obj = self
-        while len(ts) > 0:
-            t = ts.pop(0)
+        while len(parts) > 0:
+            name = parts.pop(0)
 
             if issubclass(obj.__class__, Base2Obj):
-                obj = getattr(obj, t)
+                obj = getattr(obj, name)
             elif isinstance(obj, list):
-                obj = obj[int(t)]
+                obj = obj[int(name)]
             elif isinstance(obj, dict):
-                obj = obj[t]
+                obj = obj[name]
 
-            if issubclass(obj.__class__, (Base2Obj, _Map, _List)) and len(ts):
-                return obj.resolve(ts)
+            if issubclass(obj.__class__,
+                          (Base2Obj, _Map, _List)) and len(parts):
+                return obj.resolve(parts)
         return obj
 
     def merge_children(self, other):
@@ -558,52 +559,53 @@ class Base2Obj(_Base):
         """
         for name in self.__children__:
             if not getattr(self, name):
-                o = getattr(other, name)
-                if o:
-                    setattr(self, name, o)
+                obj = getattr(other, name)
+                if obj:
+                    setattr(self, name, obj)
 
     def compare(self, other, base=None):
         """ comparison, will return the first difference, mainly used for testing """
         if type(self) != type(other):
             return False, ''
 
-        def _cmp_(name, s, o):
-            if isinstance(s, six.string_types + six.integer_types):
-                return s == o, name
-            if type(s) != type(o):
+        def _cmp_(name, self_, other_):
+            if isinstance(self_, six.string_types + six.integer_types):
+                return self_ == other_, name
+            if type(self_) != type(other_):
                 return False, name
-            if isinstance(s, (Base2Obj, _Map, _List)):
-                return s.compare(o, base=name)
-            if isinstance(s, list):
-                for i, v in zip(range(len(s)), s):
-                    same, n = _cmp_(jp_compose(str(i), name), v, o[i])
+            if isinstance(self_, (Base2Obj, _Map, _List)):
+                return self_.compare(other_, base=name)
+            if isinstance(self_, list):
+                for i, elm in zip(range(len(self_)), self_):
+                    same, location = _cmp_(
+                        jp_compose(str(i), name), elm, other_[i])
                     if not same:
-                        return same, n
-            elif isinstance(s, dict):
+                        return same, location
+            elif isinstance(self_, dict):
                 # dict diff is complex, so we just
                 # compare if any key diff here
-                diff = list(set(s.keys()) - set(o.keys()))
+                diff = list(set(self_.keys()) - set(other_.keys()))
                 if diff:
                     return False, jp_compose(str(diff[0]), name)
-                diff = list(set(o.keys()) - set(s.keys()))
+                diff = list(set(other_.keys()) - set(self_.keys()))
                 if diff:
                     return False, jp_compose(str(diff[0]), name)
-                for k, v in six.iteritems(s):
-                    same, n = _cmp_(jp_compose(k, name), v, o[k])
+                for k, val in six.iteritems(self_):
+                    same, location = _cmp_(jp_compose(k, name), val, other_[k])
                     if not same:
-                        return same, n
+                        return same, location
             else:
                 # unknown type, delegate to default compare
-                return s == o, name
+                return self_ == other_, name
             return True, ''
 
         for name in itertools.chain(
                 six.iterkeys(self.__fields__), six.iterkeys(self.__children__)):
-            same, n = _cmp_(
+            same, location = _cmp_(
                 jp_compose(name, base), getattr(self, name), getattr(
                     other, name))
             if not same:
-                return same, n
+                return same, location
 
         return True, ''
 
@@ -613,26 +615,26 @@ class Base2Obj(_Base):
         """
         ret = {}
 
-        cs = set([name for name in self.__children__])
-        fs = set([name for name in self.__fields__])
+        children = set([name for name in self.__children__])
+        fields = set([name for name in self.__fields__])
 
         # dump children first
-        for name in cs:
-            c = getattr(self, name)
-            if c:
-                ret[name] = c.dump()
-                fs.discard(name)
+        for name in children:
+            child = getattr(self, name)
+            if child:
+                ret[name] = child.dump()
+                fields.discard(name)
 
         # dump each field
-        for name in fs:
+        for name in fields:
             if not self.is_set(name):
                 continue
 
-            o = getattr(self, name)
-            if o is None:
+            obj = getattr(self, name)
+            if obj is None:
                 continue
 
-            ret[name] = o
+            ret[name] = obj
 
         return ret
 
@@ -682,9 +684,9 @@ class Base2Obj(_Base):
                     _Map,
                     _List,
             )):
-                c = obj._children_
-                for cc in c:
-                    ret[jp_compose([name, cc])] = c[cc]
+                children = obj._children_
+                for child_name in children:
+                    ret[jp_compose([name, child_name])] = children[child_name]
 
         return ret
 
