@@ -42,7 +42,7 @@ class Resolver(object):
         # note that we didn't cache App with this local_url
         local_url = self.__url_load_hook(url) if self.__url_load_hook else url
 
-        logger.info('{0} patch to {1}'.format(url, local_url))
+        logger.info('%s patch to %s', url, local_url)
 
         # check cache
         obj = self.__cache.get(url, None)

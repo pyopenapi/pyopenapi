@@ -183,7 +183,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         if not obj:
             raise Exception('Unable to parse object from {0}'.format(jref))
 
-        logger.info('version: {0}'.format(version))
+        logger.info('version: %s', version)
 
         # cache obj before migration, or we may load an object multiple times when resolve
         # $ref in the same spec
@@ -276,7 +276,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         :raises ValueError: if path is not valid
         """
 
-        logger.info('resolving: [{0}]'.format(jref))
+        logger.info('resolving: [%s]', jref)
 
         if not jref:
             raise ValueError('Empty Path is not allowed')

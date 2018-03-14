@@ -108,13 +108,13 @@ class LocalGetter(Getter):
                         break
                 else:
                     raise ValueError(
-                        'Unable to locate resource file: [{0}]'.format(path))
+                        'Unable to locate resource file: [{}]'.format(path))
 
     def load(self, path):
-        logger.info('to load: [{0}]'.format(path))
+        logger.info('to load: [%s]', path)
 
         path = patch_path(self.base_path, path)
-        logger.info('final path to load: [{0}]'.format(path))
+        logger.info('final path to load: [%s]', path)
 
         ret = None
         with open(path, 'r') as file_handle:
@@ -142,7 +142,7 @@ class SimpleGetter(Getter):
                     str(type(path))))
 
     def load(self, path):
-        logger.info('to load: [{0}]'.format(path))
+        logger.info('to load: [%s]', path)
 
         return self.__simple_getter_callback__.__func__(path)
 
@@ -179,6 +179,6 @@ class DictGetter(Getter):
         self._path2dict = path2dict or {}
 
     def load(self, path):
-        logger.info('to load: [{0}]'.format(path))
+        logger.info('to load: [%s]', path)
 
         return self._path2dict.get(path, {})
