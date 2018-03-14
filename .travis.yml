@@ -8,7 +8,7 @@ matrix:
     include:
         - python: "2.7"
           env:
-              - FORMAT_CHECK="1"
+              - FORMAT_CHECK="0"
               - VALIDITY_CHECK="0"
         - python: "3.3"
           env:
@@ -16,7 +16,7 @@ matrix:
               - VALIDITY_CHECK="0"
         - python: "3.5"
           env:
-              - FORMAT_CHECK="1"
+              - FORMAT_CHECK="0"
               - VALIDITY_CHECK="0"
         - python: "3.6"
           env:
