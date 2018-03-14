@@ -2,12 +2,9 @@ from __future__ import absolute_import
 from . import consts
 from .errs import CycleDetectionError
 import six
-import imp
 import sys
-import datetime
 import re
 import os
-import operator
 import functools
 import pkgutil
 import distutils

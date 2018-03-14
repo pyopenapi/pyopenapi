@@ -1,12 +1,9 @@
 from __future__ import absolute_import
 from ......utils import jp_compose, deref
 from ......errs import SchemaError
-from ...objects import Operation
-from .constants import BASE_SCHEMA_FIELDS, SCHEMA_FIELDS, FILE_CONTENT_TYPES
+from .constants import BASE_SCHEMA_FIELDS, SCHEMA_FIELDS
 from .parameter_context import ParameterContext
-from os import path
 import six
-import copy
 
 
 def _generate_fields(obj, names):

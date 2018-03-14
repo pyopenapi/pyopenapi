@@ -1,9 +1,6 @@
 from pyopenapi import utils, errs
-from datetime import datetime
 from .utils import is_windows, is_py2
 import unittest
-import functools
-import six
 import os
 
 

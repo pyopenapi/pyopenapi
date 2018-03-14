@@ -3,7 +3,6 @@ from ...errs import FieldNotExist
 import six
 import types
 import copy
-import os
 import itertools
 
 

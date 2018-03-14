@@ -1,10 +1,9 @@
 from pyopenapi import errs
 from pyopenapi.utils import normalize_url
 from pyopenapi.migration.versions.v2_0 import objects
-from ....utils import get_test_data_folder, is_windows, SampleApp
+from ....utils import get_test_data_folder, SampleApp
 import unittest
 import os
-import six
 
 _FOLDER = normalize_url(get_test_data_folder(version='1.2', which='wordnik'))
 

@@ -4,7 +4,6 @@ from pyopenapi.migration.spec import (
     Base2,
     field,
     child,
-    internal,
     rename,
     map_,
     list_,

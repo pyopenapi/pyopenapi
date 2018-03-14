@@ -1,5 +1,5 @@
 from ....utils import jr_split
-from ...scan import Scanner, Scanner2
+from ...scan import Scanner2
 from ..v1_2.scanner import Upgrade
 from .scanner import Resolve, YamlFixer, NormalizeRef, Merge
 from .objects import Operation

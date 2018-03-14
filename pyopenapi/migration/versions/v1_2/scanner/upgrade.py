@@ -6,10 +6,7 @@ from ....scan import Dispatcher
 from ..objects import (
     ResourceListing,
     ApiDeclaration,
-    Operation,
     Authorization,
-    Parameter,
-    Model,
 )
 from ...v2_0.objects import Swagger
 import os

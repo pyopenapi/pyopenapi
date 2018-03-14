@@ -1,7 +1,6 @@
 from pyopenapi.migration.versions.v3_0_0.objects import OpenApi
 from ....utils import get_test_file
 import unittest
-import os
 import yaml
 
 

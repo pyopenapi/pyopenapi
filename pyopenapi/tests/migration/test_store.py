@@ -2,7 +2,6 @@
 
 from pyopenapi.migration.store import SpecObjStore
 from pyopenapi.migration.versions.v2_0.objects import Swagger, Info
-from pyopenapi.migration.versions.v3_0_0.objects import OpenApi
 from ..utils import get_test_file
 import unittest
 import json

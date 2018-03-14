@@ -1,6 +1,5 @@
 from __future__ import absolute_import
-from ....utils import final
-from ...spec import Base2, field, rename, child, list_, map_
+from ...spec import Base2, rename, child, list_, map_
 import six
 
 

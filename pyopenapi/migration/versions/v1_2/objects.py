@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-from ...spec import Base2, field, child, rename, list_, map_
-import six
-import copy
+from ...spec import Base2, rename, list_, map_
 
 
 # pylint: disable=invalid-name
