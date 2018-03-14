@@ -181,7 +181,7 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         self.assertEqual(utils.get_swagger_version({'swagger': '2.0'}), '2.0')
         self.assertEqual(utils.get_swagger_version({'qq': '20.0'}), None)
 
-    def test_diff(self):
+    def test_compare_container(self):
         dict1 = dict(a=1, b=[1, 2, 3])
         dict2 = dict(a=1, b=[1, 3])
         dict3 = dict(
@@ -196,36 +196,39 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         list1 = [dict1, dict3]
         list2 = [dict2, dict4]
 
-        self.assertEqual(utils._diff_(dict1, dict2), [
-            ('b', 3, 2),
-        ])
-
-        self.assertEqual(utils._diff_(dict2, dict1), [
-            ('b', 2, 3),
-        ])
+        self.assertEqual(
+            utils.compare_container(dict1, dict2), [
+                ('b', 3, 2),
+            ])
 
         self.assertEqual(
-            sorted(utils._diff_(dict3, dict4)),
+            utils.compare_container(dict2, dict1), [
+                ('b', 2, 3),
+            ])
+
+        self.assertEqual(
+            sorted(utils.compare_container(dict3, dict4)),
             sorted([('a/a', 1, 2), ('a/b', 3, 2), ('a/c', 4, 5), ('b/b', 3,
                                                                   2)]))
 
         self.assertEqual(
-            sorted(utils._diff_(list1, list2)),
+            sorted(utils.compare_container(list1, list2)),
             sorted([('0/b', 3, 2), ('1/a/a', 1, 2), ('1/a/b', 3, 2),
                     ('1/a/c', 4, 5), ('1/b/b', 3, 2)]))
 
         # test include
         self.assertEqual(
-            sorted(utils._diff_(dict3, dict4, include=['a'])),
+            sorted(utils.compare_container(dict3, dict4, include=['a'])),
             sorted([('a/a', 1, 2)]))
         # test exclude
         self.assertEqual(
-            sorted(utils._diff_(dict3, dict4, exclude=['a'])),
+            sorted(utils.compare_container(dict3, dict4, exclude=['a'])),
             sorted([('b/b', 3, 2)]))
         # test include and exclude
         self.assertEqual(
             sorted(
-                utils._diff_(dict3, dict4, include=['a', 'b'], exclude=['a'])),
+                utils.compare_container(
+                    dict3, dict4, include=['a', 'b'], exclude=['a'])),
             sorted([('b/b', 3, 2)]))
 
     def test_get_or_none(self):

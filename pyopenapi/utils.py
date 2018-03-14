@@ -322,7 +322,12 @@ def get_swagger_version(obj):
                                              'swaggerVersion') else obj.swagger
 
 
-def _diff_(src, dst, ret=None, base_path=None, exclude=[], include=[]):
+def compare_container(src,
+                      dst,
+                      ret=None,
+                      base_path=None,
+                      exclude=[],
+                      include=[]):
     """ compare 2 dict/list, return a list containing
     json-pointer indicating what's different, and what's diff exactly.
 
@@ -361,8 +366,8 @@ def _diff_(src, dst, ret=None, base_path=None, exclude=[], include=[]):
 
         # same key
         for k in set_src & set_dst:
-            _diff_(src[k], dst[k], ret, jp_compose(k, base=base_path), exclude,
-                   include)
+            compare_container(src[k], dst[k], ret, jp_compose(
+                k, base=base_path), exclude, include)
 
     def _list_(src, dst, ret, base_path):
         if len(src) < len(dst):
@@ -417,8 +422,8 @@ def _diff_(src, dst, ret=None, base_path=None, exclude=[], include=[]):
                 sorted_src, sorted_dst = src, dst
 
             for idx, (x, y) in enumerate(zip(sorted_src, sorted_dst)):
-                _diff_(x, y, ret, jp_compose(str(idx), base=base_path), exclude,
-                       include)
+                compare_container(x, y, ret, jp_compose(
+                    str(idx), base=base_path), exclude, include)
 
     ret = [] if ret is None else ret
     base_path = '' if base_path is None else base_path

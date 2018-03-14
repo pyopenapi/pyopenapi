@@ -4,7 +4,7 @@ import json
 
 from pyopenapi.migration.getter import UrlGetter, DictGetter, SimpleGetter
 from pyopenapi.migration.resolve import Resolver
-from pyopenapi.utils import _diff_
+from pyopenapi.utils import compare_container
 from ..utils import get_test_data_folder, SampleApp
 
 
@@ -93,7 +93,8 @@ class GetterTestCase(unittest.TestCase):
 
         # make sure it produce the same App in default way
         self.assertEqual(
-            sorted(_diff_(app.root.dump(), app_default.root.dump())), [])
+            sorted(compare_container(app.root.dump(), app_default.root.dump())),
+            [])
 
         #
         # different path, mocking an url
@@ -118,7 +119,7 @@ class GetterTestCase(unittest.TestCase):
         # make sure it produce the same App in default way
         self.assertEqual(
             sorted(
-                _diff_(
+                compare_container(
                     app.root.dump(), app_default.root.dump(),
                     exclude=['$ref'])), [])
 
@@ -145,7 +146,7 @@ class GetterTestCase(unittest.TestCase):
         # make sure it produce the same App in default way
         self.assertEqual(
             sorted(
-                _diff_(
+                compare_container(
                     app.root.dump(), app_default.root.dump(),
                     exclude=['$ref'])), [])
 
@@ -172,7 +173,8 @@ class GetterTestCase(unittest.TestCase):
 
         # make sure it produce the same App in default way
         self.assertEqual(
-            sorted(_diff_(app.root.dump(), origin_app.root.dump())), [])
+            sorted(compare_container(app.root.dump(), origin_app.root.dump())),
+            [])
 
         #
         # loading via wrong path, should be ok when all internal $ref are not absoluted
@@ -187,7 +189,7 @@ class GetterTestCase(unittest.TestCase):
         # make sure it produce the same App in default way
         self.assertEqual(
             sorted(
-                _diff_(
+                compare_container(
                     app.root.dump(), origin_app.root.dump(), exclude=['$ref'])),
             [])
 
@@ -204,7 +206,7 @@ class GetterTestCase(unittest.TestCase):
         # make sure it produce the same App in default way
         self.assertEqual(
             sorted(
-                _diff_(
+                compare_container(
                     app.root.dump(), origin_app.root.dump(), exclude=['$ref'])),
             [])
 

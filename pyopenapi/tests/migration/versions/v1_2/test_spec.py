@@ -169,16 +169,17 @@ class PropertyTestCase(unittest.TestCase):
 
     def test_parent(self):
         """ make sure parent is assigned """
-        self.assertTrue(self.app.raw.cached_apis['pet'].models['Pet']
-                        ._parent_._parent_ is self.app.raw.cached_apis['pet'])
+        self.assertTrue(
+            self.app.raw.cached_apis['pet'].models['Pet']
+            .get_parent().get_parent() is self.app.raw.cached_apis['pet'])
 
         get_user_by_name = self.app.raw.cached_apis['user'].apis[0].operations[
             2]
         self.assertEqual(get_user_by_name.nickname, 'getUserByName')
-        self.assertTrue(get_user_by_name._parent_._parent_._parent_._parent_ is
-                        self.app.raw.cached_apis['user'])
+        self.assertTrue(get_user_by_name.get_parent().get_parent().get_parent()
+                        .get_parent() is self.app.raw.cached_apis['user'])
 
-        self.assertTrue(self.app.raw.info._parent_ is self.app.raw)
+        self.assertTrue(self.app.raw.info.get_parent() is self.app.raw)
 
 
 class DataTypeTestCase(unittest.TestCase):
@@ -242,14 +243,14 @@ class DataTypeTestCase(unittest.TestCase):
     def test_field_name(self):
         """ field_name """
         self.assertEqual(
-            sorted(self.app.raw._field_names_),
+            sorted(self.app.raw.get_field_names()),
             sorted([
                 'info', 'authorizations', 'apiVersion', 'swaggerVersion', 'apis'
             ]))
 
     def test_children(self):
         """ children """
-        children = self.app.raw._children_
+        children = self.app.raw.get_children()
         self.assertEqual(len(children), 5)
         self.assertEqual(
             set(['/user', '/pet', '/store']),

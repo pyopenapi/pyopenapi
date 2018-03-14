@@ -15,7 +15,7 @@ def default_tree_traversal(root, leaves):
         if obj.__class__ not in leaves:
             objs.extend(
                 map(lambda i: (path + '/' + i[0], ) + (i[1], ),
-                    six.iteritems(obj._children_)))
+                    six.iteritems(obj.get_children())))
 
         # the path we expose here follows JsonPointer described here
         #   http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-07

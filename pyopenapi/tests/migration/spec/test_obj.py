@@ -155,9 +155,9 @@ class Base2TestCase(unittest.TestCase):
         """ make sure builder:internal works
         """
         obj = AObj({'a': 1, 'b': 2, 'ic': 3})
-        self.assertEqual(
-            sorted(obj._field_names_),
-            ['a', 'b', 'c', 'd'])  # internal is not included in '_field_names_'
+        self.assertEqual(sorted(obj.get_field_names()),
+                         ['a', 'b', 'c', 'd'
+                          ])  # internal is not included in 'get_field_names()'
         self.assertEqual(
             obj.internal_c,
             None)  # internal is separated from input spec (in __fields__)
@@ -717,12 +717,12 @@ class Base2TestCase(unittest.TestCase):
         """ Base2Obj.merge_children
         """
         obj_1 = GObj({'a': {'bb': 'a'}})
-        self.assertEqual(list(obj_1._children_.keys()), ['a'])
+        self.assertEqual(list(obj_1.get_children().keys()), ['a'])
         obj_2 = GObj({'b': {'bb': 'b'}})
         obj_1.merge_children(obj_2)
         self.assertEqual(
-            sorted(list(obj_1._children_.keys())), sorted(['a', 'b']))
-        self.assertEqual(list(obj_2._children_.keys()), ['b'])
+            sorted(list(obj_1.get_children().keys())), sorted(['a', 'b']))
+        self.assertEqual(list(obj_2.get_children().keys()), ['b'])
 
     def test_key_and_name_different(self):
         """ property name of key to underlying dict can be different
@@ -761,16 +761,16 @@ class Base2TestCase(unittest.TestCase):
         """
         # child field, missing, or different
         obj = AObj({'c': {'bb': 1}})
-        self.assertEqual(obj._path_, None)
-        self.assertEqual(obj.c._path_, 'c')
+        self.assertEqual(obj.get_path(), None)
+        self.assertEqual(obj.c.get_path(), 'c')
 
         # _Map
         obj = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
-        self.assertEqual(obj.cc['key1']._path_, 'cc/key1')
+        self.assertEqual(obj.cc['key1'].get_path(), 'cc/key1')
 
         # _List
         obj = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
-        self.assertEqual(obj.ccc[0]._path_, 'ccc/0')
+        self.assertEqual(obj.ccc[0].get_path(), 'ccc/0')
 
         # _Map of _List
         obj = DObj({
@@ -787,7 +787,7 @@ class Base2TestCase(unittest.TestCase):
                 }]
             }
         })
-        self.assertEqual(obj.d1['key1'][0]._path_, 'd1/key1/0')
+        self.assertEqual(obj.d1['key1'][0].get_path(), 'd1/key1/0')
 
         # _List of _Map
         obj = DObj({
@@ -807,7 +807,7 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        self.assertEqual(obj.d2[0]['key1']._path_, 'd2/0/key1')
+        self.assertEqual(obj.d2[0]['key1'].get_path(), 'd2/0/key1')
 
         # _Map of _Map
         obj = DObj({
@@ -830,7 +830,7 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        self.assertEqual(obj.d3['key1']['key11']._path_, 'd3/key1/key11')
+        self.assertEqual(obj.d3['key1']['key11'].get_path(), 'd3/key1/key11')
 
     def test_renamed(self):
         """ make sure renamed works
@@ -860,21 +860,21 @@ class Base2TestCase(unittest.TestCase):
                 'a': 2
             }]
         })
-        self.assertEqual(id(obj.cc._parent_), id(obj))
-        self.assertEqual(id(obj.ccc._parent_), id(obj))
+        self.assertEqual(id(obj.cc.get_parent()), id(obj))
+        self.assertEqual(id(obj.ccc.get_parent()), id(obj))
 
         map_c = obj.cc
-        self.assertEqual(id(map_c['key1']._parent_), id(map_c))
-        self.assertEqual(id(map_c['key2']._parent_), id(map_c))
+        self.assertEqual(id(map_c['key1'].get_parent()), id(map_c))
+        self.assertEqual(id(map_c['key2'].get_parent()), id(map_c))
 
         list_c = obj.ccc
-        self.assertEqual(id(list_c[0]._parent_), id(list_c))
-        self.assertEqual(id(list_c[1]._parent_), id(list_c))
+        self.assertEqual(id(list_c[0].get_parent()), id(list_c))
+        self.assertEqual(id(list_c[1].get_parent()), id(list_c))
 
         obj_a = obj.cc['key1']
         obj_b = BObj({'bb': 1})
         obj_a.attach_child('c', obj_b)
-        self.assertEqual(id(obj_b._parent_), id(obj_a))
+        self.assertEqual(id(obj_b.get_parent()), id(obj_a))
 
     def test_override_children(self):
         spec = {
