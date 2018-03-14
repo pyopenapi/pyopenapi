@@ -134,20 +134,20 @@ class SampleApp(ApiBase):
         return obj
 
     @classmethod
-    def load(kls,
+    def load(cls,
              url,
              url_load_hook=None,
              resolver=None,
              getter=None,
              sep=consts.SCOPE_SEPARATOR):
         url = utils.normalize_url(url)
-        app = kls(url, url_load_hook, resolver, sep)
+        app = cls(url, url_load_hook, resolver, sep)
 
         app.raw = app.load_obj(url, getter=getter)
         return app
 
     @classmethod
-    def create(kls,
+    def create(cls,
                url,
                to_spec_version,
                url_load_hook=None,
@@ -155,7 +155,7 @@ class SampleApp(ApiBase):
                getter=None,
                sep=consts.SCOPE_SEPARATOR):
         url = utils.normalize_url(url)
-        app = kls.load(
+        app = cls.load(
             url,
             url_load_hook=url_load_hook,
             resolver=resolver,

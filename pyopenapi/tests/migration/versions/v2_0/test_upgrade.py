@@ -433,8 +433,8 @@ class OpenAPITestCase(unittest.TestCase):
     """ test case for OpenAPI """
 
     @classmethod
-    def setUpClass(kls):
-        kls.from_upgrade, kls.upgrade_reloc = converters.to_openapi(
+    def setUpClass(cls):
+        cls.from_upgrade, cls.upgrade_reloc = converters.to_openapi(
             _APP.root, '')
 
     def test_basic(self):

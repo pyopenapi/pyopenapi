@@ -9,8 +9,8 @@ class ExternalDocumentTestCase(unittest.TestCase):
     """ test case for external document """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             url='file:///root/swagger.json',
             url_load_hook=gen_test_folder_hook(
                 get_test_data_folder(version='2.0', which='ex')),
@@ -110,8 +110,8 @@ class ReuseTestCase(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             url='file:///reuse/swagger.json',
             url_load_hook=gen_test_folder_hook(
                 get_test_data_folder(version='2.0', which='ex')),

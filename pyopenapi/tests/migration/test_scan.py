@@ -76,8 +76,8 @@ class ScannerTestCase(unittest.TestCase):
     """ test scanner """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.load(
+    def setUpClass(cls):
+        cls.app = SampleApp.load(
             get_test_data_folder(version='1.2', which='wordnik'))
 
     def test_count(self):
@@ -147,8 +147,8 @@ class ResolveTestCase(unittest.TestCase):
     """ test for scanner: Resolve """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='model_subtypes'),
             to_spec_version='2.0')
 

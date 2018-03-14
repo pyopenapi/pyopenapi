@@ -43,8 +43,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='wordnik'),
             sep=':',
             to_spec_version='2.0',

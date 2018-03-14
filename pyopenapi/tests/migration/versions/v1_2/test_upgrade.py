@@ -17,8 +17,8 @@ class SwaggerUpgradeTestCase(unittest.TestCase):
     """ test for upgrade from converting 1.2 to 2.0 """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             _FOLDER,
             to_spec_version='2.0',
         )
@@ -248,8 +248,8 @@ class ModelSubtypesTestCase(unittest.TestCase):
     """ test for upgrade /data/v1_2/model_subtypes """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='model_subtypes'),
             to_spec_version='2.0')
 

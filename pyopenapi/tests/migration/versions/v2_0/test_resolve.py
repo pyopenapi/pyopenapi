@@ -11,8 +11,8 @@ class ResolvePathItemTestCase(unittest.TestCase):
     """ test for PathItem $ref """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(
                 version='2.0', which=os.path.join('resolve', 'path_item')),
             to_spec_version='2.0',
@@ -49,8 +49,8 @@ class ResolveTestCase(unittest.TestCase):
     """ test for $ref other than PathItem """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(
                 version='2.0', which=os.path.join('resolve', 'other')),
             to_spec_version='2.0',
@@ -87,8 +87,8 @@ class DerefTestCase(unittest.TestCase):
     """ test for pyopenapi.utils.deref """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(
                 version='2.0', which=os.path.join('resolve', 'deref')),
             to_spec_version='2.0')

@@ -14,8 +14,8 @@ class PropertyTestCase(unittest.TestCase):
     """ make sure properties' existence & type """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='wordnik'),
             to_spec_version='2.0')
 
@@ -185,8 +185,8 @@ class DataTypeTestCase(unittest.TestCase):
     """ make sure data type ready """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='wordnik'),
             to_spec_version='2.0')
 

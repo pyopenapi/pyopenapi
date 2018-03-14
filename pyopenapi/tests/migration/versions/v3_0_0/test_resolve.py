@@ -21,8 +21,8 @@ class PathItemMergeTestCase(unittest.TestCase):
     """ test case for merging external path item """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             url='file:///root.yml',
             url_load_hook=gen_test_folder_hook(
                 get_test_data_folder(version='3.0.0', which='external')),
@@ -141,8 +141,8 @@ class ResolveTestCase(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             url='file:///root.yml',
             url_load_hook=gen_test_folder_hook(
                 get_test_data_folder(version='3.0.0', which='external')),
@@ -373,14 +373,14 @@ class ResolveWithObjectRelocationTestCase(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(kls):
+    def setUpClass(cls):
         doc_path = get_test_data_folder(
             version='2.0',
             which='upgrade',
         )
 
-        kls.app = SampleApp.create(doc_path, to_spec_version='3.0.0')
-        kls.doc_path = normalize_url(doc_path)
+        cls.app = SampleApp.create(doc_path, to_spec_version='3.0.0')
+        cls.doc_path = normalize_url(doc_path)
 
     def test_operation(self):
         """ operation should not be changed
@@ -486,8 +486,8 @@ class MutualReferenceTestCase(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             url='file:///root/swagger.json',
             url_load_hook=gen_test_folder_hook(
                 get_test_data_folder(version='2.0', which='ex')),

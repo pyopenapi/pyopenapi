@@ -651,16 +651,16 @@ class Base2Obj(_Base):
             obj._parent_ = self
 
     @classmethod
-    def attach_field(kls, name, **field_descriptor):
+    def attach_field(cls, name, **field_descriptor):
         desc = copy.copy(field_descriptor)
 
         builder = desc.pop('builder')
         key = desc.pop('key', None)
-        setattr(kls, name, builder(key or name, **desc))
+        setattr(cls, name, builder(key or name, **desc))
         if builder.__name__ == 'child':
-            kls.__children__[name] = field_descriptor
+            cls.__children__[name] = field_descriptor
         elif builder.__name__ == 'internal':
-            kls.__internal__[name] = field_descriptor
+            cls.__internal__[name] = field_descriptor
 
     @property
     def _field_names_(self):

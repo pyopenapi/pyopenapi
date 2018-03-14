@@ -7,8 +7,8 @@ class BitBucketTestCase(unittest.TestCase):
     """ test for bitbucket related """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='2.0', which='bitbucket'),
             to_spec_version='2.0')
 
