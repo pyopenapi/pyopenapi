@@ -19,7 +19,7 @@ def scope_compose(scope, name, sep=consts.SCOPE_SEPARATOR):
     :return the composed scope
     """
 
-    if name == None:
+    if name is None:
         new_scope = scope
     else:
         new_scope = scope if scope else name
@@ -115,7 +115,7 @@ class CycleGuard(object):
 def jp_compose(segment, base=None):
     """ append/encode a string to json-pointer
     """
-    if segment == None:
+    if segment is None:
         return base
 
     segments = [segment] if isinstance(segment, six.string_types) else segment
@@ -128,7 +128,7 @@ def jp_compose(segment, base=None):
 def jp_split(jp, max_split=-1):
     """ split/decode a string from json-pointer
     """
-    if jp == '' or jp == None:
+    if jp == '' or jp is None:
         return []
 
     def _decode(x):
@@ -421,8 +421,8 @@ def _diff_(src, dst, ret=None, base_path=None, exclude=[], include=[]):
                 _diff_(x, y, ret, jp_compose(str(idx), base=base_path), exclude,
                        include)
 
-    ret = [] if ret == None else ret
-    base_path = '' if base_path == None else base_path
+    ret = [] if ret is None else ret
+    base_path = '' if base_path is None else base_path
 
     if isinstance(src, dict):
         if not isinstance(dst, dict):

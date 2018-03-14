@@ -282,7 +282,7 @@ def to_media_type(obj, content_type, existing, path):
             obj if getattr(obj, '$ref', None) else src_schema,
             path,
             items_converter=from_items))
-    if getattr(resolved_obj, 'allowEmptyValue', None) == True:
+    if getattr(resolved_obj, 'allowEmptyValue', None) is True:
         prop['nullable'] = True
 
     encoding = to_encoding(src_schema, content_type, path)

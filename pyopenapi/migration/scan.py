@@ -127,7 +127,7 @@ class Scanner(object):
         return self.__app
 
     def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
-        if root == None:
+        if root is None:
             raise ValueError('Can\'t scan because root==None')
 
         merged_r = _build_route(route)
@@ -145,7 +145,7 @@ class Scanner2(object):
     """
 
     def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
-        if root == None:
+        if root is None:
             raise ValueError('Can\'t scan because root==None')
 
         merged_r = _build_route(route)

@@ -171,7 +171,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             # openapi 3.0.0
             obj = OpenApi(src_spec, jref, override)
 
-        elif version == None and parser:
+        elif version is None and parser:
             obj = parser(src_spec, jref, {})
             version = obj.__swagger_version__ if hasattr(
                 obj, '__swagger_version__') else version

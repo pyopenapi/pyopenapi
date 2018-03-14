@@ -18,7 +18,7 @@ class YamlFixer(object):
     def _op(self, _, obj):
         """ convert status code in Responses from int to string
         """
-        if obj.responses == None: return
+        if obj.responses is None: return
 
         responses = MapOfResponseOrReference({}, obj.responses._path_)
         for k, resp in six.iteritems(obj.responses):

@@ -57,7 +57,7 @@ def convert_min_max(dst, src):
 
 
 def convert_schema_from_datatype(obj, scope, sep):
-    if obj == None:
+    if obj is None:
         return None
 
     spec = {}
@@ -112,7 +112,7 @@ def convert_parameter(param, scope, sep):
         if getattr(param, '$ref'):
             raise SchemaError('Can\'t have $ref in non-body Parameters')
 
-        if param.allowMultiple == True and param.items == None:
+        if param.allowMultiple is True and param.items is None:
             p_spec['type'] = 'array'
             p_spec['collectionFormat'] = 'csv'
             if param.is_set('uniqueItems'):
