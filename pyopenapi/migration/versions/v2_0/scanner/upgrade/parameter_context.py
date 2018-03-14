@@ -51,8 +51,7 @@ class ParameterContext(object):
                 set(self.__valid_mime_types) & set([
                     'application/x-www-form-urlencoded', 'multipart/form-data'
                 ])) or [self.get_default_mime_type()]
-        else:
-            return self.__valid_mime_types
+        return self.__valid_mime_types
 
     def get_default_mime_type(self):
         if self.is_file:
@@ -61,5 +60,4 @@ class ParameterContext(object):
             return 'application/x-www-form-urlencoded'
         elif self.is_body:
             return 'application/json'
-        else:
-            return 'text/plain'
+        return 'text/plain'

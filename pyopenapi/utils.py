@@ -177,9 +177,9 @@ def path2url(path_part):
     if sys.version_info.major >= 3 and sys.version_info.minor >= 4:
         import pathlib
         return pathlib.Path(path_part).as_uri()
-    else:
-        return six.moves.urllib.parse.urljoin(
-            'file:', six.moves.urllib.request.pathname2url(path_part))
+
+    return six.moves.urllib.parse.urljoin(
+        'file:', six.moves.urllib.request.pathname2url(path_part))
 
 
 _WINDOWS_PATH_PREFIX_PATTERN = re.compile(r'(^[A-Za-z]:\\)')
@@ -273,8 +273,7 @@ def normalize_jr(json_ref, url=None):
 
     if url_part:
         return ''.join([url_part, '#', jp]) if jp else url_part
-    else:
-        return '#' + jp
+    return '#' + jp
 
 
 def _fullmatch(regex, chunk):

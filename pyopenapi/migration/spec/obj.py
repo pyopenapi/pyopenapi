@@ -111,8 +111,7 @@ def child(key, child_builder=None, required=False, default=None):
                 val, path=jp_compose(key, base=self._path_), override=ovr)
             self.children[key] = chd
             return chd
-        else:
-            return None
+        return None
 
     def _setter_(self, val):
         if issubclass(val.__class__, (Base2Obj, _Map, _List)):
