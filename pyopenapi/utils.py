@@ -326,8 +326,8 @@ def compare_container(src,
                       dst,
                       ret=None,
                       base_path=None,
-                      exclude=[],
-                      include=[]):
+                      exclude=None,
+                      include=None):
     """ compare 2 dict/list, return a list containing
     json-pointer indicating what's different, and what's diff exactly.
 
@@ -336,6 +336,9 @@ def compare_container(src,
     - when src is dict or list, and dst is not: (base_path, type(src), type(dst))
     - other: (base_path, src, dst)
     """
+
+    exclude = exclude or []
+    include = include or []
 
     def _dict_(src, dst, ret, base_path):
         set_src, set_dst = set(src.keys()), set(dst.keys())

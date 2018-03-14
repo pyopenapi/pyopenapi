@@ -126,7 +126,9 @@ class Scanner(object):
     def app(self):
         return self.__app
 
-    def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
+    def scan(self, route, root, nexter=default_tree_traversal, leaves=None):
+        leaves = leaves or []
+
         if root is None:
             raise ValueError('Can\'t scan because root==None')
 
@@ -144,7 +146,9 @@ class Scanner2(object):
     between Scannner and App should be decoupled.
     """
 
-    def scan(self, route, root, nexter=default_tree_traversal, leaves=[]):
+    def scan(self, route, root, nexter=default_tree_traversal, leaves=None):
+        leaves = leaves or []
+
         if root is None:
             raise ValueError('Can\'t scan because root==None')
 

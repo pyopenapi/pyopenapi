@@ -48,8 +48,8 @@ class _Attrs(object):
     'Reference' object.
     """
 
-    def __init__(self, attrs={}):
-        self.attrs = attrs
+    def __init__(self, attrs=None):
+        self.attrs = attrs or {}
 
 
 AttributeGroup = six.with_metaclass(AttributeMeta, _Attrs)
