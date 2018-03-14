@@ -96,7 +96,7 @@ class ExternalDocumentTestCase(unittest.TestCase):
         """ test case for issue#53,
         relative file, which root is a Schema Object
         """
-        app = SampleApp.create(
+        SampleApp.create(
             url='file:///relative/internal.yaml',
             url_load_hook=gen_test_folder_hook(
                 get_test_data_folder(version='2.0', which='ex')),

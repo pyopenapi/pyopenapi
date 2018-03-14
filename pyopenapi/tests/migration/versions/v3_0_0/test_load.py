@@ -13,7 +13,7 @@ class Load_3_0_0_SpecTestCase(unittest.TestCase):
     def test_api_with_examples(self):
         """ load api-with-examples.yaml
         """
-        oai = OpenApi(
+        OpenApi(
             yaml.load(
                 get_test_file(
                     version='3.0.0',
@@ -24,7 +24,7 @@ class Load_3_0_0_SpecTestCase(unittest.TestCase):
     def test_petstore_expanded(self):
         """ load petstore-expanded.yaml
         """
-        oai = OpenApi(
+        OpenApi(
             yaml.load(
                 get_test_file(
                     version='3.0.0',
@@ -35,7 +35,7 @@ class Load_3_0_0_SpecTestCase(unittest.TestCase):
     def test_petstore(self):
         """ load pestore.yaml
         """
-        oai = OpenApi(
+        OpenApi(
             yaml.load(
                 get_test_file(
                     version='3.0.0', which='openapi',
@@ -45,7 +45,7 @@ class Load_3_0_0_SpecTestCase(unittest.TestCase):
     def test_uber(self):
         """ load uber.yaml
         """
-        oai = OpenApi(
+        OpenApi(
             yaml.load(
                 get_test_file(
                     version='3.0.0', which='openapi', file_name='uber.yaml')),
@@ -54,7 +54,7 @@ class Load_3_0_0_SpecTestCase(unittest.TestCase):
     def test_link_example(self):
         """ load uber.yaml
         """
-        oai = OpenApi(
+        OpenApi(
             yaml.load(
                 get_test_file(
                     version='3.0.0',

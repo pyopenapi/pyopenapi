@@ -536,10 +536,11 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
     if obj.parameters:
         consumes, parameters = consumes or [], None
         for index, param in enumerate(obj.parameters):
-            new_path = jp_compose(['parameters', str(index)], base=path)
             new_p, pctx = from_parameter(
-                param, body, consumes,
-                jp_compose(['parameters', str(index)], base=path))
+                param,
+                body,
+                consumes,
+                path=jp_compose(['parameters', str(index)], base=path))
             if pctx.is_file or pctx.is_body:
                 body = new_p
                 reloc['parameters/{}'.format(
