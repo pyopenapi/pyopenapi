@@ -348,7 +348,7 @@ class Upgrade(object):
         common_path = common_path[:-1] if common_path[
             -1] == '/' else common_path
 
-        if len(common_path) > 0:
+        if common_path:
             parsed = six.moves.urllib.parse.urlparse(common_path)
             self.__swagger['host'] = parsed.netloc
 

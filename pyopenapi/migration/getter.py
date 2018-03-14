@@ -27,7 +27,7 @@ class Getter(six.Iterator):
         return self
 
     def __next__(self):
-        if len(self.urls) == 0:
+        if not self.urls:
             raise StopIteration
 
         obj = self.load(self.urls.pop(0))

@@ -7,7 +7,7 @@ from .spec import Base2Obj
 def default_tree_traversal(root, leaves):
     """ default tree traversal """
     objs = [('#', root)]
-    while len(objs) > 0:
+    while objs:
         path, obj = objs.pop()
 
         # name of child are json-pointer encoded, we don't have

@@ -136,7 +136,7 @@ class _Base(object):
         # setup override
         for k, val in six.iteritems(override or {}):
             tokens = jp_split(k, 1)
-            if len(tokens) > 0:
+            if tokens:
                 self.override.setdefault(tokens[0], {}).update({
                     tokens[1] if len(tokens) > 1 else '':
                     val
@@ -233,7 +233,7 @@ class _List(_Base):
             parts = [parts]
 
         obj = self
-        if len(parts) > 0:
+        if parts:
             idx = parts.pop(0)
             return self.__elm[int(idx)].resolve(parts)
         return obj
@@ -261,7 +261,7 @@ class _List(_Base):
 
     def dump(self):
         ret = []
-        if len(self.__elm) == 0:
+        if not self.__elm:
             return ret
 
         is_primitive = not hasattr(self.__elm[0], 'dump')
@@ -372,7 +372,7 @@ class _Map(_Base):
             parts = [parts]
 
         obj = self
-        if len(parts) > 0:
+        if parts:
             key = parts.pop(0)
             return self.__elm[key].resolve(parts)
         return obj
@@ -539,7 +539,7 @@ class Base2Obj(_Base):
             parts = [parts]
 
         obj = self
-        while len(parts) > 0:
+        while parts:
             name = parts.pop(0)
 
             if issubclass(obj.__class__, Base2Obj):
@@ -549,8 +549,7 @@ class Base2Obj(_Base):
             elif isinstance(obj, dict):
                 obj = obj[name]
 
-            if issubclass(obj.__class__,
-                          (Base2Obj, _Map, _List)) and len(parts):
+            if issubclass(obj.__class__, (Base2Obj, _Map, _List)) and parts:
                 return obj.resolve(parts)
         return obj
 

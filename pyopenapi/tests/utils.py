@@ -31,7 +31,7 @@ class DictDB(dict):
         self._db = []
 
     def create_(self, **data):
-        if len([elm for elm in self._db if elm['id'] == data['id']]):
+        if [elm for elm in self._db if elm['id'] == data['id']]:
             return False
 
         self._db.append(data)
@@ -39,7 +39,7 @@ class DictDB(dict):
 
     def read_(self, key):
         found = [elm for elm in self._db if elm['id'] == key]
-        if len(found):
+        if found:
             return found[0]
         return None
 

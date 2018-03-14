@@ -258,7 +258,7 @@ def normalize_jr(json_ref, url=None):
     url_part, jp = (json_ref[:idx],
                     json_ref[idx + 1:]) if idx != -1 else (json_ref, None)
 
-    if len(url_part) > 0:
+    if url_part:
         parsed = six.moves.urllib.parse.urlparse(url_part)
         if parsed.scheme == '' and url:
             url_parsed = six.moves.urllib.parse.urlparse(url)
@@ -378,7 +378,7 @@ def _diff_(src, dst, ret=None, base_path=None, exclude=[], include=[]):
                 len(dst),
             ))
         else:
-            if len(src) == 0:
+            if not src:
                 return
 
             # make sure every element in list is the same

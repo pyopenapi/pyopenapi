@@ -278,7 +278,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
 
         logger.info('resolving: [{0}]'.format(jref))
 
-        if jref is None or len(jref) == 0:
+        if not jref:
             raise ValueError('Empty Path is not allowed')
 
         to_spec_version = to_spec_version or from_spec_version

@@ -40,7 +40,7 @@ class ParameterContext(object):
         return self.__name
 
     def get_valid_mime_type(self):
-        if not len(self.__valid_mime_types):
+        if not self.__valid_mime_types:
             return [self.get_default_mime_type()]
 
         if self.is_file:

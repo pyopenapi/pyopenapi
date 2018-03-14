@@ -66,7 +66,7 @@ class Resolver(object):
 
         if obj:
             parts = jp_split(json_pointer)[1:]
-            while len(parts) > 0:
+            while parts:
                 head = parts.pop(0)
                 if isinstance(obj, list):
                     obj = obj[int(head)]

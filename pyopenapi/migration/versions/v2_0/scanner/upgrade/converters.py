@@ -109,7 +109,7 @@ def to_schema(obj, path, items_converter=None):
     ret.update(_generate_fields(obj, SCHEMA_FIELDS))
 
     required = getattr(obj, 'required', None)
-    if isinstance(required, list) and len(required) > 0:
+    if isinstance(required, list) and required:
         ret['required'] = required
 
     all_of = getattr(obj, 'allOf', None)
