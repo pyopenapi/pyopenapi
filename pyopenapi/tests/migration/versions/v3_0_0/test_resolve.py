@@ -1,3 +1,5 @@
+import unittest
+
 from pyopenapi.utils import jr_split, normalize_url
 from pyopenapi.migration.versions.v3_0_0.objects import (
     Reference,
@@ -13,7 +15,6 @@ from pyopenapi.migration.versions.v3_0_0.objects import (
     SecurityScheme,
 )
 from ....utils import get_test_data_folder, gen_test_folder_hook, SampleApp
-import unittest
 
 
 class PathItemMergeTestCase(unittest.TestCase):

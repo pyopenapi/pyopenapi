@@ -1,10 +1,12 @@
 from __future__ import absolute_import
-from ..utils import jr_split, jp_split
-from .getter import UrlGetter, LocalGetter
-import six
 import os
 import inspect
 import logging
+
+import six
+
+from ..utils import jr_split, jp_split
+from .getter import UrlGetter, LocalGetter
 
 logger = logging.getLogger(__name__)
 

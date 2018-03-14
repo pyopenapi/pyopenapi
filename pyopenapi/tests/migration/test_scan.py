@@ -1,3 +1,6 @@
+import unittest
+import weakref
+
 from pyopenapi.migration.scan import Scanner, Scanner2, Dispatcher
 from pyopenapi.migration.versions.v1_2.objects import (
     ApiDeclaration, Authorization, Operation, ResponseMessage, Parameter)
@@ -6,8 +9,6 @@ from pyopenapi.migration.versions.v3_0_0.objects import (
     Parameter as Parameter3,
 )
 from ..utils import get_test_data_folder, SampleApp
-import unittest
-import weakref
 
 
 class CountObject(object):

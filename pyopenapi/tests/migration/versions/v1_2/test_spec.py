@@ -1,11 +1,13 @@
+import unittest
+
+import six
+
 from pyopenapi.migration.versions.v1_2.objects import (
     Info, Authorization, Scope, Items, GrantTypes, Implicit, AuthorizationCode,
     LoginEndpoint, TokenRequestEndpoint, TokenEndpoint, ApiDeclaration,
     ResourceInListing, Operation, Parameter, ResponseMessage, Authorizations,
     Model)
 from ....utils import get_test_data_folder, SampleApp
-import unittest
-import six
 
 
 class PropertyTestCase(unittest.TestCase):

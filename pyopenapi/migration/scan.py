@@ -1,6 +1,7 @@
 from __future__ import absolute_import
-from .spec import Base2Obj
 import six
+
+from .spec import Base2Obj
 
 
 def default_tree_traversal(root, leaves):

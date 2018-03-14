@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+import six
+
 from .....utils import jp_compose, jr_split
 from .....errs import JsonReferenceError
 from ....scan import Dispatcher
@@ -27,7 +29,6 @@ from ..attrs import (
     ReferenceAttributeGroup,
     PathItemAttributeGroup,
 )
-import six
 
 
 def _resolve(obj, expected, app, path):
@@ -55,7 +56,8 @@ def _resolve(obj, expected, app, path):
         remove_dummy=True,
     )
     if not resolved:
-        raise JsonReferenceError('Unable to resolve: {}'.format(obj.normalized_ref))
+        raise JsonReferenceError('Unable to resolve: {}'.format(
+            obj.normalized_ref))
 
     if obj.ref.startswith('#'):
         _, obj.ref = jr_split(new_ref)

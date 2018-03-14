@@ -1,5 +1,6 @@
-from ....utils import get_test_data_folder, SampleApp
 import unittest
+
+from ....utils import get_test_data_folder, SampleApp
 
 
 class BitBucketTestCase(unittest.TestCase):

@@ -1,7 +1,7 @@
-from pyopenapi.migration.versions.v2_0.scanner.upgrade import converters
-from ....utils import get_test_data_folder, SampleApp
 import unittest
 
+from pyopenapi.migration.versions.v2_0.scanner.upgrade import converters
+from ....utils import get_test_data_folder, SampleApp
 
 _APP = SampleApp.create(
     get_test_data_folder(version='2.0', which='upgrade'), to_spec_version='2.0')

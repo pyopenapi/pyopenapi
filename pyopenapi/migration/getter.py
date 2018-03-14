@@ -1,12 +1,14 @@
 from __future__ import absolute_import
-from .. import consts
-from ..utils import patch_path
 import json
-import yaml
-import six
 import os
 import logging
 import re
+
+import six
+import yaml
+
+from .. import consts
+from ..utils import patch_path
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
-from pyopenapi.migration.spec.attr import AttributeGroup, attr
 import unittest
+
+from pyopenapi.migration.spec.attr import AttributeGroup, attr
 
 
 # pylint: disable=invalid-name

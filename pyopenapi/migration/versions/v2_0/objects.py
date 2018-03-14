@@ -1,6 +1,7 @@
 from __future__ import absolute_import
-from ...spec import Base2, rename, child, list_, map_
 import six
+
+from ...spec import Base2, rename, child, list_, map_
 
 
 def is_str(spec, path, override):

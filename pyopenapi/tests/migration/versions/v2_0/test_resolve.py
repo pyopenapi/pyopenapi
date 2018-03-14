@@ -1,9 +1,10 @@
-from pyopenapi.utils import final, deref, jp_compose
-from pyopenapi.migration.versions.v2_0.objects import License, Schema, PathItem
-from ....utils import get_test_data_folder, gen_test_folder_hook, SampleApp
 import unittest
 import os
 import weakref
+
+from pyopenapi.utils import final, deref, jp_compose
+from pyopenapi.migration.versions.v2_0.objects import License, Schema, PathItem
+from ....utils import get_test_data_folder, gen_test_folder_hook, SampleApp
 
 
 class ResolvePathItemTestCase(unittest.TestCase):

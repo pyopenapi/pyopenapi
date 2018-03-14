@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from ....utils import jr_split
 from ...scan import Scanner2
 from ..v1_2.scanner import Upgrade

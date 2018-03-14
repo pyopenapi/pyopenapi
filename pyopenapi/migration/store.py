@@ -1,11 +1,13 @@
 from __future__ import absolute_import
+import logging
+import os
 from collections import OrderedDict
 from distutils.version import StrictVersion  # pylint: disable=no-name-in-module,import-error
+
+import six
+
 from .. import utils, consts
 from .spec import _Base
-import logging
-import six
-import os
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,10 @@
-from pyopenapi.utils import _diff_
-from pyopenapi.migration.versions.v2_0.objects import Swagger
-from ....utils import get_test_data_folder, SampleApp
 import os
 import json
 import unittest
+
+from pyopenapi.utils import _diff_
+from pyopenapi.migration.versions.v2_0.objects import Swagger
+from ....utils import get_test_data_folder, SampleApp
 
 
 class ConverterTestCase(unittest.TestCase):

@@ -1,10 +1,11 @@
+import unittest
+import os
+import json
+
 from pyopenapi.migration.getter import UrlGetter, DictGetter, SimpleGetter
 from pyopenapi.migration.resolve import Resolver
 from pyopenapi.utils import _diff_
 from ..utils import get_test_data_folder, SampleApp
-import unittest
-import os
-import json
 
 
 class _MyCustomException(Exception):

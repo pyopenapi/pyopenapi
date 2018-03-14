@@ -1,7 +1,8 @@
-from pyopenapi import utils, errs
-from .utils import is_windows, is_py2
 import unittest
 import os
+
+from pyopenapi import utils, errs
+from .utils import is_windows, is_py2
 
 
 class SwaggerUtilsTestCase(unittest.TestCase):

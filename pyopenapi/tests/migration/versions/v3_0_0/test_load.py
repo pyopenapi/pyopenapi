@@ -1,7 +1,8 @@
-from pyopenapi.migration.versions.v3_0_0.objects import OpenApi
-from ....utils import get_test_file
 import unittest
 import yaml
+
+from pyopenapi.migration.versions.v3_0_0.objects import OpenApi
+from ....utils import get_test_file
 
 
 # pylint: disable=invalid-name

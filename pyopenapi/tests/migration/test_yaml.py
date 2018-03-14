@@ -1,8 +1,9 @@
+import unittest
+
 from pyopenapi.migration.scan import Scanner2
 from pyopenapi.migration.versions.v2_0.scanner import YamlFixer
 from pyopenapi.migration.versions.v2_0.objects import Operation
 from ..utils import get_test_data_folder, SampleApp
-import unittest
 
 
 class YAMLTestCase(unittest.TestCase):

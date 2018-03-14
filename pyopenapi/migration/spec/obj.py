@@ -1,9 +1,12 @@
-from ...utils import jp_compose, jp_split
-from ...errs import FieldNotExist
-import six
+from __future__ import absolute_import
 import types
 import copy
 import itertools
+
+import six
+
+from ...utils import jp_compose, jp_split
+from ...errs import FieldNotExist
 
 
 def field(key, required=False, default=None, restricted=False, readonly=True):

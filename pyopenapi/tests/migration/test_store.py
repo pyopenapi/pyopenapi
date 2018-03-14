@@ -1,10 +1,11 @@
 # pylint: disable=no-member
 
+import unittest
+import json
+
 from pyopenapi.migration.store import SpecObjStore
 from pyopenapi.migration.versions.v2_0.objects import Swagger, Info
 from ..utils import get_test_file
-import unittest
-import json
 
 
 class SpecObjStoreTestCase(unittest.TestCase):

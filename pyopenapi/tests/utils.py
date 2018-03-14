@@ -1,9 +1,9 @@
 from __future__ import absolute_import
+import os
+import sys
+import six
 from pyopenapi.migration.base import ApiBase
 from pyopenapi import utils, consts
-import os
-import six
-import sys
 
 
 def get_test_data_folder(version='1.2', which=''):

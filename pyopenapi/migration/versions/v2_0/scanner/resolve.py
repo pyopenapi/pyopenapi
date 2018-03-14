@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+import six
+
 from .....utils import jp_compose
 from .....errs import SchemaError, JsonReferenceError
 from ....scan import Dispatcher
@@ -16,8 +18,6 @@ from ..attrs import (
     PathItemAttributeGroup,
     SchemaAttributeGroup,
 )
-
-import six
 
 
 def _resolve(obj, expected, attr_group_cls, app, path):

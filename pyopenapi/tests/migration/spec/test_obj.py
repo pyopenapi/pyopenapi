@@ -1,5 +1,7 @@
 # pylint: disable=no-member, invalid-name
 
+import unittest
+
 from pyopenapi.migration.spec import (
     Base2,
     field,
@@ -11,7 +13,6 @@ from pyopenapi.migration.spec import (
     _List,
 )
 from pyopenapi.migration.spec.attr import AttributeGroup
-import unittest
 
 
 class BObj(Base2):

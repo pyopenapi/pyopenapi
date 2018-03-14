@@ -1,7 +1,9 @@
 from __future__ import absolute_import
+import os
+import six
+from ..... import consts
 from .....errs import SchemaError
 from .....utils import scope_compose, get_or_none
-from ..... import consts
 from ....scan import Dispatcher
 from ..objects import (
     ResourceListing,
@@ -9,8 +11,6 @@ from ..objects import (
     Authorization,
 )
 from ...v2_0.objects import Swagger
-import os
-import six
 
 
 def _get_name(path):

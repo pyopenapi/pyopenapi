@@ -1,13 +1,13 @@
 from __future__ import absolute_import
-from . import consts
-from .errs import CycleDetectionError
-import six
 import sys
 import re
 import os
 import functools
 import pkgutil
 import distutils
+import six
+from . import consts
+from .errs import CycleDetectionError
 
 
 #TODO: accept varg

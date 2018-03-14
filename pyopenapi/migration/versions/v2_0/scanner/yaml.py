@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+import six
+
 from ....scan import Dispatcher
 from ..objects import (
     Operation,
     MapOfResponseOrReference,
 )
-import six
 
 
 class YamlFixer(object):
