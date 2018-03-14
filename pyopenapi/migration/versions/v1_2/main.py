@@ -1,2 +1,10 @@
-def upgrade(obj, app, jref):
+from __future__ import absolute_import
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def upgrade(obj, _, jref):
+    logger.info('upgrade {} to 2.0 spec'.format(jref))
+
     return obj, {}

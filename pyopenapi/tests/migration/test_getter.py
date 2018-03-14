@@ -12,7 +12,7 @@ class _MyCustomException(Exception):
     pass
 
 
-def _my_custom_load(path):
+def _my_custom_load(_):
     raise _MyCustomException('a testing exception')
 
 

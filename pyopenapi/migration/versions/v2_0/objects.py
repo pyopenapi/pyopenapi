@@ -5,6 +5,8 @@ from ...spec import Base2, rename, child, list_, map_
 
 
 def is_str(spec, path, override):
+    if override:
+        raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types):
         return spec
     raise Exception('should be a string, not {}, {}'.format(

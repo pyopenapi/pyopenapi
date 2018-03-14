@@ -235,7 +235,7 @@ class Upgrade(object):
         self.__sep = sep
 
     @Disp.register([ResourceListing])
-    def _resource_listing(self, path, obj):
+    def _resource_listing(self, _, obj):
         swagger_spec = {}
         swagger_spec['swagger'] = '2.0'
         swagger_spec['schemes'] = ['http', 'https']
@@ -287,7 +287,7 @@ class Upgrade(object):
         self.__swagger = swagger_spec
 
     @Disp.register([ApiDeclaration])
-    def _api_declaration(self, path, obj):
+    def _api_declaration(self, _, obj):
         name = obj.resource_path[1:]
         for tag in self.__swagger['tags']:
             if tag['name'] == name:

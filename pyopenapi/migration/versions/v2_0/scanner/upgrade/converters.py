@@ -57,7 +57,7 @@ def to_tag(obj, path):
     return ret
 
 
-def to_xml(obj, path):
+def to_xml(obj, _):
     ret = {}
     ret.update(
         _generate_fields(obj, [
@@ -71,7 +71,7 @@ def to_xml(obj, path):
     return ret
 
 
-def to_external_docs(obj, path):
+def to_external_docs(obj, _):
     ret = {}
     ret['url'] = obj.url
     if obj.description:
@@ -95,7 +95,7 @@ def from_items(obj, path):
     return ret
 
 
-def to_schema(obj, path, items_converter=None, parameter_context=None):
+def to_schema(obj, path, items_converter=None):
     ref = getattr(obj, '$ref', None)
     if ref:
         return {'$ref': ref}
@@ -261,7 +261,7 @@ def to_encoding(obj, content_type, path):
     return ret
 
 
-def to_media_type(obj, content_type, existing, example, ctx, path):
+def to_media_type(obj, content_type, existing, path):
     # parameter object need to merge several objects into one schema object
     ret = existing or {}
     resolved_obj = deref(obj)
@@ -281,8 +281,7 @@ def to_media_type(obj, content_type, existing, example, ctx, path):
         to_schema(
             obj if getattr(obj, '$ref', None) else src_schema,
             path,
-            items_converter=from_items,
-            parameter_context=ctx))
+            items_converter=from_items))
     if getattr(resolved_obj, 'allowEmptyValue', None) == True:
         prop['nullable'] = True
 
@@ -305,7 +304,7 @@ def to_request_body(obj, existing_body, ctx, path):
         for type_ in content_types:
             existing_media_type = content.setdefault(type_, {})
             content[type_] = to_media_type(obj, type_, existing_media_type,
-                                           None, ctx, path)
+                                           path)
     elif ctx.is_body:
         if existing_body:
             raise SchemaError('multiple bodies found: {}'.format(path))
@@ -316,10 +315,8 @@ def to_request_body(obj, existing_body, ctx, path):
 
         for type_ in content_types:
             media_type = content.setdefault(type_, {})
-            media_type['schema'] = to_schema(
-                resolved_obj.schema,
-                jp_compose('schema', base=path),
-                parameter_context=ctx)
+            media_type['schema'] = to_schema(resolved_obj.schema,
+                                             jp_compose('schema', base=path))
     else:
         raise SchemaError(
             'invalid parameter context: {},{},{} for request body: {}'.format(
@@ -328,7 +325,7 @@ def to_request_body(obj, existing_body, ctx, path):
     return ret
 
 
-def to_parameter(obj, ctx, path):
+def to_parameter(obj, path):
     ret = {}
     ret.update(
         _generate_fields(obj, [
@@ -386,7 +383,7 @@ def from_parameter(obj, existing_body, consumes, path):
         if ref_:
             ret = {'$ref': ref_}
         else:
-            ret = to_parameter(obj, ctx, path)
+            ret = to_parameter(obj, path)
 
     return ret, ctx
 
@@ -495,13 +492,13 @@ def to_operation(obj, body, root_url, path, produces=None, consumes=None):
     return ret
 
 
-def to_contact(obj, path):
+def to_contact(obj, _):
     ret = _generate_fields(obj, ('name', 'url', 'email'))
 
     return ret
 
 
-def to_license(obj, path):
+def to_license(obj, _):
     ret = {}
     ret['name'] = obj.name
     ret.update(_generate_fields(obj, ['url']))
@@ -583,7 +580,7 @@ def to_path_item(obj, root_url, path, consumes=None, produces=None):
     return ret, reloc
 
 
-def from_swagger_to_server(obj, path):
+def from_swagger_to_server(obj, _):
     url = obj.host if not obj.basePath else six.moves.urllib.parse.urlunsplit(
         (obj.schemes[0]
          if obj.schemes else 'https', obj.host, obj.basePath, None, None))

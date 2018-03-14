@@ -52,14 +52,17 @@ class PathRecord(object):
         self.response_message = []
         self.parameter = []
 
+    # pylint: disable=unused-argument
     @Disp.register([ApiDeclaration])
     def _api_declaration(self, path, obj, _):
         self.api_declaration.append(path)
 
+    # pylint: disable=unused-argument
     @Disp.register([Authorization])
     def _authorization(self, path, obj, _):
         self.authorization.append(path)
 
+    # pylint: disable=unused-argument
     @Disp.register([ResponseMessage])
     def _response_message(self, path, obj, _):
         self.response_message.append(path)
@@ -178,7 +181,7 @@ class CountParemeter3(object):
         }
 
     @Disp.register([Header3, Parameter3])
-    def _count(self, path, obj):
+    def _count(self, _, obj):
         self.total[obj.__class__] = self.total[obj.__class__] + 1
 
 

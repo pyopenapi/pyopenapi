@@ -106,6 +106,7 @@ class JObj(Base2):
     }
 
 
+# pylint: disable=unused-argument
 def is_str(spec, path, override):
     return spec
 

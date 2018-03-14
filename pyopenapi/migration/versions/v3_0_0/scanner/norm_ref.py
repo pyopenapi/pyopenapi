@@ -24,9 +24,9 @@ class NormalizeRef(object):
         self.base_url = base_url
 
     @Disp.register([Reference])
-    def _reference(self, path, obj):
+    def _reference(self, _, obj):
         _normalize(obj, self.base_url, ReferenceAttributeGroup)
 
     @Disp.register([PathItem])
-    def _path_item(self, path, obj):
+    def _path_item(self, _, obj):
         _normalize(obj, self.base_url, PathItemAttributeGroup)
