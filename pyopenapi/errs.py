@@ -13,5 +13,5 @@ class FieldNotExist(Exception):
     pass
 
 
-class ReferenceError(Exception):
+class JsonReferenceError(Exception):
     pass

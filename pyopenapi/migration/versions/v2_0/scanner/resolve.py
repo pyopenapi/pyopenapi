@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from .....utils import jp_compose
-from .....errs import SchemaError
+from .....errs import SchemaError, JsonReferenceError
 from ....scan import Dispatcher
 from ..objects import (
     Operation,
@@ -33,7 +33,7 @@ def _resolve(obj, expected, attr_group_cls, app, path):
         return
 
     if not attrs.normalized_ref:
-        raise ReferenceError('empty normalized_ref for {} in {}'.format(
+        raise JsonReferenceError('empty normalized_ref for {} in {}'.format(
             obj.ref, path))
 
     resolved, _ = app.resolve_obj(
@@ -43,7 +43,7 @@ def _resolve(obj, expected, attr_group_cls, app, path):
         remove_dummy=True,
     )
     if not resolved:
-        raise ReferenceError('Unable to resolve: {} in {}'.format(
+        raise JsonReferenceError('Unable to resolve: {} in {}'.format(
             obj.normalized_ref, path))
 
     attrs.ref_obj = resolved

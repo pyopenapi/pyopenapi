@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from .....utils import jp_compose, jr_split
-from .....errs import ReferenceError
+from .....errs import JsonReferenceError
 from ....scan import Dispatcher
 from ..objects import (
     PathItem,
@@ -46,7 +46,7 @@ def _resolve(obj, expected, app, path):
 
     if not attrs.normalized_ref:
         if isinstance(obj, Reference):
-            raise ReferenceError('empty normalized_ref for {} in {}'.format(
+            raise JsonReferenceError('empty normalized_ref for {} in {}'.format(
                 obj.ref, path))
         return
 
@@ -59,7 +59,7 @@ def _resolve(obj, expected, app, path):
         remove_dummy=True,
     )
     if not resolved:
-        raise ReferenceError('Unable to resolve: {}'.format(obj.normalized_ref))
+        raise JsonReferenceError('Unable to resolve: {}'.format(obj.normalized_ref))
 
     if obj.ref.startswith('#'):
         _, obj.ref = jr_split(new_ref)
