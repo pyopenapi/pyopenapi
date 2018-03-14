@@ -1,4 +1,4 @@
-# pylint: disable=no-member, invalid-name
+# pylint: disable=no-member,invalid-name,attribute-defined-outside-init
 
 import unittest
 

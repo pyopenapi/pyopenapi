@@ -1,3 +1,5 @@
+# pylint: disable=attribute-defined-outside-init
+
 import unittest
 
 from pyopenapi.migration.spec.attr import AttributeGroup, attr

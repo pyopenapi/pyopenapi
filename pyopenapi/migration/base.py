@@ -42,6 +42,10 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         self.__migratable_spec_versions = utils.get_supported_versions(
             os.path.join('migration', 'versions'), is_pkg=True)
 
+        # init property for 'current loaded spec version'
+        # when the loaded object is a root one.
+        self.__current_spec_version = None
+
         # a map from json-reference to
         # - spec.base2._Base
         # - a map from json-pointer to spec.base2._Base
