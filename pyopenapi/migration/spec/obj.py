@@ -265,6 +265,7 @@ class _List(_Base):
             ret.append(e.dump())
         return ret
 
+    # pylint: disable=no-self-use
     def get_field_names(self):
         return []
 
@@ -404,6 +405,7 @@ class _Map(_Base):
 
         return ret
 
+    # pylint: disable=no-self-use
     def get_field_names(self):
         return []
 

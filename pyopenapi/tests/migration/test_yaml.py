@@ -1,6 +1,6 @@
 import unittest
 
-from pyopenapi.migration.scan import Scanner2
+from pyopenapi.migration.scan import scan
 from pyopenapi.migration.versions.v2_0.scanner import YamlFixer
 from pyopenapi.migration.versions.v2_0.objects import Operation
 from ..utils import get_test_data_folder, SampleApp
@@ -18,7 +18,6 @@ class YAMLTestCase(unittest.TestCase):
                 version='2.0',
                 which='yaml',
             ))
-        scanner = Scanner2()
-        scanner.scan(route=[YamlFixer()], root=app_yaml.raw, leaves=[Operation])
+        scan(route=[YamlFixer()], root=app_yaml.raw, leaves=[Operation])
 
         self.assertEqual((True, ''), app_json.raw.compare(app_yaml.raw))

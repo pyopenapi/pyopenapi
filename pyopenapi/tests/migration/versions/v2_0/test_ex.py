@@ -96,12 +96,15 @@ class ExternalDocumentTestCase(unittest.TestCase):
         """ test case for issue#53,
         relative file, which root is a Schema Object
         """
-        SampleApp.create(
-            url='file:///relative/internal.yaml',
-            url_load_hook=gen_test_folder_hook(
-                get_test_data_folder(version='2.0', which='ex')),
-            to_spec_version='2.0',
-        )
+        try:
+            SampleApp.create(
+                url='file:///relative/internal.yaml',
+                url_load_hook=gen_test_folder_hook(
+                    get_test_data_folder(version='2.0', which='ex')),
+                to_spec_version='2.0',
+            )
+        except:
+            self.fail('unable to load internal.yaml')
 
 
 class ReuseTestCase(unittest.TestCase):

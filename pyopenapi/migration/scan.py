@@ -141,18 +141,16 @@ class Scanner(object):
                     _handle_cls(cls, self.app, path, obj, *args)
 
 
-class Scanner2(object):
+def scan(route, root, nexter=default_tree_traversal, leaves=None):
     """ Scanner v2, the main change is to remove 'app' from default input. The depnedencies
     between Scannner and App should be decoupled.
     """
+    leaves = leaves or []
 
-    def scan(self, route, root, nexter=default_tree_traversal, leaves=None):
-        leaves = leaves or []
+    if root is None:
+        raise ValueError('Can\'t scan because root==None')
 
-        if root is None:
-            raise ValueError('Can\'t scan because root==None')
-
-        merged_r = _build_route(route)
-        for path, obj in nexter(root, leaves):
-            for args in merged_r:
-                _handle_cls_without_app(obj.__class__, path, obj, *args)
+    merged_r = _build_route(route)
+    for path, obj in nexter(root, leaves):
+        for args in merged_r:
+            _handle_cls_without_app(obj.__class__, path, obj, *args)

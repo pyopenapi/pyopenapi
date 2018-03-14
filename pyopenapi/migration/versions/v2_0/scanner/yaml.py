@@ -14,6 +14,7 @@ class YamlFixer(object):
     class Disp(Dispatcher):
         pass
 
+    # pylint: disable=no-self-use
     @Disp.register([Operation])
     def _op(self, _, obj):
         """ convert status code in Responses from int to string

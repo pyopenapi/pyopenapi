@@ -1,7 +1,7 @@
 import unittest
 import weakref
 
-from pyopenapi.migration.scan import Scanner, Scanner2, Dispatcher
+from pyopenapi.migration.scan import Scanner, Dispatcher, scan
 from pyopenapi.migration.versions.v1_2.objects import (
     ApiDeclaration, Authorization, Operation, ResponseMessage, Parameter)
 from pyopenapi.migration.versions.v3_0_0.objects import (
@@ -194,7 +194,7 @@ class Scanner2TestCase(unittest.TestCase):
         """
         header = Header3({})
         count_param = CountParemeter3()
-        Scanner2().scan(route=[count_param], root=header)
+        scan(route=[count_param], root=header)
 
         self.assertEqual(count_param.total[Header3], 1)
         self.assertEqual(count_param.total[Parameter3], 0)

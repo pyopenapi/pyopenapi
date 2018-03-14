@@ -29,7 +29,11 @@ class GetterTestCase(unittest.TestCase):
         path = get_test_data_folder(version='2.0', which='random_file_name')
         path = os.path.join(path, 'test_random.json')
         # should not raise ValueError
-        SampleApp.create(path, to_spec_version='2.0')
+        try:
+            SampleApp.create(path, to_spec_version='2.0')
+        except:
+            self.fail('unable to load random_file_name_v2_0')
+            raise
 
     def test_random_name_v1_2(self):
         """
@@ -37,7 +41,11 @@ class GetterTestCase(unittest.TestCase):
         path = get_test_data_folder(version='1.2', which='random_file_name')
         path = os.path.join(path, 'test_random.json')
         # should not raise ValueError
-        SampleApp.create(path, to_spec_version='2.0')
+        try:
+            SampleApp.create(path, to_spec_version='2.0')
+        except:
+            self.fail('unable to load test_random_name_v1_2')
+            raise
 
     def test_local_path(self):
         """ make sure path would be assigned when
@@ -48,7 +56,11 @@ class GetterTestCase(unittest.TestCase):
         path = os.path.join(path, 'test_random.json')
 
         # should not raise errors
-        SampleApp.load(path, getter=cls)
+        try:
+            SampleApp.load(path, getter=cls)
+        except:
+            self.fail('unable to load test_random_name_v2_0')
+            raise
 
     def test_dict_getter_v1_2(self):
         """ make sure 'DictGetter' works the same as 'LocalGetter'
