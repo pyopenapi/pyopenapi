@@ -8,7 +8,6 @@ from ..objects import (
     Operation,
     Schema,
     PathItem,
-    Operation,
     Reference,
     ParameterOrReference,
     ResponseOrReference,
