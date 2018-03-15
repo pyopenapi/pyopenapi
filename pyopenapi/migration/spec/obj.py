@@ -617,9 +617,9 @@ class Base2Obj(_Base):
 
         # dump children first
         for name in children:
-            child = getattr(self, name)
-            if child:
-                ret[name] = child.dump()
+            child_ = getattr(self, name)
+            if child_:
+                ret[name] = child_.dump()
                 fields.discard(name)
 
         # dump each field
