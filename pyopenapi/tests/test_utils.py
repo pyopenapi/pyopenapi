@@ -32,16 +32,16 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             ['', '/~test', 'qq', '~test', '/test', ''])
 
     def test_derelativize_url(self):
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/durf.json'),
             'https://localhost/hurf/durf.json')
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/./durf.json'),
             'https://localhost/hurf/durf.json')
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/../durf.json'),
             'https://localhost/durf.json')
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/.../durf.json'),
             'https://localhost/durf.json')
 

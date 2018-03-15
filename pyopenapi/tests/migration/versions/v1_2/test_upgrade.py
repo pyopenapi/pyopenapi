@@ -154,8 +154,8 @@ class SwaggerUpgradeTestCase(unittest.TestCase):
                 get_test_data_folder(version='1.2', which='upgrade_parameter'),
                 to_spec_version='2.0')
         except errs.SchemaError as e:
-            self.failUnlessEqual(e.args,
-                                 ("Can't have $ref in non-body Parameters", ))
+            self.assertEqual(e.args,
+                             ("Can't have $ref in non-body Parameters", ))
         else:
             self.fail('SchemaError not raised')
 
@@ -206,7 +206,7 @@ class SwaggerUpgradeTestCase(unittest.TestCase):
                     which=os.path.join('upgrade_items', 'with_ref')),
                 to_spec_version='2.0')
         except errs.SchemaError as e:
-            self.failUnlessEqual(e.args, ('Can\'t have $ref for Items', ))
+            self.assertEqual(e.args, ('Can\'t have $ref for Items', ))
         else:
             self.fail('SchemaError not raised')
 
@@ -217,8 +217,8 @@ class SwaggerUpgradeTestCase(unittest.TestCase):
                     which=os.path.join('upgrade_items', 'invalid_primitive')),
                 to_spec_version='2.0')
         except errs.SchemaError as e:
-            self.failUnlessEqual(
-                e.args, ('Non primitive type is not allowed for Items', ))
+            self.assertEqual(e.args,
+                             ('Non primitive type is not allowed for Items', ))
         else:
             self.fail('SchemaError not raised')
 
