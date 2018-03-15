@@ -194,7 +194,7 @@ class Base2TestCase(unittest.TestCase):
                 self.assertEqual({'a': 1}, val.dump())
                 break
         else:
-            self.assertTrue(False)
+            self.fail('"key1" not found')
 
     def test_list(self):
         """ make sure container:List works

@@ -410,7 +410,7 @@ class PathItemConverterTestCase(unittest.TestCase):
             elif 'name' in param:
                 self.assertEqual(param['name'], 'user_name')
             else:
-                self.assertTrue(False)
+                self.fail('either "name" or "$ref" should be in param')
 
         # check object relocation
         self.assertEqual(reloc['parameters/0'],
