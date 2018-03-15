@@ -28,6 +28,7 @@ class DictDB(dict):
     """ Simple DB for singular model """
 
     def __init__(self):
+        super(DictDB, self).__init__()
         self._db = []
 
     def create_(self, **data):
