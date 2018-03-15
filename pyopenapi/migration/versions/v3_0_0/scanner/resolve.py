@@ -81,31 +81,26 @@ class Resolve(object):
     def _path_item(self, path, obj):
         _resolve(obj, PathItem, self.app, path)
         # parameters
-        [
+        for idx, param in enumerate(obj.parameters or []):
             _resolve(param, ParameterOrReference, self.app,
                      jp_compose([path, 'parameters',
                                  str(idx)]))
-            for idx, param in enumerate(obj.parameters or [])
-        ]
 
     @Disp.register([Schema])
     def _schema(self, path, obj):
         # allOf, oneOf, anyOf
-        [
+
+        for idx, schema in enumerate(obj.all_of or []):
             _resolve(schema, SchemaOrReference, self.app,
                      jp_compose([path, 'allOf', str(idx)]))
-            for idx, schema in enumerate(obj.all_of or [])
-        ]
-        [
+
+        for idx, schema in enumerate(obj.one_of or []):
             _resolve(schema, SchemaOrReference, self.app,
                      jp_compose([path, 'oneOf', str(idx)]))
-            for idx, schema in enumerate(obj.one_of or [])
-        ]
-        [
+
+        for idx, schema in enumerate(obj.any_of or []):
             _resolve(schema, SchemaOrReference, self.app,
                      jp_compose([path, 'anyOf', str(idx)]))
-            for idx, schema in enumerate(obj.any_of or [])
-        ]
 
         # not
         _resolve(obj.not_, SchemaOrReference, self.app,
@@ -169,12 +164,11 @@ class Resolve(object):
     @Disp.register([Operation])
     def _operation(self, path, obj):
         # parameters
-        [
+
+        for idx, param in enumerate(obj.parameters or []):
             _resolve(param, ParameterOrReference, self.app,
                      jp_compose([path, 'parameters',
                                  str(idx)]))
-            for idx, param in enumerate(obj.parameters or [])
-        ]
 
         # requestBody
         _resolve(obj.request_body, RequestBodyOrReference, self.app,
