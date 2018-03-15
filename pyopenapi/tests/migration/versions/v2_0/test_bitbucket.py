@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 
 from ....utils import get_test_data_folder, SampleApp

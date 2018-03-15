@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 SCHEMA_APIS = 'apis'
 SCHEMA_PATH = 'path'
 

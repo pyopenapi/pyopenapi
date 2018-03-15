@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # pylint: disable=no-member
 
 import unittest

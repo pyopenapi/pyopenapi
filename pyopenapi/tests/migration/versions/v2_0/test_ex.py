@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 
 from pyopenapi.utils import deref, final

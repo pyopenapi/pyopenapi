@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 
 from pyopenapi.migration.versions.v2_0.scanner.upgrade import converters

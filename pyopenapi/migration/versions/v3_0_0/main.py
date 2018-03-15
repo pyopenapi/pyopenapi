@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from ....utils import jr_split
 from ...scan import scan
 from ..v2_0.scanner.upgrade import converters

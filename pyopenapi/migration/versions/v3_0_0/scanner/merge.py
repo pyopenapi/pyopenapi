@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 from ....scan import Dispatcher
 from ...comm import _merge_path_item

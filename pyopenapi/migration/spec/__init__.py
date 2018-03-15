@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .obj import (
     Base2Obj,
     Base2,
