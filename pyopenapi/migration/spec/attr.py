@@ -34,10 +34,10 @@ class AttributeMeta(type):
     def __new__(mcs, name, bases, spec):
         attrs = spec.setdefault('__attributes__', {})
 
-        for name, args in six.iteritems(attrs):
+        for name_, args in six.iteritems(attrs):
             args = copy.copy(args)
             builder = args.pop('builder', None) or attr
-            spec[name] = builder(args.pop('key', None) or name, **args)
+            spec[name_] = builder(args.pop('key', None) or name_, **args)
 
         return type.__new__(mcs, name, bases, spec)
 
