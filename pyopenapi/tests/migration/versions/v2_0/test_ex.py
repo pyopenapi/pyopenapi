@@ -103,6 +103,8 @@ class ExternalDocumentTestCase(unittest.TestCase):
                     get_test_data_folder(version='2.0', which='ex')),
                 to_spec_version='2.0',
             )
+
+        # pylint: disable=bare-except
         except:
             self.fail('unable to load internal.yaml')
 
