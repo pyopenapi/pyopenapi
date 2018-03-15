@@ -87,7 +87,7 @@ def _build_route(routes):
     for route in routes:
         for attr in route.__class__.__dict__:
             obj = getattr(route, attr)
-            if type(obj) == DispatcherMeta:
+            if isinstance(obj, DispatcherMeta):
                 ret.append((route, obj.obj_route, obj.result_fn[0]))
 
             # TODO: add a break or find a better way to load DispatchMeta

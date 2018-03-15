@@ -235,6 +235,7 @@ class _List(_Base):
         raise NotImplementedError()
 
     def compare(self, other, base=None):
+        # pylint: disable=unidiomatic-typecheck
         if type(self) != type(other):
             return False, ''
 
@@ -373,6 +374,7 @@ class _Map(_Base):
         raise NotImplementedError()
 
     def compare(self, other, base=None):
+        # pylint: disable=unidiomatic-typecheck
         if type(self) != type(other):
             return False, ''
 
@@ -556,12 +558,16 @@ class Base2Obj(_Base):
 
     def compare(self, other, base=None):
         """ comparison, will return the first difference, mainly used for testing """
+
+        # pylint: disable=unidiomatic-typecheck
         if type(self) != type(other):
             return False, ''
 
         def _cmp_(name, self_, other_):
             if isinstance(self_, six.string_types + six.integer_types):
                 return self_ == other_, name
+
+            # pylint: disable=unidiomatic-typecheck
             if type(self_) != type(other_):
                 return False, name
             if isinstance(self_, (Base2Obj, _Map, _List)):

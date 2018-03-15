@@ -391,7 +391,8 @@ def compare_container(src,
 
             # make sure every element in list is the same
             def is_singular(x, y):
-                if type(y) != type(x):
+                # pylint: disable=unidiomatic-typecheck
+                if type(y) is not type(x):
                     raise ValueError('different type: {0}, {1}'.format(
                         type(y).__name__,
                         type(x).__name__))
