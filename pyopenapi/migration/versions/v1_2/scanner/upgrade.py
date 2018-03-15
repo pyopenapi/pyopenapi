@@ -106,7 +106,7 @@ def convert_parameter(param, scope, sep):
     else:
         p_spec['in'] = param.paramType
 
-    if 'body' == p_spec['in']:
+    if p_spec['in'] == 'body':
         p_spec['schema'] = convert_schema_from_datatype(param, scope, sep)
         return p_spec
 
