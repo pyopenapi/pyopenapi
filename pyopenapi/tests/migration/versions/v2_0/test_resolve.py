@@ -118,7 +118,7 @@ class DerefTestCase(unittest.TestCase):
         )
 
         # fill its cache with several dummy objects
-        license, _ = app.resolve_obj(
+        license_, _ = app.resolve_obj(
             'file:///wordnik/swagger.json#/info/license',
             parser=License,
             from_spec_version='2.0',
@@ -147,14 +147,14 @@ class DerefTestCase(unittest.TestCase):
 
         # make sure root objec use those dummy objects during loading
         self.assertEqual(
-            weakref.proxy(swg.resolve(['info', 'license'])), license)
+            weakref.proxy(swg.resolve(['info', 'license'])), license_)
         self.assertEqual(
             weakref.proxy(swg.resolve(['definitions', 'Order'])), order)
         self.assertEqual(
             weakref.proxy(swg.resolve(['definitions', 'Pet'])), pet)
 
         # make sure this relation is maintained after migrating up
-        license, _ = app.resolve_obj(
+        license_, _ = app.resolve_obj(
             'file:///wordnik/swagger.json#/info/license',
             parser=License,
             from_spec_version='2.0',
@@ -175,4 +175,4 @@ class DerefTestCase(unittest.TestCase):
 
         # make sure root objec use those dummy objects during loading
         self.assertEqual(
-            weakref.proxy(root.resolve(['info', 'license'])), license)
+            weakref.proxy(root.resolve(['info', 'license'])), license_)
