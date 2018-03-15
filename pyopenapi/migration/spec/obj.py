@@ -464,7 +464,7 @@ class FieldMeta(type):
     """ metaclass to init fields, similar to the one in base.py
     """
 
-    def __new__(metacls, name, bases, spc):
+    def __new__(mcs, name, bases, spc):
         """ scan through MRO to get a merged list of fields and create them
         """
         fields = spc.setdefault('__fields__', {})
@@ -494,7 +494,7 @@ class FieldMeta(type):
         _update_to_spc(internal, intl)
         _update_to_spc(child, children)
 
-        return type.__new__(metacls, name, bases, spc)
+        return type.__new__(mcs, name, bases, spc)
 
 
 class Base2Obj(_Base):

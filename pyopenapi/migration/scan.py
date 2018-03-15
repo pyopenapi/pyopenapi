@@ -26,14 +26,14 @@ class DispatcherMeta(type):
     """ metaclass for Dispatcher
     """
 
-    def __new__(metacls, name, bases, spc):
+    def __new__(mcs, name, bases, spc):
         if 'obj_route' not in spc.keys():
             # forcely create a new obj_route
             # but not share the same one with parents.
             spc['obj_route'] = {}
             spc['result_fn'] = [None]
 
-        return type.__new__(metacls, name, bases, spc)
+        return type.__new__(mcs, name, bases, spc)
 
 
 class Dispatcher(six.with_metaclass(DispatcherMeta, object)):

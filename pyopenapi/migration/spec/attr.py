@@ -31,7 +31,7 @@ class AttributeMeta(type):
     """ metaclass to init attributes
     """
 
-    def __new__(metacls, name, bases, spec):
+    def __new__(mcs, name, bases, spec):
         attrs = spec.setdefault('__attributes__', {})
 
         for name, args in six.iteritems(attrs):
@@ -39,7 +39,7 @@ class AttributeMeta(type):
             builder = args.pop('builder', None) or attr
             spec[name] = builder(args.pop('key', None) or name, **args)
 
-        return type.__new__(metacls, name, bases, spec)
+        return type.__new__(mcs, name, bases, spec)
 
 
 class _Attrs(object):
