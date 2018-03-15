@@ -21,7 +21,7 @@ def to_style_and_explode(collection_format, in_, type_, path):
     style = None
     explode = None
     if collection_format == 'csv':
-        if in_ in ('query'):
+        if in_ == 'query':
             style = 'form'
             explode = False
         elif in_ in ('path', 'header'):
@@ -37,7 +37,7 @@ def to_style_and_explode(collection_format, in_, type_, path):
                 in_, type_, path))
         style = 'pipeDelimited'
     elif collection_format == 'multi':
-        if in_ in ('query'):
+        if in_ == 'query':
             style = 'form'
             explode = True
 
