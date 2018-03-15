@@ -108,33 +108,34 @@ def convert_parameter(param, scope, sep):
 
     if 'body' == p_spec['in']:
         p_spec['schema'] = convert_schema_from_datatype(param, scope, sep)
+        return p_spec
+
+    if getattr(param, '$ref'):
+        raise SchemaError('Can\'t have $ref in non-body Parameters')
+
+    if param.allowMultiple is True and param.items is None:
+        p_spec['type'] = 'array'
+        p_spec['collectionFormat'] = 'csv'
+        if param.is_set('uniqueItems'):
+            p_spec['uniqueItems'] = param.uniqueItems
+        p_spec['items'] = convert_items(param)
+        if param.is_set("defaultValue"):
+            p_spec['default'] = [param.defaultValue]
+        p_spec['items']['enum'] = param.enum
     else:
-        if getattr(param, '$ref'):
-            raise SchemaError('Can\'t have $ref in non-body Parameters')
+        p_spec['type'] = param.type.lower()
+        if param.is_set('format'):
+            p_spec['format'] = param.format
+        if param.is_set("defaultValue"):
+            p_spec['default'] = param.defaultValue
+        convert_min_max(p_spec, param)
+        p_spec['enum'] = param.enum
 
-        if param.allowMultiple is True and param.items is None:
-            p_spec['type'] = 'array'
-            p_spec['collectionFormat'] = 'csv'
-            if param.is_set('uniqueItems'):
-                p_spec['uniqueItems'] = param.uniqueItems
-            p_spec['items'] = convert_items(param)
-            if param.is_set("defaultValue"):
-                p_spec['default'] = [param.defaultValue]
-            p_spec['items']['enum'] = param.enum
-        else:
-            p_spec['type'] = param.type.lower()
-            if param.is_set('format'):
-                p_spec['format'] = param.format
-            if param.is_set("defaultValue"):
-                p_spec['default'] = param.defaultValue
-            convert_min_max(p_spec, param)
-            p_spec['enum'] = param.enum
-
-        if param.items:
-            p_spec['collectionFormat'] = 'csv'
-            if param.is_set('uniqueItems'):
-                p_spec['uniqueItems'] = param.uniqueItems
-            p_spec['items'] = convert_items(param.items)
+    if param.items:
+        p_spec['collectionFormat'] = 'csv'
+        if param.is_set('uniqueItems'):
+            p_spec['uniqueItems'] = param.uniqueItems
+        p_spec['items'] = convert_items(param.items)
 
     return p_spec
 

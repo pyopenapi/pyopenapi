@@ -79,36 +79,35 @@ class LocalGetter(Getter):
             if self.base_path.endswith(name):
                 self.base_path = os.path.dirname(self.base_path)
                 self.urls = [path]
-                break
+                return
             else:
                 target_path = os.path.join(path, name)
                 if os.path.isfile(target_path):
                     self.urls = [target_path]
-                    break
+                    return
+
+        # there is no file matched predefined file name:
+        # - resource_list.json (1.2)
+        # - swagger.json       (2.0)
+        # in this case, we will locate them in this way:
+        # - when 'path' points to a specific file, and its
+        #   extension is either 'json' or 'yaml'.
+        _, ext = os.path.splitext(path)
+        for e in [
+                consts.FILE_EXT_JSON, consts.FILE_EXT_YAML, consts.FILE_EXT_YML
+        ]:
+            if ext.endswith(e):
+                self.base_path = os.path.dirname(path)
+                self.urls = [path]
+                return
+
+        for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
+            if os.path.isfile(path + '.' + e):
+                self.urls = [path + '.' + e]
+                break
         else:
-            # there is no file matched predefined file name:
-            # - resource_list.json (1.2)
-            # - swagger.json       (2.0)
-            # in this case, we will locate them in this way:
-            # - when 'path' points to a specific file, and its
-            #   extension is either 'json' or 'yaml'.
-            _, ext = os.path.splitext(path)
-            for e in [
-                    consts.FILE_EXT_JSON, consts.FILE_EXT_YAML,
-                    consts.FILE_EXT_YML
-            ]:
-                if ext.endswith(e):
-                    self.base_path = os.path.dirname(path)
-                    self.urls = [path]
-                    break
-            else:
-                for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
-                    if os.path.isfile(path + '.' + e):
-                        self.urls = [path + '.' + e]
-                        break
-                else:
-                    raise ValueError(
-                        'Unable to locate resource file: [{}]'.format(path))
+            raise ValueError(
+                'Unable to locate resource file: [{}]'.format(path))
 
     def load(self, path):
         logger.info('to load: [%s]', path)

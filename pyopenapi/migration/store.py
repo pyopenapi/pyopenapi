@@ -131,49 +131,48 @@ class SpecObjStore(object):
         while True:
             patch_from = None
             for from_, to_ in six.iteritems(current_routes):
-                # find the longest prefix in f(rom)
+                # find the longest prefix in from_
                 if not remain_jp.startswith(from_):
                     continue
                 if not patch_from or len(from_) > len(patch_from):
                     patch_from, patch_to = from_, to_
 
-            if patch_to:
-                if isinstance(patch_to, dict):
-                    # nested route map
-                    current_routes, patch_to = patch_to, None
-                    fixed_prefix += ('/' if fixed_prefix else '') + patch_from
-                    remain_jp = remain_jp[len(patch_from):]
-                    remain_jp = remain_jp[1:] if remain_jp.startswith(
-                        '/') else remain_jp
-                    continue
-                elif isinstance(patch_to, six.string_types):
-                    break
-                else:
-                    raise Exception(
-                        'unexpected JSON pointer patch type: {}:{}'.format(
-                            str(type(patch_to)), patch_to))
-            else:
+            if not patch_to:
                 break
 
-        if patch_to:
-            remain = jp[len(fixed_prefix + patch_from) + 1:]  # +1 for '/'
-            new_jp = None
-            # let's patch the JSON pointer
-            if patch_to.startswith('#'):
-                # an absolute JSON point
-                new_jp = patch_to
-            else:
-                # a relavie path case, need to compose
-                # a qualified JSON pointer
-                new_jp = fixed_prefix + '/' + patch_to
+            if isinstance(patch_to, dict):
+                # nested route map
+                current_routes, patch_to = patch_to, None
+                fixed_prefix += ('/' if fixed_prefix else '') + patch_from
+                remain_jp = remain_jp[len(patch_from):]
+                remain_jp = remain_jp[1:] if remain_jp.startswith(
+                    '/') else remain_jp
+                continue
+            elif isinstance(patch_to, six.string_types):
+                break
 
-            if remain:
-                new_jp += ('' if new_jp.endswith('/') or remain.startswith('/')
-                           else '/') + remain
-            return new_jp
+            raise Exception('unexpected JSON pointer patch type: {}:{}'.format(
+                str(type(patch_to)), patch_to))
 
-        # there is no need for relocation
-        return jp
+        if not patch_to:
+            # there is no need for relocation
+            return jp
+
+        new_jp = None
+        # let's patch the JSON pointer
+        if patch_to.startswith('#'):
+            # an absolute JSON point
+            new_jp = patch_to
+        else:
+            # a relavie path case, need to compose
+            # a qualified JSON pointer
+            new_jp = fixed_prefix + '/' + patch_to
+
+        remain = jp[len(fixed_prefix + patch_from) + 1:]  # +1 for '/'
+        if remain:
+            new_jp += ('' if new_jp.endswith('/') or remain.startswith('/') else
+                       '/') + remain
+        return new_jp
 
     def relocate(self, url, jp, from_spec, to_spec=None):
         """ $ref relocation
