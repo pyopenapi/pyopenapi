@@ -1,10 +1,9 @@
-from pyopenapi import utils, errs
-from datetime import datetime
-from .utils import is_windows, is_py2
+# -*- coding: utf-8 -*-
 import unittest
-import functools
-import six
 import os
+
+from pyopenapi import utils, errs
+from .utils import is_windows, is_py2
 
 
 class SwaggerUtilsTestCase(unittest.TestCase):
@@ -19,10 +18,10 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         self.assertEqual(utils.jp_compose(''), '')
         self.assertEqual(utils.jp_compose(None, 'base'), 'base')
 
-        cs = ['~test1', '/test2', 'test3']
-        c = utils.jp_compose(cs, 'base')
-        self.assertEqual(c, 'base/~0test1/~1test2/test3')
-        self.assertEqual(utils.jp_split(c)[1:], cs)
+        parts = ['~test1', '/test2', 'test3']
+        composed = utils.jp_compose(parts, 'base')
+        self.assertEqual(composed, 'base/~0test1/~1test2/test3')
+        self.assertEqual(utils.jp_split(composed)[1:], parts)
 
         self.assertEqual(utils.jp_split('~1test'), ['/test'])
         self.assertEqual(utils.jp_split('~0test'), ['~test'])
@@ -34,16 +33,16 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             ['', '/~test', 'qq', '~test', '/test', ''])
 
     def test_derelativize_url(self):
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/durf.json'),
             'https://localhost/hurf/durf.json')
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/./durf.json'),
             'https://localhost/hurf/durf.json')
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/../durf.json'),
             'https://localhost/durf.json')
-        self.assertEquals(
+        self.assertEqual(
             utils.derelativise_url('https://localhost/hurf/.../durf.json'),
             'https://localhost/durf.json')
 
@@ -55,27 +54,27 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             'e!f!g': 3,
             'a!f!g': 4,
         }
-        d = utils.ScopeDict(obj)
-        d.sep = '!'
-        self.assertEqual(d['a!b'], 1)
-        self.assertEqual(d['b'], 1)
-        self.assertEqual(d['ee'], 2)
-        self.assertEqual(d['a', 'b'], 1)
-        self.assertEqual(d['c', 'd', 'ee'], 2)
-        self.assertEqual(d['d', 'ee'], 2)
-        self.assertRaises(ValueError, d.__getitem__, ('f', 'g'))
-        self.assertRaises(TypeError, lambda x: d.sep)
+        dict_ = utils.ScopeDict(obj)
+        dict_.sep = '!'
+        self.assertEqual(dict_['a!b'], 1)
+        self.assertEqual(dict_['b'], 1)
+        self.assertEqual(dict_['ee'], 2)
+        self.assertEqual(dict_['a', 'b'], 1)
+        self.assertEqual(dict_['c', 'd', 'ee'], 2)
+        self.assertEqual(dict_['d', 'ee'], 2)
+        self.assertRaises(ValueError, dict_.__getitem__, ('f', 'g'))
+        self.assertRaises(TypeError, lambda x: dict_.sep)
 
         obj = {
             'tag1!##!get': 1,
             'tag2!##!something-get': 2,
         }
-        d = utils.ScopeDict(obj)
-        d.sep = '!##!'
-        self.assertEqual(d['tag1', 'get'], 1)
-        self.assertEqual(d['tag2', 'something-get'], 2)
-        self.assertEqual(d['get'], 1)
-        self.assertEqual(d['something-get'], 2)
+        dict_ = utils.ScopeDict(obj)
+        dict_.sep = '!##!'
+        self.assertEqual(dict_['tag1', 'get'], 1)
+        self.assertEqual(dict_['tag2', 'something-get'], 2)
+        self.assertEqual(dict_['get'], 1)
+        self.assertEqual(dict_['something-get'], 2)
 
     @unittest.skipUnless(not is_windows(), 'make no sense on windows')
     def test_path2url_on_unix(self):
@@ -126,15 +125,15 @@ class SwaggerUtilsTestCase(unittest.TestCase):
             utils.jr_split(r'C:\user\tmp\local\ttt'), (target, '#'))
         self.assertEqual(
             utils.jr_split(
-        # check here for adding backslach at the end of raw string
-        #   https://pythonconquerstheuniverse.wordpress.com/2008/06/04/gotcha-%E2%80%94-backslashes-in-windows-filenames/
+                # check here for adding backslach at the end of raw string
+                #   https://pythonconquerstheuniverse.wordpress.com/2008/06/04/gotcha-%E2%80%94-backslashes-in-windows-filenames/
                 os.path.normpath('C:/user/tmp/local/ttt/')),
             (target, '#'))
 
     def test_cycle_guard(self):
-        c = utils.CycleGuard()
-        c.update(1)
-        self.assertRaises(errs.CycleDetectionError, c.update, 1)
+        guard = utils.CycleGuard()
+        guard.update(1)
+        self.assertRaises(errs.CycleDetectionError, guard.update, 1)
 
     @unittest.skipUnless(not is_windows(), 'make no sense on windows')
     def test_normalize_url(self):
@@ -183,7 +182,7 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         self.assertEqual(utils.get_swagger_version({'swagger': '2.0'}), '2.0')
         self.assertEqual(utils.get_swagger_version({'qq': '20.0'}), None)
 
-    def test_diff(self):
+    def test_compare_container(self):
         dict1 = dict(a=1, b=[1, 2, 3])
         dict2 = dict(a=1, b=[1, 3])
         dict3 = dict(
@@ -198,51 +197,54 @@ class SwaggerUtilsTestCase(unittest.TestCase):
         list1 = [dict1, dict3]
         list2 = [dict2, dict4]
 
-        self.assertEqual(utils._diff_(dict1, dict2), [
-            ('b', 3, 2),
-        ])
-
-        self.assertEqual(utils._diff_(dict2, dict1), [
-            ('b', 2, 3),
-        ])
+        self.assertEqual(
+            utils.compare_container(dict1, dict2), [
+                ('b', 3, 2),
+            ])
 
         self.assertEqual(
-            sorted(utils._diff_(dict3, dict4)),
+            utils.compare_container(dict2, dict1), [
+                ('b', 2, 3),
+            ])
+
+        self.assertEqual(
+            sorted(utils.compare_container(dict3, dict4)),
             sorted([('a/a', 1, 2), ('a/b', 3, 2), ('a/c', 4, 5), ('b/b', 3,
                                                                   2)]))
 
         self.assertEqual(
-            sorted(utils._diff_(list1, list2)),
+            sorted(utils.compare_container(list1, list2)),
             sorted([('0/b', 3, 2), ('1/a/a', 1, 2), ('1/a/b', 3, 2),
                     ('1/a/c', 4, 5), ('1/b/b', 3, 2)]))
 
         # test include
         self.assertEqual(
-            sorted(utils._diff_(dict3, dict4, include=['a'])),
+            sorted(utils.compare_container(dict3, dict4, include=['a'])),
             sorted([('a/a', 1, 2)]))
         # test exclude
         self.assertEqual(
-            sorted(utils._diff_(dict3, dict4, exclude=['a'])),
+            sorted(utils.compare_container(dict3, dict4, exclude=['a'])),
             sorted([('b/b', 3, 2)]))
         # test include and exclude
         self.assertEqual(
             sorted(
-                utils._diff_(dict3, dict4, include=['a', 'b'], exclude=['a'])),
+                utils.compare_container(
+                    dict3, dict4, include=['a', 'b'], exclude=['a'])),
             sorted([('b/b', 3, 2)]))
 
     def test_get_or_none(self):
         """ test for get_or_none
         """
 
-        class A(object):
+        class AObj(object):
             pass
 
-        a = A()
-        setattr(A, 'b', A())
-        setattr(a.b, 'c', A())
-        setattr(a.b.c, 'd', 'test string')
-        self.assertEqual(utils.get_or_none(a, 'b', 'c', 'd'), 'test string')
-        self.assertEqual(utils.get_or_none(a, 'b', 'c', 'd', 'e'), None)
+        obj = AObj()
+        setattr(AObj, 'b', AObj())
+        setattr(obj.b, 'c', AObj())  # pylint: disable=no-member
+        setattr(obj.b.c, 'd', 'test string')  # pylint: disable=no-member
+        self.assertEqual(utils.get_or_none(obj, 'b', 'c', 'd'), 'test string')
+        self.assertEqual(utils.get_or_none(obj, 'b', 'c', 'd', 'e'), None)
 
     def test_url_dirname(self):
         """ test url_dirname

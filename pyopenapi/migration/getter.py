@@ -1,12 +1,16 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
-from .. import consts
-from ..utils import patch_path
 import json
-import yaml
-import six
 import os
 import logging
 import re
+
+import six
+import yaml
+
+from .. import consts
+from ..utils import patch_path
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +29,7 @@ class Getter(six.Iterator):
         return self
 
     def __next__(self):
-        if len(self.urls) == 0:
+        if not self.urls:
             raise StopIteration
 
         obj = self.load(self.urls.pop(0))
@@ -73,50 +77,49 @@ class LocalGetter(Getter):
         if re.match('^/[A-Z]+:', path) is not None:
             path = os.path.abspath(path[1:])
 
-        for n in consts.SWAGGER_FILE_NAMES:
-            if self.base_path.endswith(n):
+        for name in consts.SWAGGER_FILE_NAMES:
+            if self.base_path.endswith(name):
                 self.base_path = os.path.dirname(self.base_path)
                 self.urls = [path]
+                return
+            else:
+                target_path = os.path.join(path, name)
+                if os.path.isfile(target_path):
+                    self.urls = [target_path]
+                    return
+
+        # there is no file matched predefined file name:
+        # - resource_list.json (1.2)
+        # - swagger.json       (2.0)
+        # in this case, we will locate them in this way:
+        # - when 'path' points to a specific file, and its
+        #   extension is either 'json' or 'yaml'.
+        _, ext = os.path.splitext(path)
+        for e in [
+                consts.FILE_EXT_JSON, consts.FILE_EXT_YAML, consts.FILE_EXT_YML
+        ]:
+            if ext.endswith(e):
+                self.base_path = os.path.dirname(path)
+                self.urls = [path]
+                return
+
+        for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
+            if os.path.isfile(path + '.' + e):
+                self.urls = [path + '.' + e]
                 break
-            else:
-                p = os.path.join(path, n)
-                if os.path.isfile(p):
-                    self.urls = [p]
-                    break
         else:
-            # there is no file matched predefined file name:
-            # - resource_list.json (1.2)
-            # - swagger.json       (2.0)
-            # in this case, we will locate them in this way:
-            # - when 'path' points to a specific file, and its
-            #   extension is either 'json' or 'yaml'.
-            _, ext = os.path.splitext(path)
-            for e in [
-                    consts.FILE_EXT_JSON, consts.FILE_EXT_YAML,
-                    consts.FILE_EXT_YML
-            ]:
-                if ext.endswith(e):
-                    self.base_path = os.path.dirname(path)
-                    self.urls = [path]
-                    break
-            else:
-                for e in [consts.FILE_EXT_JSON, consts.FILE_EXT_YAML]:
-                    if os.path.isfile(path + '.' + e):
-                        self.urls = [path + '.' + e]
-                        break
-                else:
-                    raise ValueError(
-                        'Unable to locate resource file: [{0}]'.format(path))
+            raise ValueError(
+                'Unable to locate resource file: [{}]'.format(path))
 
     def load(self, path):
-        logger.info('to load: [{0}]'.format(path))
+        logger.info('to load: [%s]', path)
 
         path = patch_path(self.base_path, path)
-        logger.info('final path to load: [{0}]'.format(path))
+        logger.info('final path to load: [%s]', path)
 
         ret = None
-        with open(path, 'r') as f:
-            ret = f.read()
+        with open(path, 'r') as file_handle:
+            ret = file_handle.read()
         return ret
 
 
@@ -140,19 +143,19 @@ class SimpleGetter(Getter):
                     str(type(path))))
 
     def load(self, path):
-        logger.info('to load: [{0}]'.format(path))
+        logger.info('to load: [%s]', path)
 
         return self.__simple_getter_callback__.__func__(path)
 
 
 def _url_load(path):
-    ret = f = None
+    ret = file_handle = None
     try:
-        f = six.moves.urllib.request.urlopen(path)
-        ret = f.read()
+        file_handle = six.moves.urllib.request.urlopen(path)
+        ret = file_handle.read()
     finally:
-        if f:
-            f.close()
+        if file_handle:
+            file_handle.close()
 
     return ret
 
@@ -177,6 +180,6 @@ class DictGetter(Getter):
         self._path2dict = path2dict or {}
 
     def load(self, path):
-        logger.info('to load: [{0}]'.format(path))
+        logger.info('to load: [%s]', path)
 
         return self._path2dict.get(path, {})

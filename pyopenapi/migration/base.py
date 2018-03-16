@@ -1,17 +1,21 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
+
+import abc
+import logging
+import pkgutil
+import weakref
+import os
+from distutils.version import StrictVersion  # pylint: disable=no-name-in-module,import-error
+
+import six
 from .. import utils, consts
 from .resolve import Resolver
 from .store import SpecObjStore
 from .versions.v1_2.objects import ResourceListing, ApiDeclaration
 from .versions.v2_0.objects import Swagger
 from .versions.v3_0_0.objects import OpenApi
-from distutils.version import StrictVersion
-import abc
-import six
-import logging
-import pkgutil
-import weakref
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +43,10 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         # migratable spec version
         self.__migratable_spec_versions = utils.get_supported_versions(
             os.path.join('migration', 'versions'), is_pkg=True)
+
+        # init property for 'current loaded spec version'
+        # when the loaded object is a root one.
+        self.__current_spec_version = None
 
         # a map from json-reference to
         # - spec.base2._Base
@@ -137,8 +145,8 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             obj = ResourceListing(src_spec, jref, {})
 
             resources = []
-            for r in obj.apis:
-                resources.append(r.path)
+            for resource in obj.apis:  # pylint: disable=no-member
+                resources.append(resource.path)
 
             base = utils.url_dirname(jref)
             urls = zip(
@@ -169,7 +177,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
             # openapi 3.0.0
             obj = OpenApi(src_spec, jref, override)
 
-        elif version == None and parser:
+        elif version is None and parser:
             obj = parser(src_spec, jref, {})
             version = obj.__swagger_version__ if hasattr(
                 obj, '__swagger_version__') else version
@@ -181,7 +189,7 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         if not obj:
             raise Exception('Unable to parse object from {0}'.format(jref))
 
-        logger.info('version: {0}'.format(version))
+        logger.info('version: %s', version)
 
         # cache obj before migration, or we may load an object multiple times when resolve
         # $ref in the same spec
@@ -215,8 +223,8 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         # load migration module
         url, relocated_jp = utils.jr_split(jref)
         from_spec_version = obj.__swagger_version__
-        for v in supported_versions:
-            patched_version = 'v{}'.format(v).replace('.', '_')
+        for version in supported_versions:
+            patched_version = 'v{}'.format(version).replace('.', '_')
             migration_module_path = '.'.join(
                 ['pyopenapi', 'migration', 'versions', patched_version, 'main'])
             loader = pkgutil.find_loader(migration_module_path)
@@ -230,22 +238,24 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
                     migration_module_path))
 
             # preform migration
-            obj, reloc = migration_module.up(obj, self, jref)
+            obj, reloc = migration_module.upgrade(obj, self, jref)
 
             # update route for object relocation
-            self.spec_obj_store.update_routes(url, v, {relocated_jp: reloc})
+            self.spec_obj_store.update_routes(url, version,
+                                              {relocated_jp: reloc})
 
             # update JSON pointer for next round
-            relocated_jp = self.spec_obj_store.relocate(url, relocated_jp,
-                                                        from_spec_version, v)
+            relocated_jp = self.spec_obj_store.relocate(
+                url, relocated_jp, from_spec_version, version)
 
             # prepare this object if needy
             obj = self.prepare_obj(obj, url + relocated_jp)
 
             # cache migrated and prepared object if we need it later
-            self.spec_obj_store.set(obj, url, relocated_jp, spec_version=v)
+            self.spec_obj_store.set(
+                obj, url, relocated_jp, spec_version=version)
 
-            from_spec_version = v
+            from_spec_version = version
 
         if isinstance(obj, (OpenApi, Swagger, ResourceListing)):
             self.__current_spec_version = spec_version
@@ -272,9 +282,9 @@ class ApiBase(six.with_metaclass(abc.ABCMeta, object)):
         :raises ValueError: if path is not valid
         """
 
-        logger.info('resolving: [{0}]'.format(jref))
+        logger.info('resolving: [%s]', jref)
 
-        if jref is None or len(jref) == 0:
+        if not jref:
             raise ValueError('Empty Path is not allowed')
 
         to_spec_version = to_spec_version or from_spec_version

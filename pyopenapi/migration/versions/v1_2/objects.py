@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
-from ...spec import Base2, field, child, rename, list_, map_
-import six
-import copy
+from ...spec import Base2, rename, list_, map_
 
 
+# pylint: disable=invalid-name
 class BaseObj_v1_2(Base2):
     __swagger_version__ = '1.2'
 

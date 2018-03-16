@@ -1,53 +1,55 @@
+# -*- coding: utf-8 -*-
+import unittest
+import os
+
 from pyopenapi import errs
 from pyopenapi.utils import normalize_url
 from pyopenapi.migration.versions.v2_0 import objects
-from ....utils import get_test_data_folder, is_windows, SampleApp
-import unittest
-import os
-import six
+from ....utils import get_test_data_folder, SampleApp
 
-folder = normalize_url(get_test_data_folder(version='1.2', which='wordnik'))
+_FOLDER = normalize_url(get_test_data_folder(version='1.2', which='wordnik'))
 
 
-def _pf(s):
-    return folder + '#' + s
+def _patch_folder(path_):
+    return _FOLDER + '#' + path_
 
 
-class Swagger_Upgrade_TestCase(unittest.TestCase):
+class SwaggerUpgradeTestCase(unittest.TestCase):
     """ test for upgrade from converting 1.2 to 2.0 """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
-            folder,
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
+            _FOLDER,
             to_spec_version='2.0',
         )
 
     def test_resource_list(self):
         """ ResourceList -> Swagger
         """
-        s = self.app.root
+        obj = self.app.root
 
-        self.assertEqual(s.swagger, '2.0')
-        self.assertEqual(s.host, 'petstore.swagger.wordnik.com')
-        self.assertEqual(s.basePath, '')
-        self.assertEqual(s.info.version, '1.0.0')
-        self.assertEqual(s.schemes, ['http', 'https'])
-        self.assertEqual(s.consumes, [])
-        self.assertEqual(s.produces, [])
+        self.assertEqual(obj.swagger, '2.0')
+        self.assertEqual(obj.host, 'petstore.swagger.wordnik.com')
+        self.assertEqual(obj.basePath, '')
+        self.assertEqual(obj.info.version, '1.0.0')
+        self.assertEqual(obj.schemes, ['http', 'https'])
+        self.assertEqual(obj.consumes, [])
+        self.assertEqual(obj.produces, [])
 
     def test_resource(self):
         """  Resource -> Tag, Operation
         make sure the way we rearrange resources
         to tags is correct.
         """
-        s = self.app.root
+        obj = self.app.root
         self.assertEqual(
-            sorted([t.name for t in s.tags]), sorted(['store', 'user', 'pet']))
+            sorted([t.name for t in obj.tags]), sorted(['store', 'user',
+                                                        'pet']))
 
-        p = self.app.root.paths
+        path_items = self.app.root.paths
         self.assertEqual(
-            sorted(p.keys()),
+            sorted(path_items.keys()),
             sorted([
                 '/api/user/createWithArray', '/api/store/order',
                 '/api/user/login', '/api/user', '/api/pet',
@@ -60,56 +62,58 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
     def test_operation(self):
         """ Operation -> Operation
         """
-        p = self.app.root.paths['/api/pet/{petId}']
+        path_item = self.app.root.paths['/api/pet/{petId}']
 
         # getPetById
-        o = p.get
-        self.assertEqual(o.tags, ['pet'])
-        self.assertEqual(o.operationId, 'getPetById')
+        operation = path_item.get
+        self.assertEqual(operation.tags, ['pet'])
+        self.assertEqual(operation.operationId, 'getPetById')
         self.assertEqual(
-            o.produces,
+            operation.produces,
             ['application/json', 'application/xml', 'text/plain', 'text/html'])
-        self.assertEqual(o.consumes, None)
-        self.assertEqual(o.summary, 'Find pet by ID')
-        self.assertEqual(o.description, 'Returns a pet based on ID')
-        self.assertEqual(o.deprecated, False)
+        self.assertEqual(operation.consumes, None)
+        self.assertEqual(operation.summary, 'Find pet by ID')
+        self.assertEqual(operation.description, 'Returns a pet based on ID')
+        self.assertEqual(operation.deprecated, False)
 
         # partialUpdate
-        o = p.patch
-        self.assertEqual(o.produces, ['application/json', 'application/xml'])
-        self.assertEqual(o.consumes, ['application/json', 'application/xml'])
-        self.assertEqual(o.security, [{'oauth2': ['write:pets']}])
-        self.assertTrue('default' in o.responses)
+        operation = path_item.patch
+        self.assertEqual(operation.produces,
+                         ['application/json', 'application/xml'])
+        self.assertEqual(operation.consumes,
+                         ['application/json', 'application/xml'])
+        self.assertEqual(operation.security, [{'oauth2': ['write:pets']}])
+        self.assertTrue('default' in operation.responses)
 
-        r = o.responses['default']
-        self.assertEqual(r.headers, None)
-        self.assertEqual(r.schema.type, 'array')
+        resp = operation.responses['default']
+        self.assertEqual(resp.headers, None)
+        self.assertEqual(resp.schema.type, 'array')
         self.assertEqual(
-            r.schema.items.get_attrs('migration').normalized_ref,
-            _pf('/definitions/pet!##!Pet'))
+            resp.schema.items.get_attrs('migration').normalized_ref,
+            _patch_folder('/definitions/pet!##!Pet'))
 
         # createUser
-        o = self.app.root.paths['/api/user'].post
-        self.assertEqual(o.tags, ['user'])
-        self.assertEqual(o.operationId, 'createUser')
+        operation = self.app.root.paths['/api/user'].post
+        self.assertEqual(operation.tags, ['user'])
+        self.assertEqual(operation.operationId, 'createUser')
 
     def test_authorization(self):
         """ Authorization -> Security Scheme
         """
-        s = self.app.root.securityDefinitions
-        self.assertEqual(list(s.keys()), ['oauth2'])
+        sec = self.app.root.securityDefinitions
+        self.assertEqual(list(sec.keys()), ['oauth2'])
 
-        ss = s['oauth2']
-        self.assertEqual(ss.type, 'oauth2')
-        self.assertEqual(ss.name, None)
-        self.assertEqual(getattr(ss, 'in'), None)
-        self.assertEqual(ss.flow, 'implicit')
-        self.assertEqual(ss.authorizationUrl,
+        scheme = sec['oauth2']
+        self.assertEqual(scheme.type, 'oauth2')
+        self.assertEqual(scheme.name, None)
+        self.assertEqual(getattr(scheme, 'in'), None)
+        self.assertEqual(scheme.flow, 'implicit')
+        self.assertEqual(scheme.authorizationUrl,
                          'http://petstore.swagger.wordnik.com/api/oauth/dialog')
-        self.assertEqual(ss.tokenUrl,
+        self.assertEqual(scheme.tokenUrl,
                          'http://petstore.swagger.wordnik.com/api/oauth/token')
         self.assertEqual(
-            ss.scopes, {
+            scheme.scopes, {
                 'write:pets': 'Modify pets in your account',
                 'read:pets': 'Read your pets'
             })
@@ -118,31 +122,32 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
         """ Parameter -> Parameter
         """
         # body
-        o = self.app.root.paths['/api/pet/{petId}'].patch
-        p = [p for p in o.parameters if getattr(p, 'in') == 'body'][0]
-        self.assertEqual(getattr(p, 'in'), 'body')
-        self.assertEqual(p.required, True)
+        operation = self.app.root.paths['/api/pet/{petId}'].patch
+        body = [x for x in operation.parameters
+                if getattr(x, 'in') == 'body'][0]
+        self.assertEqual(getattr(body, 'in'), 'body')
+        self.assertEqual(body.required, True)
         self.assertEqual(
-            p.schema.get_attrs('migration').normalized_ref,
-            _pf('/definitions/pet!##!Pet'))
+            body.schema.get_attrs('migration').normalized_ref,
+            _patch_folder('/definitions/pet!##!Pet'))
 
         # form
-        o = self.app.root.paths['/api/pet/uploadImage'].post
-        p = [
-            p for p in o.parameters
-            if getattr(p, 'in') == 'formData' and p.type == 'string'
+        operation = self.app.root.paths['/api/pet/uploadImage'].post
+        form = [
+            x for x in operation.parameters
+            if getattr(x, 'in') == 'formData' and x.type == 'string'
         ][0]
-        self.assertEqual(p.name, 'additionalMetadata')
-        self.assertEqual(p.required, False)
+        self.assertEqual(form.name, 'additionalMetadata')
+        self.assertEqual(form.required, False)
 
         # file
-        o = self.app.root.paths['/api/pet/uploadImage'].post
-        p = [
-            p for p in o.parameters
-            if getattr(p, 'in') == 'formData' and p.type == 'file'
+        operation = self.app.root.paths['/api/pet/uploadImage'].post
+        file_ = [
+            x for x in operation.parameters
+            if getattr(x, 'in') == 'formData' and x.type == 'file'
         ][0]
-        self.assertEqual(p.name, 'file')
-        self.assertEqual(p.required, False)
+        self.assertEqual(file_.name, 'file')
+        self.assertEqual(file_.required, False)
 
         # non-body can't have $ref
         try:
@@ -150,47 +155,47 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
                 get_test_data_folder(version='1.2', which='upgrade_parameter'),
                 to_spec_version='2.0')
         except errs.SchemaError as e:
-            self.failUnlessEqual(e.args,
-                                 ("Can't have $ref in non-body Parameters", ))
+            self.assertEqual(e.args,
+                             ("Can't have $ref in non-body Parameters", ))
         else:
             self.fail('SchemaError not raised')
 
     def test_model(self):
         """ Model -> Definition
         """
-        d = self.app.root.definitions['pet!##!Pet']
-        self.assertEqual(d.required, ['id', 'name'])
+        schema = self.app.root.definitions['pet!##!Pet']
+        self.assertEqual(schema.required, ['id', 'name'])
 
-        ps = d.properties.keys()
+        property_names = schema.properties.keys()
         self.assertEqual(
-            sorted(ps),
+            sorted(property_names),
             ['category', 'id', 'name', 'photoUrls', 'status', 'tags'])
 
-        p = d.properties['id']
-        self.assertEqual(p.type, 'integer')
-        self.assertEqual(p.format, 'int64')
-        self.assertEqual(p.description, 'unique identifier for the pet')
-        self.assertEqual(p.minimum, 0)
-        self.assertEqual(p.maximum, 100)
+        prop = schema.properties['id']
+        self.assertEqual(prop.type, 'integer')
+        self.assertEqual(prop.format, 'int64')
+        self.assertEqual(prop.description, 'unique identifier for the pet')
+        self.assertEqual(prop.minimum, 0)
+        self.assertEqual(prop.maximum, 100)
 
-        p = d.properties['category']
+        prop = schema.properties['category']
         self.assertEqual(
-            p.get_attrs('migration').normalized_ref,
-            _pf('/definitions/pet!##!Category'))
+            prop.get_attrs('migration').normalized_ref,
+            _patch_folder('/definitions/pet!##!Category'))
 
-        p = d.properties['photoUrls']
-        self.assertEqual(p.type, 'array')
-        self.assertEqual(p.items.type, 'string')
+        prop = schema.properties['photoUrls']
+        self.assertEqual(prop.type, 'array')
+        self.assertEqual(prop.items.type, 'string')
 
-        p = d.properties['tags']
-        self.assertEqual(p.type, 'array')
+        prop = schema.properties['tags']
+        self.assertEqual(prop.type, 'array')
         self.assertEqual(
-            p.items.get_attrs('migration').normalized_ref,
-            _pf('/definitions/pet!##!Tag'))
+            prop.items.get_attrs('migration').normalized_ref,
+            _patch_folder('/definitions/pet!##!Tag'))
 
-        p = d.properties['status']
-        self.assertEqual(p.type, 'string')
-        self.assertEqual(p.enum, ['available', 'pending', 'sold'])
+        prop = schema.properties['status']
+        self.assertEqual(prop.type, 'string')
+        self.assertEqual(prop.enum, ['available', 'pending', 'sold'])
 
     def test_item(self):
         """ make sure to raise exception for invalid item
@@ -202,7 +207,7 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
                     which=os.path.join('upgrade_items', 'with_ref')),
                 to_spec_version='2.0')
         except errs.SchemaError as e:
-            self.failUnlessEqual(e.args, ('Can\'t have $ref for Items', ))
+            self.assertEqual(e.args, ('Can\'t have $ref for Items', ))
         else:
             self.fail('SchemaError not raised')
 
@@ -213,8 +218,8 @@ class Swagger_Upgrade_TestCase(unittest.TestCase):
                     which=os.path.join('upgrade_items', 'invalid_primitive')),
                 to_spec_version='2.0')
         except errs.SchemaError as e:
-            self.failUnlessEqual(
-                e.args, ('Non primitive type is not allowed for Items', ))
+            self.assertEqual(e.args,
+                             ('Non primitive type is not allowed for Items', ))
         else:
             self.fail('SchemaError not raised')
 
@@ -244,8 +249,8 @@ class ModelSubtypesTestCase(unittest.TestCase):
     """ test for upgrade /data/v1_2/model_subtypes """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='model_subtypes'),
             to_spec_version='2.0')
 

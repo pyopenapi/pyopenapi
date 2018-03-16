@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import os
+import sys
+import six
 from pyopenapi.migration.base import ApiBase
 from pyopenapi import utils, consts
-import os
-import six
-import sys
 
 
 def get_test_data_folder(version='1.2', which=''):
@@ -20,18 +21,19 @@ def get_test_data_folder(version='1.2', which=''):
 def get_test_file(version, which, file_name):
     with open(
             os.path.join(get_test_data_folder(version, which), file_name),
-            'r') as f:
-        return f.read()
+            'r') as handle:
+        return handle.read()
 
 
 class DictDB(dict):
     """ Simple DB for singular model """
 
     def __init__(self):
+        super(DictDB, self).__init__()
         self._db = []
 
     def create_(self, **data):
-        if len([elm for elm in self._db if elm['id'] == data['id']]):
+        if [elm for elm in self._db if elm['id'] == data['id']]:
             return False
 
         self._db.append(data)
@@ -39,7 +41,7 @@ class DictDB(dict):
 
     def read_(self, key):
         found = [elm for elm in self._db if elm['id'] == key]
-        if len(found):
+        if found:
             return found[0]
         return None
 
@@ -56,28 +58,28 @@ class DictDB(dict):
         return found
 
 
-pet_Tom = dict(
+_PET_TOM = dict(
     id=1,
     category=dict(id=1, name='dog'),
     name='Tom',
     tags=[dict(id=2, name='yellow'),
           dict(id=3, name='big')],
     status='sold')
-pet_Mary = dict(
+_PET_MARY = dict(
     id=2,
     category=dict(id=2, name='cat'),
     name='Mary',
     tags=[dict(id=1, name='white'),
           dict(id=4, name='small')],
     status='pending')
-pet_John = dict(
+_PET_JOHN = dict(
     id=3,
     category=dict(id=2, name='cat'),
     name='John',
     tags=[dict(id=2, name='yellow'),
           dict(id=4, name='small')],
     status='available')
-pet_Sue = dict(
+_PET_SUE = dict(
     id=4,
     category=dict(id=3, name='fish'),
     name='Sue',
@@ -88,23 +90,25 @@ pet_Sue = dict(
 
 def create_pet_db():
     pet = DictDB()
-    pet.create_(**pet_Tom)
-    pet.create_(**pet_Mary)
-    pet.create_(**pet_John)
-    pet.create_(**pet_Sue)
+    pet.create_(**_PET_TOM)
+    pet.create_(**_PET_MARY)
+    pet.create_(**_PET_JOHN)
+    pet.create_(**_PET_SUE)
 
     return pet
 
 
 def gen_test_folder_hook(folder):
     def _hook(url):
-        p = six.moves.urllib.parse.urlparse(url)
-        if p.scheme != 'file':
+        parsed = six.moves.urllib.parse.urlparse(url)
+        if parsed.scheme != 'file':
             return url
 
-        path = os.path.join(folder, p.path
-                            if not p.path.startswith('/') else p.path[1:])
-        return six.moves.urllib.parse.urlunparse(p[:2] + (path, ) + p[3:])
+        path = os.path.join(folder, parsed.path
+                            if not parsed.path.startswith('/') else
+                            parsed.path[1:])
+        return six.moves.urllib.parse.urlunparse(parsed[:2] +
+                                                 (path, ) + parsed[3:])
 
     return _hook
 
@@ -132,20 +136,20 @@ class SampleApp(ApiBase):
         return obj
 
     @classmethod
-    def load(kls,
+    def load(cls,
              url,
              url_load_hook=None,
              resolver=None,
              getter=None,
              sep=consts.SCOPE_SEPARATOR):
         url = utils.normalize_url(url)
-        app = kls(url, url_load_hook, resolver, sep)
+        app = cls(url, url_load_hook, resolver, sep)
 
         app.raw = app.load_obj(url, getter=getter)
         return app
 
     @classmethod
-    def create(kls,
+    def create(cls,
                url,
                to_spec_version,
                url_load_hook=None,
@@ -153,7 +157,7 @@ class SampleApp(ApiBase):
                getter=None,
                sep=consts.SCOPE_SEPARATOR):
         url = utils.normalize_url(url)
-        app = kls.load(
+        app = cls.load(
             url,
             url_load_hook=url_load_hook,
             resolver=resolver,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 
@@ -13,5 +14,5 @@ class FieldNotExist(Exception):
     pass
 
 
-class ReferenceError(Exception):
+class JsonReferenceError(Exception):
     pass

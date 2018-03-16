@@ -1,9 +1,11 @@
-from pyopenapi.utils import _diff_
-from pyopenapi.migration.versions.v2_0.objects import Swagger
-from ....utils import get_test_data_folder, SampleApp
+# -*- coding: utf-8 -*-
 import os
 import json
 import unittest
+
+from pyopenapi.utils import compare_container
+from pyopenapi.migration.versions.v2_0.objects import Swagger
+from ....utils import get_test_data_folder, SampleApp
 
 
 class ConverterTestCase(unittest.TestCase):
@@ -16,20 +18,21 @@ class ConverterTestCase(unittest.TestCase):
 
         # load swagger.json into dict
         origin = None
-        with open(os.path.join(path, 'swagger.json')) as r:
-            origin = json.loads(r.read())
+        with open(os.path.join(path, 'swagger.json')) as handle:
+            origin = json.loads(handle.read())
 
         # diff for empty list or dict is allowed
-        d = app.root.dump()
+        dumped = app.root.dump()
         self.assertEqual(
-            sorted(_diff_(origin, d)),
+            sorted(compare_container(origin, dumped)),
             sorted([('paths/~1store~1inventory/get/parameters', None, None),
                     ('paths/~1user~1logout/get/parameters', None, None)]))
 
         # try to load the dumped dict back, to see if anything wrong
-        Swagger(d)
+        Swagger(dumped)
 
 
+# pylint: disable=invalid-name
 class Converter_v1_2_TestCase(unittest.TestCase):
     """ test for convert from 1.2
 
@@ -41,8 +44,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='wordnik'),
             sep=':',
             to_spec_version='2.0',
@@ -57,7 +60,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1pet~1{petId}/patch/responses/default/schema/items',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
         # enum
         expect = {
@@ -68,7 +71,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1pet~1findByStatus/get/parameters/0/items',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
         # type
         expect = {'type': 'string'}
@@ -76,7 +79,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/definitions/pet:Pet/properties/photoUrls/items',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
     def test_scope(self):
         """
@@ -87,9 +90,9 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             'read:pets': 'Read your pets',
         }
         self.assertEqual(
-            _diff_(expect,
-                   self.app.root.securityDefinitions['oauth2'].scopes.dump()),
-            [])
+            compare_container(
+                expect,
+                self.app.root.securityDefinitions['oauth2'].scopes.dump()), [])
 
         # test scope in Operation Object
         expect = [dict(oauth2=['write:pets'])]
@@ -97,7 +100,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1store~1order~1{orderId}/delete/security',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
     def test_login_endpoint(self):
         """
@@ -108,7 +111,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         }
 
         self.assertEqual(
-            _diff_(
+            compare_container(
                 expect,
                 self.app.root.securityDefinitions['oauth2'].dump(),
                 include=['authorizationUrl']), [])
@@ -126,7 +129,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         }
 
         self.assertEqual(
-            _diff_(
+            compare_container(
                 expect,
                 self.app.root.securityDefinitions['oauth2'].dump(),
                 include=['type', 'authorizationUrl', 'flow']), [])
@@ -139,7 +142,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1store~1order/post/security',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
     def test_authorization(self):
         """
@@ -156,7 +159,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
         }
 
         self.assertEqual(
-            _diff_(
+            compare_container(
                 expect,
                 self.app.root.securityDefinitions['oauth2'].dump(),
                 exclude=[
@@ -180,7 +183,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1pet~1{petId}/get/parameters/0',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
         # allowMultiple, defaultValue, enum
         expect = {
@@ -196,7 +199,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             from_spec_version='2.0',
         )
         self.assertEqual(
-            _diff_(
+            compare_container(
                 expect,
                 target.dump(),
                 include=['collectionFormat', 'default', 'enum']), [])
@@ -208,7 +211,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             from_spec_version='2.0',
         )
         self.assertEqual(
-            _diff_(expect, target.dump(), include=['schema', 'in']), [])
+            compare_container(expect, target.dump(), include=['schema', 'in']),
+            [])
 
     def test_operation(self):
         """
@@ -223,7 +227,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             from_spec_version='2.0',
         )
         self.assertEqual(
-            _diff_(
+            compare_container(
                 expect,
                 target.dump(),
                 include=['operationId', 'summary', 'description']), [])
@@ -238,7 +242,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             from_spec_version='2.0',
         )
         self.assertEqual(
-            _diff_(expect, target.dump(), include=['produces', 'consumes']), [])
+            compare_container(
+                expect, target.dump(), include=['produces', 'consumes']), [])
 
         # deprecated
         expect = dict(deprecated=True)
@@ -247,7 +252,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             from_spec_version='2.0',
         )
         self.assertEqual(
-            _diff_(expect, target.dump(), include=['deprecated']), [])
+            compare_container(expect, target.dump(), include=['deprecated']),
+            [])
 
         # responses, in 1.2, the type of Operation is default response
         expect = {
@@ -263,7 +269,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/paths/~1api~1pet~1findByTags/get/responses/default',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump(), exclude=['$ref']), [])
+        self.assertEqual(
+            compare_container(expect, target.dump(), exclude=['$ref']), [])
 
     def test_property(self):
         """
@@ -278,7 +285,7 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/definitions/user:User/properties/userStatus',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
     def test_model(self):
         """
@@ -322,7 +329,8 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             '#/definitions/pet:Pet',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump(), exclude=['$ref']), [])
+        self.assertEqual(
+            compare_container(expect, target.dump(), exclude=['$ref']), [])
 
     def test_info(self):
         """
@@ -337,16 +345,19 @@ class Converter_v1_2_TestCase(unittest.TestCase):
             license=dict(
                 name='Apache 2.0',
                 url='http://www.apache.org/licenses/LICENSE-2.0.html'))
-        self.assertEqual(_diff_(self.app.root.info.dump(), expect), [])
+        self.assertEqual(
+            compare_container(self.app.root.info.dump(), expect), [])
 
     def test_resource_list(self):
         """
         """
         expect = dict(swagger='2.0')
         self.assertEqual(
-            _diff_(expect, self.app.root.dump(), include=['swagger']), [])
+            compare_container(
+                expect, self.app.root.dump(), include=['swagger']), [])
 
 
+# pylint: disable=invalid-name
 class Converter_v1_2_TestCase_Others(unittest.TestCase):
     """ for test cases needs special init
     """
@@ -371,7 +382,7 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
             '#/securityDefinitions/oauth2',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
     def test_authorization(self):
         """
@@ -386,14 +397,14 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
             '#/securityDefinitions/simple_key',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
         expect = {'type': 'apiKey', 'in': 'header', 'name': 'simpleHK'}
         target, _ = app.resolve_obj(
             '#/securityDefinitions/simple_key2',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
         expect = {
             'type': 'basic',
@@ -402,7 +413,7 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
             '#/securityDefinitions/simple_basic',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump()), [])
+        self.assertEqual(compare_container(expect, target.dump()), [])
 
     def test_model_inheritance(self):
         """
@@ -417,4 +428,5 @@ class Converter_v1_2_TestCase_Others(unittest.TestCase):
             '#/definitions/user:UserWithInfo',
             from_spec_version='2.0',
         )
-        self.assertEqual(_diff_(expect, target.dump(), include=['allOf']), [])
+        self.assertEqual(
+            compare_container(expect, target.dump(), include=['allOf']), [])

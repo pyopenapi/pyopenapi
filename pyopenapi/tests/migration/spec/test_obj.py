@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
+# pylint: disable=no-member,invalid-name,attribute-defined-outside-init
+
+import unittest
+
 from pyopenapi.migration.spec import (
     Base2,
     field,
     child,
-    internal,
     rename,
     map_,
     list_,
@@ -10,7 +14,6 @@ from pyopenapi.migration.spec import (
     _List,
 )
 from pyopenapi.migration.spec.attr import AttributeGroup
-import unittest
 
 
 class BObj(Base2):
@@ -27,7 +30,7 @@ class AObj(Base2):
     }
 
     __internal__ = {
-        'ic': dict(),
+        'internal_c': dict(),
         'd3_renamed': dict(key='a', builder=rename),
         'd4_renamed': dict(key='d', builder=rename),
     }
@@ -53,13 +56,13 @@ class DObj(Base2):
 
 
 def if_not_a(obj_class):
-    def f(spec, path=None, override=None):
+    def func(spec, path=None, override=None):
         if 'a' in spec:
             return AObj(spec, path=path, override=override)
         return obj_class(spec, path=path, override=override)
 
-    f.__name__ = 'if_not_a_or_' + obj_class.__name__
-    return f
+    func.__name__ = 'if_not_a_or_' + obj_class.__name__
+    return func
 
 
 class EObj(Base2):
@@ -104,6 +107,7 @@ class JObj(Base2):
     }
 
 
+# pylint: disable=unused-argument
 def is_str(spec, path, override):
     return spec
 
@@ -151,19 +155,19 @@ class Base2TestCase(unittest.TestCase):
     def test_internal(self):
         """ make sure builder:internal works
         """
-        a = AObj({'a': 1, 'b': 2, 'ic': 3})
-        self.assertEqual(sorted(a._field_names_),
+        obj = AObj({'a': 1, 'b': 2, 'ic': 3})
+        self.assertEqual(sorted(obj.get_field_names()),
                          ['a', 'b', 'c', 'd'
-                          ])    # internal is not included in '_field_names_'
+                          ])  # internal is not included in 'get_field_names()'
         self.assertEqual(
-            a.ic,
-            None)    # internal is separated from input spec (in __fields__)
+            obj.internal_c,
+            None)  # internal is separated from input spec (in __fields__)
 
-        a.ic = 4
-        self.assertEqual(a.ic, 4)
+        obj.internal_c = 4
+        self.assertEqual(obj.internal_c, 4)
 
         # make sure we won't dump internal fields
-        self.assertEqual(a.dump(), {'a': 1, 'b': 2})
+        self.assertEqual(obj.dump(), {'a': 1, 'b': 2})
 
     def test_child(self):
         """ make sure builder:child works
@@ -177,38 +181,38 @@ class Base2TestCase(unittest.TestCase):
     def test_map(self):
         """ make sure container:Map works
         """
-        c = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
-        self.assertTrue(issubclass(c.cc.__class__, _Map))
-        self.assertTrue('key1' in c.cc)
-        self.assertTrue(isinstance(c.cc['key1'], AObj))
-        self.assertTrue('key2' in c.cc)
-        self.assertTrue(isinstance(c.cc['key2'], AObj))
-        self.assertEqual(c.cc['key1'].a, 1)
-        self.assertEqual(c.cc['key2'].b, 2)
+        obj = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
+        self.assertTrue(issubclass(obj.cc.__class__, _Map))
+        self.assertTrue('key1' in obj.cc)
+        self.assertTrue(isinstance(obj.cc['key1'], AObj))
+        self.assertTrue('key2' in obj.cc)
+        self.assertTrue(isinstance(obj.cc['key2'], AObj))
+        self.assertEqual(obj.cc['key1'].a, 1)
+        self.assertEqual(obj.cc['key2'].b, 2)
 
-        for k, v in c.cc.items():
+        for k, val in obj.cc.items():
             if k == 'key1':
-                self.assertEqual({'a': 1}, v.dump())
+                self.assertEqual({'a': 1}, val.dump())
                 break
         else:
-            self.assertTrue(False)
+            self.fail('"key1" not found')
 
     def test_list(self):
         """ make sure container:List works
         """
-        c = CObj({'ccc': [{'a': 1}, {'a': 2}]})
-        self.assertTrue(issubclass(c.ccc.__class__, _List))
-        cnt = {1: 0, 2: 0}
-        for e in c.ccc:
-            cnt[e.a] += 1
-        for c in cnt:
-            self.assertEqual(cnt[c], 1)
+        obj = CObj({'ccc': [{'a': 1}, {'a': 2}]})
+        self.assertTrue(issubclass(obj.ccc.__class__, _List))
+        cnts = {1: 0, 2: 0}
+        for e in obj.ccc:
+            cnts[e.a] += 1
+        for idx in cnts:
+            self.assertEqual(cnts[idx], 1)
 
     def test_composite_container(self):
         """ check child_builder=List(Map(List ....)
         """
         # map of list
-        d = DObj({
+        obj = DObj({
             'd1': {
                 'key1': [{
                     'a': 1
@@ -222,13 +226,13 @@ class Base2TestCase(unittest.TestCase):
                 }]
             }
         })
-        self.assertEqual(d.d1['key1'][0].a, 1)
-        self.assertEqual(d.d1['key1'][1].a, 2)
-        self.assertEqual(d.d1['key2'][0].a, 3)
-        self.assertEqual(d.d1['key2'][1].a, 4)
+        self.assertEqual(obj.d1['key1'][0].a, 1)
+        self.assertEqual(obj.d1['key1'][1].a, 2)
+        self.assertEqual(obj.d1['key2'][0].a, 3)
+        self.assertEqual(obj.d1['key2'][1].a, 4)
 
         # list of map
-        d = DObj({
+        obj = DObj({
             'd2': [{
                 'key1': {
                     'a': 1
@@ -245,13 +249,13 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        self.assertEqual(d.d2[0]['key1'].a, 1)
-        self.assertEqual(d.d2[0]['key2'].a, 2)
-        self.assertEqual(d.d2[1]['key3'].a, 3)
-        self.assertEqual(d.d2[1]['key4'].a, 4)
+        self.assertEqual(obj.d2[0]['key1'].a, 1)
+        self.assertEqual(obj.d2[0]['key2'].a, 2)
+        self.assertEqual(obj.d2[1]['key3'].a, 3)
+        self.assertEqual(obj.d2[1]['key4'].a, 4)
 
         # map of map
-        d = DObj({
+        obj = DObj({
             'd3': {
                 'key1': {
                     'key11': {
@@ -271,26 +275,26 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        self.assertEqual(d.d3['key1']['key11'].a, 1)
-        self.assertEqual(d.d3['key1']['key12'].a, 2)
-        self.assertEqual(d.d3['key2']['key21'].a, 3)
-        self.assertEqual(d.d3['key2']['key22'].a, 4)
+        self.assertEqual(obj.d3['key1']['key11'].a, 1)
+        self.assertEqual(obj.d3['key1']['key12'].a, 2)
+        self.assertEqual(obj.d3['key2']['key21'].a, 3)
+        self.assertEqual(obj.d3['key2']['key22'].a, 4)
 
     def test_if_not_ref(self):
         """ make sure we can write a function as a selector to return expected type
         ex. Reference Object in OpenAPI 3.0 -> Some Object | Reference Object
         """
-        e = EObj({'e1': [{'a': 1}, {'bb': 2}]})
-        self.assertTrue(isinstance(e.e1[0], AObj))
-        self.assertEqual(e.e1[0].a, 1)
-        self.assertTrue(isinstance(e.e1[1], BObj))
-        self.assertEqual(e.e1[1].bb, 2)
+        obj = EObj({'e1': [{'a': 1}, {'bb': 2}]})
+        self.assertTrue(isinstance(obj.e1[0], AObj))
+        self.assertEqual(obj.e1[0].a, 1)
+        self.assertTrue(isinstance(obj.e1[1], BObj))
+        self.assertEqual(obj.e1[1].bb, 2)
 
         # the case for Reference Object | Callbacs Object
-        e = EObj({'e2': {'a': 1}})
-        self.assertTrue(isinstance(e.e2, AObj))
-        self.assertEqual(e.e2.a, 1)
-        e = EObj({
+        obj = EObj({'e2': {'a': 1}})
+        self.assertTrue(isinstance(obj.e2, AObj))
+        self.assertEqual(obj.e2.a, 1)
+        obj = EObj({
             'e2': {
                 'key1': {
                     'key11': {
@@ -304,63 +308,85 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        self.assertFalse(isinstance(e.e2, AObj))
-        self.assertEqual(e.e2['key1']['key11'].a, 1)
-        self.assertEqual(e.e2['key2']['key21'].a, 2)
+        self.assertFalse(isinstance(obj.e2, AObj))
+        self.assertEqual(obj.e2['key1']['key11'].a, 1)
+        self.assertEqual(obj.e2['key2']['key21'].a, 2)
 
         # func as child_builder
-        e = EObj({'e3': {'a': 1}})
-        self.assertTrue(isinstance(e.e3, AObj))
-        self.assertEqual(e.e3.a, 1)
+        obj = EObj({'e3': {'a': 1}})
+        self.assertTrue(isinstance(obj.e3, AObj))
+        self.assertEqual(obj.e3.a, 1)
         self.assertTrue(isinstance(EObj({'e3': {}}).e3, DObj))
 
         # funct with container
-        e = EObj({'e4': {'a': 1}})
-        self.assertTrue(isinstance(e.e4, AObj))
-        self.assertEqual(e.e4.a, 1)
-        e = EObj({'e4': {'key1': {'a': 1}, 'key2': {'a': 2}}})
-        self.assertEqual(e.e4['key1'].a, 1)
-        self.assertEqual(e.e4['key2'].a, 2)
+        obj = EObj({'e4': {'a': 1}})
+        self.assertTrue(isinstance(obj.e4, AObj))
+        self.assertEqual(obj.e4.a, 1)
+        obj = EObj({'e4': {'key1': {'a': 1}, 'key2': {'a': 2}}})
+        self.assertEqual(obj.e4['key1'].a, 1)
+        self.assertEqual(obj.e4['key2'].a, 2)
 
     def test_inheritance(self):
         """ inheritance
         """
         # both fields are created
-        f = FObj({'a': 1, 'b': 2, 'f1': 3})
-        self.assertEqual(f.a, 1)
-        self.assertEqual(f.b, 2)
-        self.assertEqual(f.f1, 3)
+        obj = FObj({'a': 1, 'b': 2, 'f1': 3})
+        self.assertEqual(obj.a, 1)
+        self.assertEqual(obj.b, 2)
+        self.assertEqual(obj.f1, 3)
 
     def test_compare(self):
         """ Base2Obj.compare
         """
         # when a field is different
-        a1 = AObj({'a': 1, 'b': 1})
-        a2 = AObj({'a': 2, 'b': 1})
-        self.assertEqual(a1.compare(a2), (False, 'a'))
+        obj_1 = AObj({'a': 1, 'b': 1})
+        obj_2 = AObj({'a': 2, 'b': 1})
+        self.assertEqual(obj_1.compare(obj_2), (False, 'a'))
 
         # child field, missing, or different
-        a1 = AObj({'b': 1, 'c': {'bb': 1}})
-        a2 = AObj({'b': 1})
+        obj_1 = AObj({'b': 1, 'c': {'bb': 1}})
+        obj_2 = AObj({'b': 1})
 
-        self.assertEqual(a1.compare(a2), (False, 'c'))
-        a3 = AObj({'b': 1, 'c': {'bb': 2}})
-        self.assertEqual(a1.compare(a3), (False, 'c/bb'))
+        self.assertEqual(obj_1.compare(obj_2), (False, 'c'))
+        obj_3 = AObj({'b': 1, 'c': {'bb': 2}})
+        self.assertEqual(obj_1.compare(obj_3), (False, 'c/bb'))
 
         # _Map
-        c1 = CObj({'cc': {'key1': {'a': 1, 'b': 1}, 'key2': {'a': 1, 'b': 2}}})
-        c2 = CObj({'cc': {'key1': {'a': 1, 'b': 1}, 'key2': {'a': 1, 'b': 3}}})
-        self.assertEqual(c1.compare(c2), (False, 'cc/key2/b'))
+        obj_1 = CObj({
+            'cc': {
+                'key1': {
+                    'a': 1,
+                    'b': 1
+                },
+                'key2': {
+                    'a': 1,
+                    'b': 2
+                }
+            }
+        })
+        obj_2 = CObj({
+            'cc': {
+                'key1': {
+                    'a': 1,
+                    'b': 1
+                },
+                'key2': {
+                    'a': 1,
+                    'b': 3
+                }
+            }
+        })
+        self.assertEqual(obj_1.compare(obj_2), (False, 'cc/key2/b'))
 
         # _List
-        c1 = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
-        c2 = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 3, 'b': 3}]})
-        self.assertEqual(c1.compare(c2), (False, 'ccc/1/a'))
-        self.assertEqual(c1.compare(c1), (True, ''))
-        self.assertEqual(c2.compare(c2), (True, ''))
+        obj_1 = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
+        obj_2 = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 3, 'b': 3}]})
+        self.assertEqual(obj_1.compare(obj_2), (False, 'ccc/1/a'))
+        self.assertEqual(obj_1.compare(obj_1), (True, ''))
+        self.assertEqual(obj_2.compare(obj_2), (True, ''))
 
         # _Map of _List
-        d1 = DObj({
+        obj_1 = DObj({
             'd1': {
                 'key1': [{
                     'b': 1
@@ -374,7 +400,7 @@ class Base2TestCase(unittest.TestCase):
                 }]
             }
         })
-        d2 = DObj({
+        obj_2 = DObj({
             'd1': {
                 'key1': [{
                     'b': 1
@@ -388,15 +414,15 @@ class Base2TestCase(unittest.TestCase):
                 }]
             }
         })
-        d3 = DObj({'d1': {'key1': [{'b': 1}, {'b': 2}]}})
-        self.assertEqual(d1.compare(d2), (False, 'd1/key1/1/b'))
-        self.assertEqual(d1.compare(d3), (False, 'd1/key2'))
-        self.assertEqual(d1.compare(d1), (True, ''))
-        self.assertEqual(d2.compare(d2), (True, ''))
-        self.assertEqual(d3.compare(d3), (True, ''))
+        obj_3 = DObj({'d1': {'key1': [{'b': 1}, {'b': 2}]}})
+        self.assertEqual(obj_1.compare(obj_2), (False, 'd1/key1/1/b'))
+        self.assertEqual(obj_1.compare(obj_3), (False, 'd1/key2'))
+        self.assertEqual(obj_1.compare(obj_1), (True, ''))
+        self.assertEqual(obj_2.compare(obj_2), (True, ''))
+        self.assertEqual(obj_3.compare(obj_3), (True, ''))
 
         # _List of _Map
-        d1 = DObj({
+        obj_1 = DObj({
             'd2': [{
                 'key1': {
                     'b': 1
@@ -413,7 +439,7 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        d2 = DObj({
+        obj_2 = DObj({
             'd2': [{
                 'key1': {
                     'b': 1
@@ -430,7 +456,7 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        d3 = DObj({
+        obj_3 = DObj({
             'd2': [{
                 'key1': {
                     'b': 1
@@ -444,14 +470,14 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        self.assertEqual(d1.compare(d2), (False, 'd2/1/key4/b'))
-        self.assertEqual(d1.compare(d3), (False, 'd2/0/key2'))
-        self.assertEqual(d1.compare(d1), (True, ''))
-        self.assertEqual(d2.compare(d2), (True, ''))
-        self.assertEqual(d3.compare(d3), (True, ''))
+        self.assertEqual(obj_1.compare(obj_2), (False, 'd2/1/key4/b'))
+        self.assertEqual(obj_1.compare(obj_3), (False, 'd2/0/key2'))
+        self.assertEqual(obj_1.compare(obj_1), (True, ''))
+        self.assertEqual(obj_2.compare(obj_2), (True, ''))
+        self.assertEqual(obj_3.compare(obj_3), (True, ''))
 
         # _Map of _Map
-        d1 = DObj({
+        obj_1 = DObj({
             'd3': {
                 'key1': {
                     'key11': {
@@ -471,7 +497,7 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        d2 = DObj({
+        obj_2 = DObj({
             'd3': {
                 'key1': {
                     'key11': {
@@ -491,7 +517,7 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        d3 = DObj({
+        obj_3 = DObj({
             'd3': {
                 'key1': {
                     'key11': {
@@ -508,58 +534,58 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        self.assertEqual(d1.compare(d2), (False, 'd3/key2/key22/b'))
-        self.assertEqual(d1.compare(d3), (False, 'd3/key2/key22'))
-        self.assertEqual(d1.compare(d1), (True, ''))
-        self.assertEqual(d2.compare(d2), (True, ''))
-        self.assertEqual(d3.compare(d3), (True, ''))
+        self.assertEqual(obj_1.compare(obj_2), (False, 'd3/key2/key22/b'))
+        self.assertEqual(obj_1.compare(obj_3), (False, 'd3/key2/key22'))
+        self.assertEqual(obj_1.compare(obj_1), (True, ''))
+        self.assertEqual(obj_2.compare(obj_2), (True, ''))
+        self.assertEqual(obj_3.compare(obj_3), (True, ''))
 
         # dict
-        a1 = AObj({'b': {'a': 1, 'b': 2}})
-        a2 = AObj({'b': {'a': 2, 'b': 2}})
-        a3 = AObj({'b': {'a': 1}})
-        self.assertEqual(a1.compare(a2), (False, 'b/a'))
-        self.assertEqual(a1.compare(a3), (False, 'b/b'))
-        self.assertEqual(a1.compare(a1), (True, ''))
-        self.assertEqual(a2.compare(a2), (True, ''))
-        self.assertEqual(a3.compare(a3), (True, ''))
+        obj_1 = AObj({'b': {'a': 1, 'b': 2}})
+        obj_2 = AObj({'b': {'a': 2, 'b': 2}})
+        obj_3 = AObj({'b': {'a': 1}})
+        self.assertEqual(obj_1.compare(obj_2), (False, 'b/a'))
+        self.assertEqual(obj_1.compare(obj_3), (False, 'b/b'))
+        self.assertEqual(obj_1.compare(obj_1), (True, ''))
+        self.assertEqual(obj_2.compare(obj_2), (True, ''))
+        self.assertEqual(obj_3.compare(obj_3), (True, ''))
 
         # list
-        a1 = AObj({'b': [1, 2, 3]})
-        a2 = AObj({'b': [1, 2, 4]})
-        self.assertEqual(a1.compare(a2), (False, 'b/2'))
-        self.assertEqual(a1.compare(a1), (True, ''))
-        self.assertEqual(a2.compare(a2), (True, ''))
+        obj_1 = AObj({'b': [1, 2, 3]})
+        obj_2 = AObj({'b': [1, 2, 4]})
+        self.assertEqual(obj_1.compare(obj_2), (False, 'b/2'))
+        self.assertEqual(obj_1.compare(obj_1), (True, ''))
+        self.assertEqual(obj_2.compare(obj_2), (True, ''))
 
     def test_attach_child(self):
         """ Base2Obj.attach_child
         """
-        a1 = AObj({})
-        a1.attach_child('c', BObj({'bb': 1}))
-        self.assertEqual(a1.c.bb, 1)
+        obj = AObj({})
+        obj.attach_child('c', BObj({'bb': 1}))
+        self.assertEqual(obj.c.bb, 1)
 
     def test_dump(self):
         """ [Base2Obj, _Map, _List].dump
         """
-        o = {'b': 1}
-        a = AObj(o)
-        self.assertEqual(a.dump(), o)
+        spec = {'b': 1}
+        obj = AObj(spec)
+        self.assertEqual(obj.dump(), spec)
 
-        o = {'b': 1, 'c': {'bb': 2}}
-        a = AObj(o)
-        self.assertEqual(a.dump(), o)
+        spec = {'b': 1, 'c': {'bb': 2}}
+        obj = AObj(spec)
+        self.assertEqual(obj.dump(), spec)
         # children first
-        a.attach_child('c', BObj({'bb': 3}))
-        self.assertEqual(a.dump(), {'b': 1, 'c': {'bb': 3}})
+        obj.attach_child('c', BObj({'bb': 3}))
+        self.assertEqual(obj.dump(), {'b': 1, 'c': {'bb': 3}})
 
         # _Map
-        o = {'cc': {'key1': {'b': 1}, 'key2': {'b': 2}}}
-        c = CObj(o)
-        self.assertEqual(c.dump(), o)
+        spec = {'cc': {'key1': {'b': 1}, 'key2': {'b': 2}}}
+        obj = CObj(spec)
+        self.assertEqual(obj.dump(), spec)
         # modify map
-        c.cc['key3'] = AObj({'b': 3})
+        obj.cc['key3'] = AObj({'b': 3})
         self.assertEqual(
-            c.dump(),
+            obj.dump(),
             {'cc': {
                 'key1': {
                     'b': 1
@@ -572,17 +598,17 @@ class Base2TestCase(unittest.TestCase):
                 }
             }})
         # replace child
-        c.attach_child('cc', map_(AObj)({'key3': {'b': 1}}))
-        self.assertEqual(c.dump(), {'cc': {'key3': {'b': 1}}})
+        obj.attach_child('cc', map_(AObj)({'key3': {'b': 1}}))
+        self.assertEqual(obj.dump(), {'cc': {'key3': {'b': 1}}})
 
         # _List
-        o = {'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]}
-        c = CObj(o)
-        self.assertEqual(c.dump(), o)
+        spec = {'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]}
+        obj = CObj(spec)
+        self.assertEqual(obj.dump(), spec)
         # modify list
-        c.ccc.append(AObj({'b': 4}))
+        obj.ccc.append(AObj({'b': 4}))
         self.assertEqual(
-            c.dump(), {'ccc': [{
+            obj.dump(), {'ccc': [{
                 'a': 1,
                 'b': 2
             }, {
@@ -592,36 +618,36 @@ class Base2TestCase(unittest.TestCase):
                 'b': 4
             }]})
         # replace child
-        c.attach_child('ccc', list_(AObj)([{'b': 1}, {'b': 4}]))
-        self.assertEqual(c.dump(), {'ccc': [{'b': 1}, {'b': 4}]})
+        obj.attach_child('ccc', list_(AObj)([{'b': 1}, {'b': 4}]))
+        self.assertEqual(obj.dump(), {'ccc': [{'b': 1}, {'b': 4}]})
 
     def test_resolve(self):
         """ [Base2Obj, _Map, _List].resolve
         """
         # Base2Obj
-        a = AObj({'a': 1, 'c': {'bb': 2}})
-        self.assertEqual(a.resolve('a'), 1)
-        c = a.resolve('c')
-        self.assertTrue(isinstance(c, BObj))
-        self.assertEqual(c.resolve('bb'), 2)
-        self.assertEqual(a.resolve(['c', 'bb']), 2)
+        obj = AObj({'a': 1, 'c': {'bb': 2}})
+        self.assertEqual(obj.resolve('a'), 1)
+        resolved = obj.resolve('c')
+        self.assertTrue(isinstance(resolved, BObj))
+        self.assertEqual(resolved.resolve('bb'), 2)
+        self.assertEqual(obj.resolve(['c', 'bb']), 2)
 
         # _Map
-        c = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
-        self.assertEqual(c.resolve(['cc', 'key2', 'b']), 2)
-        m = c.resolve('cc')
-        self.assertTrue(issubclass(m.__class__, _Map))
-        self.assertEqual(m.resolve(['key1', 'a']), 1)
+        obj = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
+        self.assertEqual(obj.resolve(['cc', 'key2', 'b']), 2)
+        resolved = obj.resolve('cc')
+        self.assertTrue(issubclass(resolved.__class__, _Map))
+        self.assertEqual(resolved.resolve(['key1', 'a']), 1)
 
         # _List
-        c = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
-        self.assertEqual(c.resolve(['ccc', '1', 'a']), 2)
-        l = c.resolve('ccc')
-        self.assertTrue(issubclass(l.__class__, _List))
-        self.assertEqual(l.resolve(['0', 'b']), 2)
+        obj = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
+        self.assertEqual(obj.resolve(['ccc', '1', 'a']), 2)
+        resolved = obj.resolve('ccc')
+        self.assertTrue(issubclass(resolved.__class__, _List))
+        self.assertEqual(resolved.resolve(['0', 'b']), 2)
 
         # _Map of _List
-        d = DObj({
+        obj = DObj({
             'd1': {
                 'key1': [{
                     'b': 1
@@ -635,10 +661,10 @@ class Base2TestCase(unittest.TestCase):
                 }]
             }
         })
-        self.assertEqual(d.resolve(['d1', 'key2', '1', 'b']), 4)
+        self.assertEqual(obj.resolve(['d1', 'key2', '1', 'b']), 4)
 
         # _List of _Map
-        d = DObj({
+        obj = DObj({
             'd2': [{
                 'key1': {
                     'b': 1
@@ -655,10 +681,10 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        self.assertEqual(d.resolve(['d2', '1', 'key4', 'b']), 4)
+        self.assertEqual(obj.resolve(['d2', '1', 'key4', 'b']), 4)
 
         # _Map of _Map
-        d = DObj({
+        obj = DObj({
             'd3': {
                 'key1': {
                     'key11': {
@@ -678,76 +704,77 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        self.assertEqual(d.resolve(['d3', 'key2', 'key21', 'b']), 3)
+        self.assertEqual(obj.resolve(['d3', 'key2', 'key21', 'b']), 3)
 
         # dict
-        a = AObj({'b': {'a': 1, 'b': 2}})
-        self.assertEqual(a.resolve(['b', 'a']), 1)
+        obj = AObj({'b': {'a': 1, 'b': 2}})
+        self.assertEqual(obj.resolve(['b', 'a']), 1)
 
         # list
-        a = AObj({'b': [1, 2, 3]})
-        self.assertEqual(a.resolve(['b', '0']), 1)
+        obj = AObj({'b': [1, 2, 3]})
+        self.assertEqual(obj.resolve(['b', '0']), 1)
 
     def test_merge_children(self):
         """ Base2Obj.merge_children
         """
-        g1 = GObj({'a': {'bb': 'a'}})
-        self.assertEqual(list(g1._children_.keys()), ['a'])
-        g2 = GObj({'b': {'bb': 'b'}})
-        g1.merge_children(g2)
-        self.assertEqual(sorted(list(g1._children_.keys())), sorted(['a', 'b']))
-        self.assertEqual(list(g2._children_.keys()), ['b'])
+        obj_1 = GObj({'a': {'bb': 'a'}})
+        self.assertEqual(list(obj_1.get_children().keys()), ['a'])
+        obj_2 = GObj({'b': {'bb': 'b'}})
+        obj_1.merge_children(obj_2)
+        self.assertEqual(
+            sorted(list(obj_1.get_children().keys())), sorted(['a', 'b']))
+        self.assertEqual(list(obj_2.get_children().keys()), ['b'])
 
     def test_key_and_name_different(self):
         """ property name of key to underlying dict can be different
         """
-        h = HObj({'a': 1, 'b': 2})
-        self.assertEqual(h.a, 2)    # should be the value of 'b'
+        obj = HObj({'a': 1, 'b': 2})
+        self.assertEqual(obj.a, 2)  # should be the value of 'b'
 
     def test_inherit_overwrite_fields(self):
         """ when inheriting, child's field would overwrite parent's
         """
-        i = IObj({'a': 1, 'cc': 100})
-        self.assertEqual(i.a, 100)
+        obj = IObj({'a': 1, 'cc': 100})
+        self.assertEqual(obj.a, 100)
 
     def test_field_restricted(self):
         """ when restricted, should not existed in key
         """
-        j = JObj({'a': 1, 'b': 1})
-        self.assertRaises(Exception, getattr, j, 'a')
-        self.assertRaises(Exception, getattr, j, 'b')
-        j = JObj({})
+        obj = JObj({'a': 1, 'b': 1})
+        self.assertRaises(Exception, getattr, obj, 'a')
+        self.assertRaises(Exception, getattr, obj, 'b')
+        obj = JObj({})
         # could access 'b' because of default
-        self.assertEqual(j.b, 'hi')
+        self.assertEqual(obj.b, 'hi')
 
     def test_recursive_field(self):
         """ field reference to self
         """
-        k = KObj({'k1': {'k1': {'k1': {'a': 2}}}, 'a': 1})
-        self.assertTrue(isinstance(k, KObj))
-        self.assertEqual(k.a, 1)
-        self.assertTrue(isinstance(k.k1, KObj))
-        self.assertTrue(isinstance(k.k1.k1, KObj))
-        self.assertEqual(k.k1.k1.k1.a, 2)
+        obj = KObj({'k1': {'k1': {'k1': {'a': 2}}}, 'a': 1})
+        self.assertTrue(isinstance(obj, KObj))
+        self.assertEqual(obj.a, 1)
+        self.assertTrue(isinstance(obj.k1, KObj))
+        self.assertTrue(isinstance(obj.k1.k1, KObj))
+        self.assertEqual(obj.k1.k1.k1.a, 2)
 
     def test_path(self):
         """ validate _path_ property
         """
         # child field, missing, or different
-        a = AObj({'c': {'bb': 1}})
-        self.assertEqual(a._path_, None)
-        self.assertEqual(a.c._path_, 'c')
+        obj = AObj({'c': {'bb': 1}})
+        self.assertEqual(obj.get_path(), None)
+        self.assertEqual(obj.c.get_path(), 'c')
 
         # _Map
-        c = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
-        self.assertEqual(c.cc['key1']._path_, 'cc/key1')
+        obj = CObj({'cc': {'key1': {'a': 1}, 'key2': {'b': 2}}})
+        self.assertEqual(obj.cc['key1'].get_path(), 'cc/key1')
 
         # _List
-        c = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
-        self.assertEqual(c.ccc[0]._path_, 'ccc/0')
+        obj = CObj({'ccc': [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}]})
+        self.assertEqual(obj.ccc[0].get_path(), 'ccc/0')
 
         # _Map of _List
-        d = DObj({
+        obj = DObj({
             'd1': {
                 'key1': [{
                     'b': 1
@@ -761,10 +788,10 @@ class Base2TestCase(unittest.TestCase):
                 }]
             }
         })
-        self.assertEqual(d.d1['key1'][0]._path_, 'd1/key1/0')
+        self.assertEqual(obj.d1['key1'][0].get_path(), 'd1/key1/0')
 
         # _List of _Map
-        d = DObj({
+        obj = DObj({
             'd2': [{
                 'key1': {
                     'b': 1
@@ -781,10 +808,10 @@ class Base2TestCase(unittest.TestCase):
                 }
             }]
         })
-        self.assertEqual(d.d2[0]['key1']._path_, 'd2/0/key1')
+        self.assertEqual(obj.d2[0]['key1'].get_path(), 'd2/0/key1')
 
         # _Map of _Map
-        d = DObj({
+        obj = DObj({
             'd3': {
                 'key1': {
                     'key11': {
@@ -804,22 +831,22 @@ class Base2TestCase(unittest.TestCase):
                 }
             }
         })
-        self.assertEqual(d.d3['key1']['key11']._path_, 'd3/key1/key11')
+        self.assertEqual(obj.d3['key1']['key11'].get_path(), 'd3/key1/key11')
 
     def test_renamed(self):
         """ make sure renamed works
         """
-        a = AObj({'a': 101})
-        self.assertEqual(a.a, 101)
-        self.assertEqual(a.d3_renamed, 101)
+        obj = AObj({'a': 101})
+        self.assertEqual(obj.a, 101)
+        self.assertEqual(obj.d3_renamed, 101)
 
         # should inherit __renamed__
-        f = FObj({'a': 102})
-        self.assertEqual(f.a, 102)
-        self.assertEqual(f.d3_renamed, 102)
+        obj = FObj({'a': 102})
+        self.assertEqual(obj.a, 102)
+        self.assertEqual(obj.d3_renamed, 102)
 
     def test_parent(self):
-        c = CObj({
+        obj = CObj({
             'cc': {
                 'key1': {
                     'a': 1
@@ -834,21 +861,21 @@ class Base2TestCase(unittest.TestCase):
                 'a': 2
             }]
         })
-        self.assertEqual(id(c.cc._parent_), id(c))
-        self.assertEqual(id(c.ccc._parent_), id(c))
+        self.assertEqual(id(obj.cc.get_parent()), id(obj))
+        self.assertEqual(id(obj.ccc.get_parent()), id(obj))
 
-        map_c = c.cc
-        self.assertEqual(id(map_c['key1']._parent_), id(map_c))
-        self.assertEqual(id(map_c['key2']._parent_), id(map_c))
+        map_c = obj.cc
+        self.assertEqual(id(map_c['key1'].get_parent()), id(map_c))
+        self.assertEqual(id(map_c['key2'].get_parent()), id(map_c))
 
-        list_c = c.ccc
-        self.assertEqual(id(list_c[0]._parent_), id(list_c))
-        self.assertEqual(id(list_c[1]._parent_), id(list_c))
+        list_c = obj.ccc
+        self.assertEqual(id(list_c[0].get_parent()), id(list_c))
+        self.assertEqual(id(list_c[1].get_parent()), id(list_c))
 
-        a = c.cc['key1']
-        b = BObj({'bb': 1})
-        a.attach_child('c', b)
-        self.assertEqual(id(b._parent_), id(a))
+        obj_a = obj.cc['key1']
+        obj_b = BObj({'bb': 1})
+        obj_a.attach_child('c', obj_b)
+        self.assertEqual(id(obj_b.get_parent()), id(obj_a))
 
     def test_override_children(self):
         spec = {
@@ -875,83 +902,83 @@ class Base2TestCase(unittest.TestCase):
                 'a': 2
             }]
         }
-        a1 = AObj(spec['cc']['key1'])
-        a2 = AObj(spec['cc']['key2'])
-        a3 = AObj(spec['ccc'][0])
-        a4 = AObj(spec['ccc'][1])
-        b = BObj(spec['cc']['key4']['c'])
+        obj_a1 = AObj(spec['cc']['key1'])
+        obj_a2 = AObj(spec['cc']['key2'])
+        obj_a3 = AObj(spec['ccc'][0])
+        obj_a4 = AObj(spec['ccc'][1])
+        obj_b = BObj(spec['cc']['key4']['c'])
 
-        c = CObj(
+        obj = CObj(
             spec,
             override={
-                'cc/key1': a1,
-                'cc/key2': a2,
-                'cc/key4/c': b,
-                'ccc/0': a3,
-                'ccc/1': a4
+                'cc/key1': obj_a1,
+                'cc/key2': obj_a2,
+                'cc/key4/c': obj_b,
+                'ccc/0': obj_a3,
+                'ccc/1': obj_a4
             })
 
         # make sure we didn't create new children
-        self.assertEqual(id(c.cc['key1']), id(a1))
-        self.assertEqual(id(c.cc['key2']), id(a2))
-        self.assertEqual(id(c.cc['key4'].c), id(b))
-        self.assertEqual(id(c.ccc[0]), id(a3))
-        self.assertEqual(id(c.ccc[1]), id(a4))
+        self.assertEqual(id(obj.cc['key1']), id(obj_a1))
+        self.assertEqual(id(obj.cc['key2']), id(obj_a2))
+        self.assertEqual(id(obj.cc['key4'].c), id(obj_b))
+        self.assertEqual(id(obj.ccc[0]), id(obj_a3))
+        self.assertEqual(id(obj.ccc[1]), id(obj_a4))
 
     def test_readonly(self):
-        a = AObj({'d': 101})
+        obj = AObj({'d': 101})
 
         # allow to overwrite
-        a.d = 102
-        self.assertEqual(a.d, 102)
+        obj.d = 102
+        self.assertEqual(obj.d, 102)
 
         # allow to overwrite via 'rename'
-        a.d4_renamed = 103
-        self.assertEqual(a.d4_renamed, 103)
-        self.assertEqual(a.d, 103)
+        obj.d4_renamed = 103
+        self.assertEqual(obj.d4_renamed, 103)
+        self.assertEqual(obj.d, 103)
 
         # deny to overwrite via 'rename' when not readonly
         def _test():
-            a.d3_renamed = 105
+            obj.d3_renamed = 105
 
         self.assertRaises(Exception, _test)
 
     def test_eq(self):
-        k = KObj({'b': ['a', 'b'], 'c': {'a': 'ca', 'b': 'cb'}})
+        obj = KObj({'b': ['a', 'b'], 'c': {'a': 'ca', 'b': 'cb'}})
 
-        self.assertEqual(k.b, ['a', 'b'])
-        self.assertEqual(k.c, {'a': 'ca', 'b': 'cb'})
-        self.assertNotEqual(k.b, ['a', 'b', 'c'])
-        self.assertNotEqual(k.c, {'a': 'ca', 'b': 'cb', 'c': 'cc'})
+        self.assertEqual(obj.b, ['a', 'b'])
+        self.assertEqual(obj.c, {'a': 'ca', 'b': 'cb'})
+        self.assertNotEqual(obj.b, ['a', 'b', 'c'])
+        self.assertNotEqual(obj.c, {'a': 'ca', 'b': 'cb', 'c': 'cc'})
 
     def test_map_get(self):
-        k = KObj({'c': {'a': 'ca', 'b': 'cb'}})
-        self.assertEqual(k.c.get('a'), 'ca')
-        self.assertEqual(k.c.get('c'), None)
-        self.assertEqual(k.c.get('c', default='default'), 'default')
+        obj = KObj({'c': {'a': 'ca', 'b': 'cb'}})
+        self.assertEqual(obj.c.get('a'), 'ca')
+        self.assertEqual(obj.c.get('c'), None)
+        self.assertEqual(obj.c.get('c', default='default'), 'default')
 
     def test_map_len(self):
-        k = KObj({'c': {'a': 'ca', 'b': 'cb'}})
-        self.assertEqual(len(k.c), 2)
+        obj = KObj({'c': {'a': 'ca', 'b': 'cb'}})
+        self.assertEqual(len(obj.c), 2)
 
     def test_get_attrs(self):
         """ make sure Base2Obj's get_attrs works
         """
-        b = BObj({})
+        obj = BObj({})
 
-        self.assertEqual(None, b.get_attrs('test'))
+        self.assertEqual(None, obj.get_attrs('test'))
 
-        attr1 = b.get_attrs('test', BGroup)
-        self.assertTrue(isinstance(attr1, BGroup))
+        attr_1 = obj.get_attrs('test', BGroup)
+        self.assertTrue(isinstance(attr_1, BGroup))
 
-        attr2 = b.get_attrs('test', BGroup)
-        self.assertEqual(id(attr1), id(attr2))
+        attr_2 = obj.get_attrs('test', BGroup)
+        self.assertEqual(id(attr_1), id(attr_2))
 
-        self.assertNotEqual(None, b.get_attrs('test'))
+        self.assertNotEqual(None, obj.get_attrs('test'))
 
     def test_dump_empty(self):
-        a = AObj({'a': 0, 'b': ''})
+        obj = AObj({'a': 0, 'b': ''})
 
-        self.assertTrue('a' in a.dump())
-        self.assertTrue('b' in a.dump())
-        self.assertFalse('c' in a.dump())
+        self.assertTrue('a' in obj.dump())
+        self.assertTrue('b' in obj.dump())
+        self.assertFalse('c' in obj.dump())

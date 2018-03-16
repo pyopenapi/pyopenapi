@@ -1,15 +1,18 @@
-from pyopenapi.migration.store import SpecObjStore
-from pyopenapi.migration.versions.v2_0.objects import Swagger, Info
-from pyopenapi.migration.versions.v3_0_0.objects import OpenApi
-from ..utils import get_test_file
+# -*- coding: utf-8 -*-
+# pylint: disable=no-member
+
 import unittest
 import json
+
+from pyopenapi.migration.store import SpecObjStore
+from pyopenapi.migration.versions.v2_0.objects import Swagger, Info
+from ..utils import get_test_file
 
 
 class SpecObjStoreTestCase(unittest.TestCase):
     """ test case for SpecObjCache """
 
-    def test_cache_get_and_set_for_same_version(self):
+    def test_cache_on_same_version(self):
         """ get and set for the same version
         """
 
@@ -116,124 +119,124 @@ class SpecObjStoreTestCase(unittest.TestCase):
         # only '2.0' is available
         obj_2_0 = Swagger({})
         cache.set(obj_2_0, url, '#', '2.0')
-        obj, j, v = cache.get_until(url, '#', '2.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0')
         self.assertEqual(id(obj), id(obj_2_0))
-        self.assertEqual(j, '#')
-        self.assertEqual(v, '2.0')
+        self.assertEqual(new_ref, '#')
+        self.assertEqual(version, '2.0')
 
         # '3.0' is available now
         obj_3_0 = Swagger({})
         cache.set(obj_3_0, url, '#/a', '3.0')
-        obj, j, v = cache.get_until(url, '#', '2.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0')
         self.assertEqual(id(obj), id(obj_3_0))
-        self.assertEqual(j, '#/a')
-        self.assertEqual(v, '3.0')
+        self.assertEqual(new_ref, '#/a')
+        self.assertEqual(version, '3.0')
 
         # '4.0' is available now
         obj_4_0 = Swagger({})
         cache.set(obj_4_0, url, '#/b', '4.0')
-        obj, j, v = cache.get_until(url, '#', '2.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0')
         self.assertEqual(id(obj), id(obj_4_0))
-        self.assertEqual(j, '#/b')
-        self.assertEqual(v, '4.0')
+        self.assertEqual(new_ref, '#/b')
+        self.assertEqual(version, '4.0')
 
         # '5.0' is available now
         obj_5_0 = Swagger({})
         cache.set(obj_5_0, url, '#/c', '5.0')
-        obj, j, v = cache.get_until(url, '#', '2.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0')
         self.assertEqual(id(obj), id(obj_5_0))
-        self.assertEqual(j, '#/c')
-        self.assertEqual(v, '5.0')
+        self.assertEqual(new_ref, '#/c')
+        self.assertEqual(version, '5.0')
 
         # until 2.0
-        obj, j, v = cache.get_until(url, '#', '2.0', until='2.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0', until='2.0')
         self.assertEqual(id(obj), id(obj_2_0))
-        self.assertEqual(j, '#')
-        self.assertEqual(v, '2.0')
+        self.assertEqual(new_ref, '#')
+        self.assertEqual(version, '2.0')
         # until 3.0
-        obj, j, v = cache.get_until(url, '#', '2.0', until='3.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0', until='3.0')
         self.assertEqual(id(obj), id(obj_3_0))
-        self.assertEqual(j, '#/a')
-        self.assertEqual(v, '3.0')
+        self.assertEqual(new_ref, '#/a')
+        self.assertEqual(version, '3.0')
         # until 4.0
-        obj, j, v = cache.get_until(url, '#', '2.0', until='4.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0', until='4.0')
         self.assertEqual(id(obj), id(obj_4_0))
-        self.assertEqual(j, '#/b')
-        self.assertEqual(v, '4.0')
+        self.assertEqual(new_ref, '#/b')
+        self.assertEqual(version, '4.0')
         # until 5.0
-        obj, j, v = cache.get_until(url, '#', '2.0', until='5.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0', until='5.0')
         self.assertEqual(id(obj), id(obj_5_0))
-        self.assertEqual(j, '#/c')
-        self.assertEqual(v, '5.0')
+        self.assertEqual(new_ref, '#/c')
+        self.assertEqual(version, '5.0')
         # until 6.0
-        obj, j, v = cache.get_until(url, '#', '2.0', until='6.0')
+        obj, new_ref, version = cache.get_until(url, '#', '2.0', until='6.0')
         self.assertEqual(id(obj), id(obj_5_0))
-        self.assertEqual(j, '#/c')
-        self.assertEqual(v, '5.0')
+        self.assertEqual(new_ref, '#/c')
+        self.assertEqual(version, '5.0')
 
     def test_route_invalid_version(self):
         """ make sure only supported version could
         be used
         """
         url = 'http://localhost/some/path'
-        rm = SpecObjStore()
-        self.assertRaises(Exception, rm.update_routes, url, '1.1', {})
+        store = SpecObjStore()
+        self.assertRaises(Exception, store.update_routes, url, '1.1', {})
 
         # 'to' version not in route
-        self.assertRaises(Exception, rm.relocate, url, '#/some/jp', '2.0',
+        self.assertRaises(Exception, store.relocate, url, '#/some/jp', '2.0',
                           '2.1')
 
     def test_route_empty_route(self):
         """ empty route should return original JSON pointer
         """
         url = 'http://localhost/some/path'
-        rm = SpecObjStore()
+        store = SpecObjStore()
 
-        rm.update_routes(url, '3.0.0', {})
+        store.update_routes(url, '3.0.0', {})
         self.assertEqual(
-            rm.relocate(url, '#/some/jp', '1.2', '3.0.0'), '#/some/jp')
+            store.relocate(url, '#/some/jp', '1.2', '3.0.0'), '#/some/jp')
 
     def test_route_fake_route(self):
         """ make sure patching with route from
         older spec to newer spec works
         """
         url = 'http://localhost/some/path'
-        rm = SpecObjStore()
+        store = SpecObjStore()
 
-        rm.update_routes(url, '3.0.0', {})
+        store.update_routes(url, '3.0.0', {})
         self.assertEqual(
-            rm.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
+            store.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
             '#/some/json/pointer')
 
         # the result of multiple calls to 'update' could be accumulated
-        rm.update_routes(url, '3.0.0', {'#/some': '#/some3'})
+        store.update_routes(url, '3.0.0', {'#/some': '#/some3'})
         self.assertEqual(
-            rm.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
+            store.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
             '#/some3/json/pointer')
 
         # longer JSON pointer would be picked
-        rm.update_routes(url, '3.0.0', {'#/some/json': '#/some3/json3'})
+        store.update_routes(url, '3.0.0', {'#/some/json': '#/some3/json3'})
         self.assertEqual(
-            rm.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
+            store.relocate(url, '#/some/json/pointer', '1.2', '3.0.0'),
             '#/some3/json3/pointer')
 
     def test_route_nested_route(self):
         """ make sure nested route works
         """
         url = 'http://localhost/some/path'
-        rm = SpecObjStore()
+        store = SpecObjStore()
 
-        rm.update_routes(
+        store.update_routes(
             url,
             '3.0.0',
             {
                 '#': {
                     'some/path': {
-        # relative, just replace the last part
+                        # relative, just replace the last part
                         'to/another/one': 'another2/two'
                     },
 
-        # real example from 3.0.0
+                    # real example from 3.0.0
                     'parameters': {
                         '': '#/components/parameters',
                         'body_1': '#/components/requestBodies/body_1'
@@ -247,14 +250,14 @@ class SpecObjStoreTestCase(unittest.TestCase):
             })
 
         self.assertEqual(
-            rm.relocate(url, '#/some/path/to/another/one/test', '2.0', '3.0.0'),
-            '#/some/path/another2/two/test')
+            store.relocate(url, '#/some/path/to/another/one/test', '2.0',
+                           '3.0.0'), '#/some/path/another2/two/test')
         self.assertEqual(
-            rm.relocate(url, '#/parameters', '2.0', '3.0.0'),
+            store.relocate(url, '#/parameters', '2.0', '3.0.0'),
             '#/components/parameters')
         self.assertEqual(
-            rm.relocate(url, '#/parameters/body_1', '2.0', '3.0.0'),
+            store.relocate(url, '#/parameters/body_1', '2.0', '3.0.0'),
             '#/components/requestBodies/body_1')
         self.assertEqual(
-            rm.relocate(url, '#/paths/~1p3/parameters/3', '2.0', '3.0.0'),
+            store.relocate(url, '#/paths/~1p3/parameters/3', '2.0', '3.0.0'),
             '#/paths/~1p3/x-pyopenapi_internal_request_body')

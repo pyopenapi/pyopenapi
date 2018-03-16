@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
+import logging
+import os
 from collections import OrderedDict
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion  # pylint: disable=no-name-in-module,import-error
+
+import six
+
 from .. import utils, consts
 from .spec import _Base
-import logging
-import six
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -82,19 +86,19 @@ class SpecObjStore(object):
         jps = [(spec_version, jp)]
         from_ = spec_version
         src = jp
-        for v in self.__migratable_spec_versions[
+        for version in self.__migratable_spec_versions[
                 self.__migratable_spec_versions.index(spec_version) + 1:
                 self.__migratable_spec_versions.index(until) + 1
                 if until else len(self.__migratable_spec_versions)]:
-            src = self.relocate(url, src, from_, to_spec=v)
-            from_ = v
-            jps.append((v, src))
+            src = self.relocate(url, src, from_, to_spec=version)
+            from_ = version
+            jps.append((version, src))
 
         # seeking for cached spec objects from newer to older
-        for v, j in reversed(jps):
-            obj = self.get(url, j, v)
+        for version, tmp_jp in reversed(jps):
+            obj = self.get(url, tmp_jp, version)
             if obj:
-                return obj, j, v
+                return obj, tmp_jp, version
 
         return None, None, None
 
@@ -108,8 +112,8 @@ class SpecObjStore(object):
             self.__routes.setdefault(
                 url,
                 OrderedDict([
-            # there would be no $ref relocation from 1.2 to 2.0,
-            # reason: there is no 'JSON pointer' concept in 1.2
+                    # there would be no $ref relocation from 1.2 to 2.0,
+                    # reason: there is no 'JSON pointer' concept in 1.2
                     (v, {}) for v in self.__migratable_spec_versions
                 ]))
 
@@ -128,50 +132,49 @@ class SpecObjStore(object):
         remain_jp = jp
         while True:
             patch_from = None
-            for f, t in six.iteritems(current_routes):
-                # find the longest prefix in f(rom)
-                if not remain_jp.startswith(f):
+            for from_, to_ in six.iteritems(current_routes):
+                # find the longest prefix in from_
+                if not remain_jp.startswith(from_):
                     continue
-                if not patch_from or len(f) > len(patch_from):
-                    patch_from, patch_to = f, t
+                if not patch_from or len(from_) > len(patch_from):
+                    patch_from, patch_to = from_, to_
 
-            if patch_to:
-                if isinstance(patch_to, dict):
-                    # nested route map
-                    current_routes, patch_to = patch_to, None
-                    fixed_prefix += ('/' if fixed_prefix else '') + patch_from
-                    remain_jp = remain_jp[len(patch_from):]
-                    remain_jp = remain_jp[1:] if remain_jp.startswith(
-                        '/') else remain_jp
-                    continue
-                elif isinstance(patch_to, six.string_types):
-                    break
-                else:
-                    raise Exception(
-                        'unexpected JSON pointer patch type: {}:{}'.format(
-                            str(type(patch_to)), patch_to))
-            else:
+            if not patch_to:
                 break
 
-        if patch_to:
-            remain = jp[len(fixed_prefix + patch_from) + 1:]    # +1 for '/'
-            new_jp = None
-            # let's patch the JSON pointer
-            if patch_to.startswith('#'):
-                # an absolute JSON point
-                new_jp = patch_to
-            else:
-                # a relavie path case, need to compose
-                # a qualified JSON pointer
-                new_jp = fixed_prefix + '/' + patch_to
+            if isinstance(patch_to, dict):
+                # nested route map
+                current_routes, patch_to = patch_to, None
+                fixed_prefix += ('/' if fixed_prefix else '') + patch_from
+                remain_jp = remain_jp[len(patch_from):]
+                remain_jp = remain_jp[1:] if remain_jp.startswith(
+                    '/') else remain_jp
+                continue
+            elif isinstance(patch_to, six.string_types):
+                break
 
-            if remain:
-                new_jp += ('' if new_jp.endswith('/') or remain.startswith('/')
-                           else '/') + remain
-            return new_jp
+            raise Exception('unexpected JSON pointer patch type: {}:{}'.format(
+                str(type(patch_to)), patch_to))
 
-        # there is no need for relocation
-        return jp
+        if not patch_to:
+            # there is no need for relocation
+            return jp
+
+        new_jp = None
+        # let's patch the JSON pointer
+        if patch_to.startswith('#'):
+            # an absolute JSON point
+            new_jp = patch_to
+        else:
+            # a relavie path case, need to compose
+            # a qualified JSON pointer
+            new_jp = fixed_prefix + '/' + patch_to
+
+        remain = jp[len(fixed_prefix + patch_from) + 1:]  # +1 for '/'
+        if remain:
+            new_jp += ('' if new_jp.endswith('/') or remain.startswith('/') else
+                       '/') + remain
+        return new_jp
 
     def relocate(self, url, jp, from_spec, to_spec=None):
         """ $ref relocation
@@ -187,9 +190,9 @@ class SpecObjStore(object):
             return jp
 
         to_spec = to_spec or consts.DEFAULT_OPENAPI_SPEC_VERSION
-        routes = self.__routes[url]
+        url_routes = self.__routes[url]
 
-        if to_spec not in routes:
+        if to_spec not in url_routes:
             raise Exception(
                 'unsupported target spec version when patching $ref: {}'.format(
                     to_spec))
@@ -197,14 +200,14 @@ class SpecObjStore(object):
         from_spec = StrictVersion(from_spec)
         to_spec = StrictVersion(to_spec)
         cur = jp
-        for version, r in six.iteritems(routes):
+        for version, version_routes in six.iteritems(url_routes):
             version = StrictVersion(version)
             if version <= from_spec:
                 continue
             if version > to_spec:
                 break
 
-            cur = SpecObjStore._patch_jp(cur, r)
+            cur = SpecObjStore._patch_jp(cur, version_routes)
 
         return cur
 

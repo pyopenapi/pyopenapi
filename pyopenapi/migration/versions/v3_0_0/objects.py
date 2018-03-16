@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
-from ...spec import Base2, field, rename, child, list_, map_
 import six
 
+from ...spec import Base2, rename, child, list_, map_
 
+
+# pylint: disable=invalid-name
 class Base2_v3_0_0(Base2):
     __swagger_version__ = '3.0.0'
 
@@ -49,7 +53,7 @@ def is_str_or_int(spec, path, override):
         raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types + six.integer_types):
         return spec
-    raise Exception('should be a string or int, not {}'.format(
+    raise Exception('should be a string or int, not {} in {}'.format(
         str(type(spec)), path))
 
 
@@ -476,8 +480,8 @@ class PathItem(Base2_v3_0_0):
         'servers': dict(child_builder=list_(Server)),
         'parameters': dict(child_builder=list_(ParameterOrReference)),
 
-    # a cached place for body parameter under PathItem object
-    # in Swager 2.0 when migration
+        # a cached place for body parameter under PathItem object
+        # in Swager 2.0 when migration
         'x-pyopenapi_internal_request_body': dict(child_builder=RequestBody),
     }
 

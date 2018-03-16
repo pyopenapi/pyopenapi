@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
+import six
+
 from ....scan import Dispatcher
 from ..objects import (
     Operation,
     MapOfResponseOrReference,
 )
-import six
 
 
 class YamlFixer(object):
@@ -13,16 +16,18 @@ class YamlFixer(object):
     class Disp(Dispatcher):
         pass
 
+    # pylint: disable=no-self-use
     @Disp.register([Operation])
     def _op(self, _, obj):
         """ convert status code in Responses from int to string
         """
-        if obj.responses == None: return
+        if obj.responses is None:
+            return
 
-        responses = MapOfResponseOrReference({}, obj.responses._path_)
-        for k, v in six.iteritems(obj.responses):
+        responses = MapOfResponseOrReference({}, obj.responses.get_path())
+        for k, resp in six.iteritems(obj.responses):
             if isinstance(k, six.integer_types):
-                responses[str(k)] = v
+                responses[str(k)] = resp
             else:
-                responses[k] = v
+                responses[k] = resp
         obj.attach_child('responses', responses)

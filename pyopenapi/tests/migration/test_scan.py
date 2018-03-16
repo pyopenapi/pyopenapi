@@ -1,4 +1,8 @@
-from pyopenapi.migration.scan import Scanner, Scanner2, Dispatcher
+# -*- coding: utf-8 -*-
+import unittest
+import weakref
+
+from pyopenapi.migration.scan import Scanner, Dispatcher, scan
 from pyopenapi.migration.versions.v1_2.objects import (
     ApiDeclaration, Authorization, Operation, ResponseMessage, Parameter)
 from pyopenapi.migration.versions.v3_0_0.objects import (
@@ -6,8 +10,6 @@ from pyopenapi.migration.versions.v3_0_0.objects import (
     Parameter as Parameter3,
 )
 from ..utils import get_test_data_folder, SampleApp
-import unittest
-import weakref
 
 
 class CountObject(object):
@@ -51,14 +53,17 @@ class PathRecord(object):
         self.response_message = []
         self.parameter = []
 
+    # pylint: disable=unused-argument
     @Disp.register([ApiDeclaration])
     def _api_declaration(self, path, obj, _):
         self.api_declaration.append(path)
 
+    # pylint: disable=unused-argument
     @Disp.register([Authorization])
     def _authorization(self, path, obj, _):
         self.authorization.append(path)
 
+    # pylint: disable=unused-argument
     @Disp.register([ResponseMessage])
     def _response_message(self, path, obj, _):
         self.response_message.append(path)
@@ -68,22 +73,25 @@ class PathRecord(object):
         self.parameter.append(path)
 
 
-app = SampleApp.load(get_test_data_folder(version='1.2', which='wordnik'))
-
-
 class ScannerTestCase(unittest.TestCase):
     """ test scanner """
 
+    @classmethod
+    def setUpClass(cls):
+        cls.app = SampleApp.load(
+            get_test_data_folder(version='1.2', which='wordnik'))
+
     def test_count(self):
-        s = Scanner(app)
-        co = CountObject()
-        s.scan(route=[co], root=app.raw)
-        for name in app.raw.cached_apis:
-            s.scan(route=[co], root=app.raw.cached_apis[name])
+        scanner = Scanner(self.app)
+        count_obj = CountObject()
+        scanner.scan(route=[count_obj], root=self.app.raw)
+        for name in self.app.raw.cached_apis:
+            scanner.scan(route=[count_obj], root=self.app.raw.cached_apis[name])
 
         self.assertEqual(
-            len(co.long_name), len('#/apis/3/operations/0/responseMessages/0'))
-        self.assertEqual(co.total, {
+            len(count_obj.long_name),
+            len('#/apis/3/operations/0/responseMessages/0'))
+        self.assertEqual(count_obj.total, {
             Authorization: 1,
             ApiDeclaration: 3,
             Operation: 20,
@@ -91,16 +99,18 @@ class ScannerTestCase(unittest.TestCase):
         })
 
     def test_leaves(self):
-        s = Scanner(app)
-        co = CountObject()
-        s.scan(route=[co], root=app.raw, leaves=[Operation])
-        for name in app.raw.cached_apis:
-            s.scan(
-                route=[co], root=app.raw.cached_apis[name], leaves=[Operation])
+        scanner = Scanner(self.app)
+        count_obj = CountObject()
+        scanner.scan(route=[count_obj], root=self.app.raw, leaves=[Operation])
+        for name in self.app.raw.cached_apis:
+            scanner.scan(
+                route=[count_obj],
+                root=self.app.raw.cached_apis[name],
+                leaves=[Operation])
 
         # the scanning would stop at Operation, so ResponseMessage
         # would not be counted.
-        self.assertEqual(co.total, {
+        self.assertEqual(count_obj.total, {
             Authorization: 1,
             ApiDeclaration: 3,
             Operation: 20,
@@ -108,16 +118,16 @@ class ScannerTestCase(unittest.TestCase):
         })
 
     def test_path(self):
-        self.maxDiff = None
-        s = Scanner(app)
-        p = PathRecord()
-        s.scan(route=[p], root=app.raw)
-        s.scan(route=[p], root=app.raw.cached_apis['store'])
+        scanner = Scanner(self.app)
+        path_record = PathRecord()
+        scanner.scan(route=[path_record], root=self.app.raw)
+        scanner.scan(
+            route=[path_record], root=self.app.raw.cached_apis['store'])
 
-        self.assertEqual(sorted(p.api_declaration), sorted(['#']))
-        self.assertEqual(p.authorization, ['#/authorizations/oauth2'])
+        self.assertEqual(sorted(path_record.api_declaration), sorted(['#']))
+        self.assertEqual(path_record.authorization, ['#/authorizations/oauth2'])
         self.assertEqual(
-            sorted(p.response_message),
+            sorted(path_record.response_message),
             sorted([
                 '#/apis/0/operations/0/responseMessages/0',
                 '#/apis/1/operations/0/responseMessages/1',
@@ -126,7 +136,7 @@ class ScannerTestCase(unittest.TestCase):
                 '#/apis/1/operations/1/responseMessages/0'
             ]))
         self.assertEqual(
-            sorted(p.parameter),
+            sorted(path_record.parameter),
             sorted([
                 '#/apis/0/operations/0/parameters/0',
                 '#/apis/1/operations/0/parameters/0',
@@ -138,24 +148,24 @@ class ResolveTestCase(unittest.TestCase):
     """ test for scanner: Resolve """
 
     @classmethod
-    def setUpClass(kls):
-        kls.app = SampleApp.create(
+    def setUpClass(cls):
+        cls.app = SampleApp.create(
             get_test_data_folder(version='1.2', which='model_subtypes'),
             to_spec_version='2.0')
 
     def test_ref_resolve(self):
         """ make sure pre resolve works """
-        o, _ = self.app.resolve_obj(
+        schema, _ = self.app.resolve_obj(
             '#/definitions/user!##!UserWithInfo/allOf/0',
             from_spec_version='2.0')
-        ref = o.get_attrs('migration').ref_obj
+        ref = schema.get_attrs('migration').ref_obj
         self.assertTrue(isinstance(ref, weakref.ProxyTypes))
 
-        o, _ = self.app.resolve_obj(
+        schema, _ = self.app.resolve_obj(
             '#/definitions/user!##!User',
             from_spec_version='2.0',
         )
-        self.assertEqual(ref, o)
+        self.assertEqual(ref, schema)
 
 
 class CountParemeter3(object):
@@ -172,7 +182,7 @@ class CountParemeter3(object):
         }
 
     @Disp.register([Header3, Parameter3])
-    def _count(self, path, obj):
+    def _count(self, _, obj):
         self.total[obj.__class__] = self.total[obj.__class__] + 1
 
 
@@ -184,8 +194,8 @@ class Scanner2TestCase(unittest.TestCase):
         when Header inherit Paremeter
         """
         header = Header3({})
-        cp = CountParemeter3()
-        Scanner2().scan(route=[cp], root=header)
+        count_param = CountParemeter3()
+        scan(route=[count_param], root=header)
 
-        self.assertEqual(cp.total[Header3], 1)
-        self.assertEqual(cp.total[Parameter3], 0)
+        self.assertEqual(count_param.total[Header3], 1)
+        self.assertEqual(count_param.total[Parameter3], 0)

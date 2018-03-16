@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 import copy
 import six
@@ -21,8 +23,8 @@ def attr(key, required=False, default=None):
                 key, self.__class__.__name__))
         return default
 
-    def _setter_(self, v):
-        self.attrs[key] = v
+    def _setter_(self, val):
+        self.attrs[key] = val
 
     return property(_getter_, _setter_)
 
@@ -31,15 +33,15 @@ class AttributeMeta(type):
     """ metaclass to init attributes
     """
 
-    def __new__(metacls, name, bases, spec):
+    def __new__(mcs, name, bases, spec):
         attrs = spec.setdefault('__attributes__', {})
 
-        for n, args in six.iteritems(attrs):
+        for name_, args in six.iteritems(attrs):
             args = copy.copy(args)
             builder = args.pop('builder', None) or attr
-            spec[n] = builder(args.pop('key', None) or n, **args)
+            spec[name_] = builder(args.pop('key', None) or name_, **args)
 
-        return type.__new__(metacls, name, bases, spec)
+        return type.__new__(mcs, name, bases, spec)
 
 
 class _Attrs(object):
@@ -48,8 +50,8 @@ class _Attrs(object):
     'Reference' object.
     """
 
-    def __init__(self, attrs={}):
-        self.attrs = attrs
+    def __init__(self, attrs=None):
+        self.attrs = attrs or {}
 
 
 AttributeGroup = six.with_metaclass(AttributeMeta, _Attrs)

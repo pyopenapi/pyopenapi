@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+
 from ....utils import jr_split
-from ...scan import Scanner, Scanner2
+from ...scan import scan
 from ..v2_0.scanner.upgrade import converters
 from ..v2_0.objects import (
     Swagger,
@@ -12,7 +14,7 @@ from .scanner import Resolve, NormalizeRef, Merge
 from . import objects
 
 
-def up(obj, app, jref):
+def upgrade(obj, app, jref):
     ret = obj
     reloc = {}
     url, jp = jr_split(jref)
@@ -43,10 +45,8 @@ def up(obj, app, jref):
                     jref, str(type(ret))))
 
     if ret.__swagger_version__ == '3.0.0':
-        scanner = Scanner2()
-
         # phase 1: normalized $ref
-        scanner.scan(root=ret, route=[NormalizeRef(url)])
+        scan(root=ret, route=[NormalizeRef(url)])
 
         # phase 2: update cache for resolving $ref to current object
         # - because the external document might reference back,
@@ -55,10 +55,10 @@ def up(obj, app, jref):
         app.spec_obj_store.update_routes(url, '3.0.0', {jp: reloc})
 
         # phase 3: resolve $ref
-        scanner.scan(root=ret, route=[Resolve(app)])
+        scan(root=ret, route=[Resolve(app)])
 
         # phase 4: merge path item from $ref
-        scanner.scan(root=ret, route=[Merge(app)])
+        scan(root=ret, route=[Merge(app)])
     else:
         raise Exception('unsupported migration: {} to 3.0.0'.format(
             obj.__swagger_version__))

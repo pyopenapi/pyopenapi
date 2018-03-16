@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
-from ....utils import final
-from ...spec import Base2, field, rename, child, list_, map_
 import six
+
+from ...spec import Base2, rename, child, list_, map_
 
 
 def is_str(spec, path, override):
+    if override:
+        raise Exception('attemp to override "str" in {}'.format(path))
     if isinstance(spec, six.string_types):
         return spec
     raise Exception('should be a string, not {}, {}'.format(
@@ -31,6 +35,7 @@ def if_not_bool_else(class_builder):
     return _f
 
 
+# pylint: disable=invalid-name
 class BaseObj_v2_0(Base2):
     __swagger_version__ = '2.0'
 
@@ -134,9 +139,6 @@ class Items(BaseSchema):
         'collection_format': dict(key='collectionFormat'),
     }
 
-    def _prim_(self, v, prim_factory, ctx=None):
-        return prim_factory.produce(self, v, ctx)
-
 
 Items.attach_field('items', builder=child, child_builder=Items)
 
@@ -171,9 +173,6 @@ class Schema(BaseSchema):
         'additional_properties': dict(
             key='additionalProperties', builder=rename),
     }
-
-    def _prim_(self, v, prim_factory, ctx=None):
-        return prim_factory.produce(self, v, ctx)
 
 
 BoolOrSchema = if_not_bool_else(Schema)
@@ -247,12 +246,6 @@ class Parameter(BaseSchema):
         'allow_empty_value': dict(key='allowEmptyValue', builder=rename),
     }
 
-    def _prim_(self, v, prim_factory, ctx=None):
-        i = getattr(self, 'in')
-        return prim_factory.produce(
-            self.schema, v, ctx) if i == 'body' else prim_factory.produce(
-                self, v, ctx)
-
 
 ParameterOrReference = if_not_ref_else(Parameter)
 
@@ -272,9 +265,6 @@ class Header(BaseSchema):
     __internal__ = {
         'collection_format': dict(key='collectionFormat', builder=rename),
     }
-
-    def _prim_(self, v, prim_factory, ctx=None):
-        return prim_factory.produce(self, v, ctx)
 
 
 class Response(BaseObj_v2_0):

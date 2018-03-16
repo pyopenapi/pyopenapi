@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
-from ..utils import jr_split, jp_split
-from .getter import UrlGetter, LocalGetter
-import six
 import os
 import inspect
 import logging
+
+import six
+
+from ..utils import jr_split, jp_split
+from .getter import UrlGetter, LocalGetter
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +38,13 @@ class Resolver(object):
     def resolve(self, jref, getter=None):
         """
         """
-        url, jp = jr_split(jref)
+        url, json_pointer = jr_split(jref)
 
         # apply hook when use this url to load
         # note that we didn't cache App with this local_url
         local_url = self.__url_load_hook(url) if self.__url_load_hook else url
 
-        logger.info('{0} patch to {1}'.format(url, local_url))
+        logger.info('%s patch to %s', url, local_url)
 
         # check cache
         obj = self.__cache.get(url, None)
@@ -48,9 +52,10 @@ class Resolver(object):
             # load that object
             if not getter:
                 getter = self.__default_getter or UrlGetter
-                p = six.moves.urllib.parse.urlparse(local_url)
-                if p.scheme == 'file' and p.path:
-                    getter = LocalGetter(os.path.join(p.netloc, p.path))
+                parsed = six.moves.urllib.parse.urlparse(local_url)
+                if parsed.scheme == 'file' and parsed.path:
+                    getter = LocalGetter(
+                        os.path.join(parsed.netloc, parsed.path))
 
             if inspect.isclass(getter):
                 # default initialization is passing the url
@@ -62,13 +67,13 @@ class Resolver(object):
             self.__cache[url] = obj if obj else None
 
         if obj:
-            ts = jp_split(jp)[1:]
-            while len(ts) > 0:
-                t = ts.pop(0)
+            parts = jp_split(json_pointer)[1:]
+            while parts:
+                head = parts.pop(0)
                 if isinstance(obj, list):
-                    obj = obj[int(t)]
+                    obj = obj[int(head)]
                 elif isinstance(obj, dict):
-                    obj = obj[t]
+                    obj = obj[head]
                 else:
                     raise Exception(
                         'Invalid type to resolve json-pointer: {0}'.format(
