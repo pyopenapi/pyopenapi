@@ -135,6 +135,8 @@ class _Base(object):
         # inside 'override':
         #   (first token of jp_split) => (reminder of jp_split, value)
 
+        self.children_cache = {}
+
         # setup override
         for k, val in six.iteritems(override or {}):
             tokens = jp_split(k, 1)
@@ -155,6 +157,15 @@ class _Base(object):
         from default from Field.
         """
         return k in self.spec
+
+    def get_children_cache(self):
+        return self.children_cache
+
+    def invalidate_children_cache(self):
+        self.children_cache = {}
+
+    def update_children_cache(self, cache):
+        self.children_cache = cache
 
     def get_parent(self):
         """ get parent object
@@ -273,7 +284,10 @@ class _List(_Base):
         return []
 
     def get_children(self):
-        ret = {}
+        ret = self.get_children_cache()
+        if ret:
+            return ret
+
         for idx, obj in enumerate(self.__elm):
             if isinstance(obj, Base2Obj):
                 ret[str(idx)] = obj
@@ -285,6 +299,7 @@ class _List(_Base):
                 for name in children:
                     ret[jp_compose([str(idx), name])] = children[name]
 
+        self.update_children_cache(ret)
         return ret
 
     def __iter__(self):
@@ -301,9 +316,13 @@ class _List(_Base):
         return self.__elm == other
 
     def append(self, obj):
+        self.invalidate_children_cache()
+
         return self.__elm.append(obj)
 
     def extend(self, other):
+        self.invalidate_children_cache()
+
         return self.__elm.extend(other)
 
 
@@ -417,7 +436,10 @@ class _Map(_Base):
         return self.__elm.keys()
 
     def get_children(self):
-        ret = {}
+        ret = self.get_children_cache()
+        if ret:
+            return ret
+
         for name, obj in six.iteritems(self.__elm):
             if isinstance(obj, Base2Obj):
                 ret[name] = obj
@@ -429,12 +451,15 @@ class _Map(_Base):
                 for key in children:
                     ret[jp_compose([name, key])] = children[key]
 
+        self.update_children_cache(ret)
         return ret
 
     def __getitem__(self, key):
         return self.__elm[key]
 
     def __setitem__(self, key, obj):
+        self.invalidate_children_cache()
+
         self.__elm[key] = obj
 
     def __contains__(self, elm):
@@ -558,6 +583,8 @@ class Base2Obj(_Base):
                 if obj:
                     setattr(self, name, obj)
 
+        self.invalidate_children_cache()
+
     def compare(self, other, base=None):
         """ comparison, will return the first difference, mainly used for testing """
 
@@ -647,6 +674,8 @@ class Base2Obj(_Base):
         if hasattr(obj, 'set_parent'):
             obj.set_parent(self)
 
+        self.invalidate_children_cache()
+
     @classmethod
     def attach_field(cls, name, **field_descriptor):
         desc = copy.copy(field_descriptor)
@@ -670,7 +699,10 @@ class Base2Obj(_Base):
         """ get children objects
         :rtype: a dict of children {child_name: child_object}
         """
-        ret = {}
+        ret = self.get_children_cache()
+        if ret:
+            return ret
+
         for name in self.__children__:
             obj = getattr(self, name)
             if not obj:
@@ -685,6 +717,7 @@ class Base2Obj(_Base):
                 for child_name in children:
                     ret[jp_compose([name, child_name])] = children[child_name]
 
+        self.update_children_cache(ret)
         return ret
 
     def get_attrs(self, namespace, group_cls=None):
