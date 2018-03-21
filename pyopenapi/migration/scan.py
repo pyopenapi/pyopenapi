@@ -16,7 +16,7 @@ def default_tree_traversal(root, leaves):
         # to encode it again.
         if obj.__class__ not in leaves:
             objs.extend(
-                map(lambda i: (path + '/' + i[0], ) + (i[1], ),
+                map(lambda i: ('/'.join([path, i[0]]), i[1]),
                     six.iteritems(obj.get_children())))
 
         # the path we expose here follows JsonPointer described here
@@ -87,12 +87,12 @@ class Dispatcher(six.with_metaclass(DispatcherMeta, object)):
 def _build_route(routes):
     ret = []
     for route in routes:
-        for attr in route.__class__.__dict__:
-            obj = getattr(route, attr)
-            if isinstance(obj, DispatcherMeta):
-                ret.append((route, obj.obj_route, obj.result_fn[0]))
+        for obj in six.itervalues(vars(route.__class__)):
+            if not isinstance(obj, DispatcherMeta):
+                continue
 
-            # TODO: add a break or find a better way to load DispatchMeta
+            ret.append((route, obj.obj_route, obj.result_fn[0]))
+            break
 
     return ret
 
