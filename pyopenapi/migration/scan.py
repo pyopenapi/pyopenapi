@@ -16,7 +16,7 @@ def default_tree_traversal(root, leaves):
         # to encode it again.
         if obj.__class__ not in leaves:
             objs.extend(
-                map(lambda i: (path + '/' + i[0], ) + (i[1], ),
+                map(lambda i: ('/'.join([path, i[0]]), ) + (i[1], ),
                     six.iteritems(obj.get_children())))
 
         # the path we expose here follows JsonPointer described here
