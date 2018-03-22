@@ -6,12 +6,12 @@ setup(
     name = 'pyopenapi',
     packages = find_packages(exclude=['*.tests.*']),
     version = version,
-    description = 'A type-safe, dynamic, spec-compliant swagger client & converter for python',
+    description = 'Library for developing backward-compatible tools on OpenAPI',
     author = 'Mission Liao',
     author_email = 'missionaryliao@gmail.com',
-    url = 'https://github.com/mission-liao/pyopenapi', # use the URL to the github repo
-    download_url = 'https://github.com/mission-liao/pyopenapi/tarball/{0}'.format(version),
-    keywords = ['swagger', 'REST'], # arbitrary keywords
+    url = 'https://github.com/pyopenapi/pyopenapi', # use the URL to the github repo
+    download_url = 'https://github.com/pyopenapi/pyopenapi/tarball/{0}'.format(version),
+    keywords = ['OepnAPI', 'REST'], # arbitrary keywords
     classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
